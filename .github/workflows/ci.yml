@@ -1,0 +1,222 @@
+# CI Pipeline — Inbound Forge
+# Rastreabilidade: INT-091, INT-092, TASK-5/ST001
+# Jobs: typecheck → lint → test → validate-openapi → build → deploy-railway
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+  DB_PLACEHOLDER: 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
+
+jobs:
+  typecheck:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ env.DB_PLACEHOLDER }}
+          DIRECT_URL: ${{ env.DB_PLACEHOLDER }}
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: LinkedIn API Guardrail (INT-117)
+        # Garante que nenhuma chamada à LinkedIn API foi introduzida (INT-068)
+        run: |
+          ! grep -r "linkedin.com/v2" src/ --include="*.ts" --include="*.tsx" --include="*.js" || (echo "ERRO: chamada LinkedIn API detectada — INT-068 proíbe integração direta" && exit 1)
+          ! grep -r "api.linkedin" src/ --include="*.ts" --include="*.tsx" --include="*.js" || (echo "ERRO: chamada LinkedIn API detectada" && exit 1)
+        shell: bash
+
+      - name: Lint
+        run: npx next lint --max-warnings=0
+
+  test:
+    name: Tests (Vitest)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: inbound_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+
+      - name: Run DB Migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+
+      - name: Run Tests
+        run: npx vitest run --reporter=verbose
+        env:
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          UPSTASH_REDIS_REST_URL: 'redis://localhost:6379'
+          UPSTASH_REDIS_REST_TOKEN: 'placeholder'
+          NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co'
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder'
+          PII_ENCRYPTION_KEY: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+          NEXTAUTH_SECRET: 'test-secret'
+          NEXTAUTH_URL: 'http://localhost:3000'
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-results/
+
+  validate-openapi:
+    name: OpenAPI Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate OpenAPI spec
+        run: npx @redocly/cli lint docs/openapi.yaml --format=stylish
+
+      - name: Check endpoint count
+        run: |
+          COUNT=$(grep -c "^  /" docs/openapi.yaml || echo "0")
+          echo "Paths encontrados: $COUNT"
+          if [ "$COUNT" -lt 47 ]; then
+            echo "ERRO: Esperado >= 47 endpoints, encontrado $COUNT"
+            exit 1
+          fi
+          echo "OK: $COUNT endpoints documentados"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [typecheck, lint, test]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: ${{ env.DB_PLACEHOLDER }}
+          DIRECT_URL: ${{ env.DB_PLACEHOLDER }}
+
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ env.DB_PLACEHOLDER }}
+          DIRECT_URL: ${{ env.DB_PLACEHOLDER }}
+          NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co'
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder'
+          NEXT_PUBLIC_APP_URL: 'https://inbound-forge.app'
+          NEXTAUTH_URL: 'https://inbound-forge.app'
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'placeholder-build-secret' }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          # Sentry source maps — apenas se token disponível
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          PII_ENCRYPTION_KEY: ${{ secrets.PII_ENCRYPTION_KEY || 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }}
+
+  deploy-railway:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    needs: [build, validate-openapi]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Trigger Railway Deploy
+        run: |
+          curl -f -X POST "${{ secrets.RAILWAY_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{"ref": "${{ github.sha }}", "branch": "main"}' \
+          || echo "AVISO: Railway webhook não configurado — pular deploy"

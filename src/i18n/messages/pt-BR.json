@@ -1,0 +1,207 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "close": "Fechar",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "clearFilters": "Limpar filtros",
+    "noResults": "Nenhum resultado encontrado",
+    "error": "Erro",
+    "success": "Sucesso",
+    "warning": "Atenção",
+    "copy": "Copiar",
+    "copied": "Copiado!",
+    "page": "Página",
+    "of": "de",
+    "items": "itens",
+    "next": "Próximo",
+    "previous": "Anterior"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "knowledge": "Base de Conhecimento",
+    "content": "Geração de Conteúdo",
+    "calendar": "Calendário",
+    "blog": "Blog",
+    "leads": "Leads",
+    "analytics": "Analytics",
+    "settings": "Configurações",
+    "signOut": "Sair"
+  },
+  "auth": {
+    "login": "Entrar",
+    "loginTitle": "Acesso ao Inbound Forge",
+    "email": "E-mail",
+    "password": "Senha",
+    "forgotPassword": "Esqueceu a senha?",
+    "loginButton": "Entrar",
+    "loginLoading": "Entrando...",
+    "loginError": "E-mail ou senha incorretos",
+    "sessionExpired": "Sessão expirada. Faça login novamente.",
+    "accountLocked": "Conta bloqueada por {minutes} minutos após {attempts} tentativas.",
+    "logoutSuccess": "Saiu com sucesso"
+  },
+  "workers": {
+    "idle": "Parado",
+    "running": "Executando",
+    "error": "Erro",
+    "stopped": "Desativado",
+    "scraping": "Scraping",
+    "image": "Imagens",
+    "publishing": "Publicação",
+    "lastPing": "Último ping: {time}",
+    "noHeartbeat": "Sem sinal há {time}"
+  },
+  "content": {
+    "title": "Conteúdo",
+    "new": "Novo conteúdo",
+    "status": {
+      "DRAFT": "Rascunho",
+      "REVIEW": "Em revisão",
+      "APPROVED": "Aprovado",
+      "PENDING_ART": "Aguardando arte",
+      "PUBLISHED": "Publicado",
+      "FAILED": "Falhou"
+    },
+    "angle": {
+      "AGGRESSIVE": "Agressivo — Amplifica dor e urgência",
+      "CONSULTIVE": "Consultivo — Educa e demonstra expertise",
+      "AUTHORIAL": "Autoral — Case de sucesso e prova social"
+    },
+    "channel": {
+      "INSTAGRAM": "Instagram",
+      "LINKEDIN": "LinkedIn",
+      "BLOG": "Blog"
+    },
+    "generate": "Gerar ângulos",
+    "regenerate": "Regenerar",
+    "approve": "Aprovar",
+    "reject": "Rejeitar",
+    "generating": "Gerando conteúdo...",
+    "approveSuccess": "Conteúdo aprovado com sucesso!",
+    "rejectSuccess": "Conteúdo rejeitado.",
+    "rejectReasonPlaceholder": "Descreva o motivo da rejeição (mín. 10 caracteres)...",
+    "rejectReasonTooShort": "O motivo deve ter pelo menos 10 caracteres",
+    "selectAngleFirst": "Selecione um ângulo antes de aprovar",
+    "copySuccess": "Texto copiado!",
+    "copyError": "Erro ao copiar",
+    "charCount": "{count} de {limit} caracteres",
+    "adaptChannel": "Adaptar para {channel}",
+    "adapting": "Adaptando...",
+    "rateLimit": "Limite de adaptações atingido ({count}/{limit} por dia)",
+    "historyTitle": "Histórico de versões",
+    "restoreVersion": "Restaurar versão {version}",
+    "restoreConfirm": "Restaurar esta versão? A edição atual será substituída.",
+    "onlyOneVersion": "Apenas uma versão disponível",
+    "editorTitle": "Conteúdo do Tema",
+    "editorDescription": "Ângulos gerados para este tema de posicionamento",
+    "listTitle": "Geração de Conteúdo",
+    "listDescription": "Geração e gestão de artigos, posts e material de inbound",
+    "emptyTitle": "Nenhum conteúdo ainda",
+    "emptyDescription": "Adicione temas da base de conhecimento para gerar seu primeiro conteúdo",
+    "funnelStage": {
+      "label": "Estágio do funil",
+      "AWARENESS": "Topo — Consciência",
+      "CONSIDERATION": "Meio — Consideração",
+      "DECISION": "Fundo — Decisão"
+    },
+    "cta": {
+      "label": "Destino do CTA",
+      "WHATSAPP": "WhatsApp",
+      "BLOG": "Blog",
+      "CONTACT_FORM": "Formulário de Contato"
+    }
+  },
+  "theme": {
+    "title": "Temas",
+    "new": "Novo tema",
+    "score": "Score: {score}",
+    "status": {
+      "ACTIVE": "Ativo",
+      "DEPRIORITIZED": "Despriorizado",
+      "REJECTED": "Rejeitado"
+    }
+  },
+  "knowledge": {
+    "title": "Base de Conhecimento",
+    "pains": "Dores",
+    "cases": "Cases",
+    "solutions": "Padrões de Solução",
+    "objections": "Objeções",
+    "niches": "Oportunidades de Nicho"
+  },
+  "leads": {
+    "title": "Leads",
+    "total": "{count} leads",
+    "funnel": {
+      "TOFU": "Topo do Funil",
+      "MOFU": "Meio do Funil",
+      "BOFU": "Fundo do Funil"
+    }
+  },
+  "blog": {
+    "title": "Blog",
+    "new": "Novo artigo",
+    "status": {
+      "DRAFT": "Rascunho",
+      "REVIEW": "Em revisão",
+      "PUBLISHED": "Publicado",
+      "ARCHIVED": "Arquivado"
+    }
+  },
+  "errors": {
+    "ERR-001": "Dados de entrada inválidos",
+    "ERR-010": "Não autenticado",
+    "ERR-011": "Sem permissão",
+    "ERR-012": "Conta bloqueada",
+    "ERR-020": "Não encontrado",
+    "ERR-022": "Operação não permitida",
+    "ERR-500": "Erro interno do servidor",
+    "generic": "Algo deu errado. Tente novamente.",
+    "networkError": "Erro de conexão. Verifique sua internet."
+  },
+  "empty": {
+    "noContent": "Nenhum conteúdo ainda",
+    "noContentDesc": "Crie seu primeiro conteúdo para começar.",
+    "noLeads": "Nenhum lead ainda",
+    "noLeadsDesc": "Configure seus UTMs e acompanhe as conversões.",
+    "noThemes": "Nenhum tema ainda",
+    "noThemesDesc": "Explore oportunidades e crie seus primeiros temas.",
+    "searchEmpty": "Nenhum resultado para \"{query}\"",
+    "filteredEmpty": "Nenhum resultado com os filtros aplicados"
+  },
+  "lgpd": {
+    "cookieConsent": "Utilizamos cookies para melhorar sua experiência.",
+    "accept": "Aceitar",
+    "decline": "Recusar",
+    "learnMore": "Saiba mais"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "period": "Período",
+    "conversionRate": "Taxa de conversão",
+    "totalLeads": "Total de leads",
+    "topChannel": "Canal principal"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Bem-vindo de volta",
+    "publishedToday": "Publicados hoje",
+    "pendingApproval": "Aguardando aprovação",
+    "workerStatus": "Status dos Workers"
+  },
+  "settings": {
+    "title": "Configurações",
+    "general": "Geral",
+    "security": "Segurança",
+    "integrations": "Integrações",
+    "saved": "Configurações salvas",
+    "saveError": "Erro ao salvar configurações"
+  }
+}

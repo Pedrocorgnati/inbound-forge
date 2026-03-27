@@ -1,0 +1,52 @@
+'use client'
+
+import { addDays, format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { CalendarDay } from './CalendarDay'
+import type { PublishingPost } from '@/types/publishing'
+
+interface WeekViewProps {
+  posts: Record<string, PublishingPost[]>
+  startDate: Date
+}
+
+const DAY_HEADERS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
+
+export function WeekView({ posts, startDate }: WeekViewProps) {
+  const today = format(new Date(), 'yyyy-MM-dd')
+  const currentMonth = new Date().getMonth()
+
+  const days = Array.from({ length: 7 }, (_, i) => addDays(startDate, i))
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="mb-1 grid grid-cols-7 gap-1">
+        {DAY_HEADERS.map((name) => (
+          <div
+            key={name}
+            className="py-1 text-center text-xs font-semibold uppercase text-gray-500"
+          >
+            {name}
+          </div>
+        ))}
+      </div>
+
+      {/* Days */}
+      <div className="grid grid-cols-7 gap-1">
+        {days.map((date) => {
+          const key = format(date, 'yyyy-MM-dd')
+          return (
+            <CalendarDay
+              key={key}
+              date={date}
+              posts={posts[key] ?? []}
+              isToday={key === today}
+              isCurrentMonth={date.getMonth() === currentMonth}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+}

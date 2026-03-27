@@ -1,0 +1,87 @@
+# Lighthouse CI — Inbound Forge
+# Rastreabilidade: PERF-005, TASK-5/ST003
+# Score >= 90 performance + accessibility em 4 rotas
+# Executa apenas em PRs para main
+
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  lighthouse:
+    name: Lighthouse Audit (PERF-005)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
+          DIRECT_URL: 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
+
+      - name: Build app
+        run: npm run build
+        env:
+          DATABASE_URL: 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
+          DIRECT_URL: 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
+          NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co'
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder'
+          NEXT_PUBLIC_APP_URL: 'https://inbound-forge.app'
+          NEXTAUTH_URL: 'http://localhost:3000'
+          NEXTAUTH_SECRET: 'lighthouse-ci-secret'
+          PII_ENCRYPTION_KEY: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+      - name: Run Lighthouse CI
+        run: npx lhci autorun --config=lighthouserc.js
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          # Variáveis necessárias para o servidor Next.js no LHCI
+          DATABASE_URL: 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
+          NEXTAUTH_SECRET: 'lighthouse-ci-secret'
+          NEXTAUTH_URL: 'http://localhost:3000'
+
+      - name: Upload Lighthouse Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: .lighthouse-reports/
+          retention-days: 30
+
+      - name: Comment PR with scores
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const fs = require('fs')
+            const path = require('path')
+            const reportsDir = '.lighthouse-reports'
+
+            if (!fs.existsSync(reportsDir)) {
+              console.log('Lighthouse reports not found')
+              return
+            }
+
+            const comment = '## Lighthouse CI Results\n\nSee artifacts for full reports.'
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment,
+            })

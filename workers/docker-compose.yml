@@ -1,0 +1,58 @@
+# docker-compose para desenvolvimento local dos workers
+# Criado por: auto-flow execute (module-1/TASK-3/ST004)
+# Uso: docker-compose -f workers/docker-compose.yml up
+
+version: '3.8'
+
+services:
+  worker-scraping:
+    build:
+      context: ..
+      dockerfile: workers/Dockerfile
+    environment:
+      - NODE_ENV=development
+      - WORKER_TYPE=SCRAPING
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
+      - WORKER_AUTH_SECRET=${WORKER_AUTH_SECRET}
+      - PORT=3001
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+  worker-image:
+    build:
+      context: ..
+      dockerfile: workers/Dockerfile
+    environment:
+      - NODE_ENV=development
+      - WORKER_TYPE=IMAGE
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
+      - WORKER_AUTH_SECRET=${WORKER_AUTH_SECRET}
+      - REPLICATE_API_TOKEN=${REPLICATE_API_TOKEN}
+      - PORT=3002
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+
+  worker-publishing:
+    build:
+      context: ..
+      dockerfile: workers/Dockerfile
+    environment:
+      - NODE_ENV=development
+      - WORKER_TYPE=PUBLISHING
+      - DATABASE_URL=${DATABASE_URL}
+      - DIRECT_URL=${DIRECT_URL}
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
+      - WORKER_AUTH_SECRET=${WORKER_AUTH_SECRET}
+      - PORT=3003
+    ports:
+      - "3003:3003"
+    restart: unless-stopped

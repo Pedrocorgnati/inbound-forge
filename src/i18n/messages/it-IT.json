@@ -1,0 +1,207 @@
+{
+  "common": {
+    "loading": "Caricamento...",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "edit": "Modifica",
+    "close": "Chiudi",
+    "confirm": "Conferma",
+    "back": "Indietro",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "clearFilters": "Cancella filtri",
+    "noResults": "Nessun risultato trovato",
+    "error": "Errore",
+    "success": "Successo",
+    "warning": "Attenzione",
+    "copy": "Copia",
+    "copied": "Copiato!",
+    "page": "Pagina",
+    "of": "di",
+    "items": "elementi",
+    "next": "Avanti",
+    "previous": "Precedente"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "knowledge": "Base di Conoscenza",
+    "content": "Generazione Contenuti",
+    "calendar": "Calendario",
+    "blog": "Blog",
+    "leads": "Lead",
+    "analytics": "Analytics",
+    "settings": "Impostazioni",
+    "signOut": "Esci"
+  },
+  "auth": {
+    "login": "Accedi",
+    "loginTitle": "Accesso a Inbound Forge",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Password dimenticata?",
+    "loginButton": "Accedi",
+    "loginLoading": "Accesso in corso...",
+    "loginError": "Email o password non corretti",
+    "sessionExpired": "Sessione scaduta. Effettua nuovamente l'accesso.",
+    "accountLocked": "Account bloccato per {minutes} minuti dopo {attempts} tentativi.",
+    "logoutSuccess": "Disconnessione avvenuta con successo"
+  },
+  "workers": {
+    "idle": "Inattivo",
+    "running": "In esecuzione",
+    "error": "Errore",
+    "stopped": "Fermato",
+    "scraping": "Scraping",
+    "image": "Immagini",
+    "publishing": "Pubblicazione",
+    "lastPing": "Ultimo ping: {time}",
+    "noHeartbeat": "Nessun segnale da {time}"
+  },
+  "content": {
+    "title": "Contenuti",
+    "new": "Nuovo contenuto",
+    "status": {
+      "DRAFT": "Bozza",
+      "REVIEW": "In revisione",
+      "APPROVED": "Approvato",
+      "PENDING_ART": "In attesa grafica",
+      "PUBLISHED": "Pubblicato",
+      "FAILED": "Fallito"
+    },
+    "angle": {
+      "AGGRESSIVE": "Aggressivo — Amplifica dolore e urgenza",
+      "CONSULTIVE": "Consultivo — Educa e dimostra competenza",
+      "AUTHORIAL": "Autoriale — Caso di successo e prova sociale"
+    },
+    "channel": {
+      "INSTAGRAM": "Instagram",
+      "LINKEDIN": "LinkedIn",
+      "BLOG": "Blog"
+    },
+    "generate": "Genera angoli",
+    "regenerate": "Rigenera",
+    "approve": "Approva",
+    "reject": "Rifiuta",
+    "generating": "Generazione contenuto...",
+    "approveSuccess": "Contenuto approvato con successo!",
+    "rejectSuccess": "Contenuto rifiutato.",
+    "rejectReasonPlaceholder": "Descrivi il motivo del rifiuto (min. 10 caratteri)...",
+    "rejectReasonTooShort": "Il motivo deve avere almeno 10 caratteri",
+    "selectAngleFirst": "Seleziona un angolo prima di approvare",
+    "copySuccess": "Testo copiato!",
+    "copyError": "Errore nella copia",
+    "charCount": "{count} di {limit} caratteri",
+    "adaptChannel": "Adatta per {channel}",
+    "adapting": "Adattamento...",
+    "rateLimit": "Limite di adattamenti raggiunto ({count}/{limit} al giorno)",
+    "historyTitle": "Cronologia versioni",
+    "restoreVersion": "Ripristina versione {version}",
+    "restoreConfirm": "Ripristinare questa versione? La modifica attuale verrà sostituita.",
+    "onlyOneVersion": "Solo una versione disponibile",
+    "editorTitle": "Contenuto del Tema",
+    "editorDescription": "Angoli generati per questo tema di posizionamento",
+    "listTitle": "Generazione Contenuti",
+    "listDescription": "Generazione e gestione di articoli, post e materiale inbound",
+    "emptyTitle": "Nessun contenuto ancora",
+    "emptyDescription": "Aggiungi temi dalla base di conoscenza per generare il tuo primo contenuto",
+    "funnelStage": {
+      "label": "Fase del funnel",
+      "AWARENESS": "Alto — Consapevolezza",
+      "CONSIDERATION": "Medio — Considerazione",
+      "DECISION": "Basso — Decisione"
+    },
+    "cta": {
+      "label": "Destinazione CTA",
+      "WHATSAPP": "WhatsApp",
+      "BLOG": "Blog",
+      "CONTACT_FORM": "Modulo di Contatto"
+    }
+  },
+  "theme": {
+    "title": "Temi",
+    "new": "Nuovo tema",
+    "score": "Punteggio: {score}",
+    "status": {
+      "ACTIVE": "Attivo",
+      "DEPRIORITIZED": "De-prioritizzato",
+      "REJECTED": "Rifiutato"
+    }
+  },
+  "knowledge": {
+    "title": "Base di Conoscenza",
+    "pains": "Punti dolenti",
+    "cases": "Case study",
+    "solutions": "Modelli di soluzione",
+    "objections": "Obiezioni",
+    "niches": "Opportunità di nicchia"
+  },
+  "leads": {
+    "title": "Lead",
+    "total": "{count} lead",
+    "funnel": {
+      "TOFU": "Cima del funnel",
+      "MOFU": "Metà del funnel",
+      "BOFU": "Fondo del funnel"
+    }
+  },
+  "blog": {
+    "title": "Blog",
+    "new": "Nuovo articolo",
+    "status": {
+      "DRAFT": "Bozza",
+      "REVIEW": "In revisione",
+      "PUBLISHED": "Pubblicato",
+      "ARCHIVED": "Archiviato"
+    }
+  },
+  "errors": {
+    "ERR-001": "Dati di input non validi",
+    "ERR-010": "Non autenticato",
+    "ERR-011": "Permesso negato",
+    "ERR-012": "Account bloccato",
+    "ERR-020": "Non trovato",
+    "ERR-022": "Operazione non consentita",
+    "ERR-500": "Errore interno del server",
+    "generic": "Qualcosa è andato storto. Riprova.",
+    "networkError": "Errore di connessione. Controlla la tua connessione internet."
+  },
+  "empty": {
+    "noContent": "Nessun contenuto ancora",
+    "noContentDesc": "Crea il tuo primo contenuto per iniziare.",
+    "noLeads": "Nessun lead ancora",
+    "noLeadsDesc": "Configura i tuoi UTM e monitora le conversioni.",
+    "noThemes": "Nessun tema ancora",
+    "noThemesDesc": "Esplora le opportunità e crea i tuoi primi temi.",
+    "searchEmpty": "Nessun risultato per \"{query}\"",
+    "filteredEmpty": "Nessun risultato con i filtri applicati"
+  },
+  "lgpd": {
+    "cookieConsent": "Utilizziamo i cookie per migliorare la tua esperienza.",
+    "accept": "Accetta",
+    "decline": "Rifiuta",
+    "learnMore": "Scopri di più"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "period": "Periodo",
+    "conversionRate": "Tasso di conversione",
+    "totalLeads": "Totale lead",
+    "topChannel": "Canale principale"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Bentornato",
+    "publishedToday": "Pubblicati oggi",
+    "pendingApproval": "In attesa di approvazione",
+    "workerStatus": "Stato dei worker"
+  },
+  "settings": {
+    "title": "Impostazioni",
+    "general": "Generale",
+    "security": "Sicurezza",
+    "integrations": "Integrazioni",
+    "saved": "Impostazioni salvate",
+    "saveError": "Errore nel salvataggio delle impostazioni"
+  }
+}

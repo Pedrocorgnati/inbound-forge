@@ -1,0 +1,207 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "back": "Back",
+    "search": "Search",
+    "filter": "Filter",
+    "clearFilters": "Clear filters",
+    "noResults": "No results found",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "page": "Page",
+    "of": "of",
+    "items": "items",
+    "next": "Next",
+    "previous": "Previous"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "knowledge": "Knowledge Base",
+    "content": "Content Generation",
+    "calendar": "Calendar",
+    "blog": "Blog",
+    "leads": "Leads",
+    "analytics": "Analytics",
+    "settings": "Settings",
+    "signOut": "Sign Out"
+  },
+  "auth": {
+    "login": "Sign In",
+    "loginTitle": "Inbound Forge Access",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "loginButton": "Sign In",
+    "loginLoading": "Signing in...",
+    "loginError": "Incorrect email or password",
+    "sessionExpired": "Session expired. Please sign in again.",
+    "accountLocked": "Account locked for {minutes} minutes after {attempts} attempts.",
+    "logoutSuccess": "Successfully signed out"
+  },
+  "workers": {
+    "idle": "Idle",
+    "running": "Running",
+    "error": "Error",
+    "stopped": "Stopped",
+    "scraping": "Scraping",
+    "image": "Images",
+    "publishing": "Publishing",
+    "lastPing": "Last ping: {time}",
+    "noHeartbeat": "No signal for {time}"
+  },
+  "content": {
+    "title": "Content",
+    "new": "New content",
+    "status": {
+      "DRAFT": "Draft",
+      "REVIEW": "In review",
+      "APPROVED": "Approved",
+      "PENDING_ART": "Pending art",
+      "PUBLISHED": "Published",
+      "FAILED": "Failed"
+    },
+    "angle": {
+      "AGGRESSIVE": "Aggressive — Amplifies pain and urgency",
+      "CONSULTIVE": "Consultive — Educates and demonstrates expertise",
+      "AUTHORIAL": "Authorial — Success case and social proof"
+    },
+    "channel": {
+      "INSTAGRAM": "Instagram",
+      "LINKEDIN": "LinkedIn",
+      "BLOG": "Blog"
+    },
+    "generate": "Generate angles",
+    "regenerate": "Regenerate",
+    "approve": "Approve",
+    "reject": "Reject",
+    "generating": "Generating content...",
+    "approveSuccess": "Content approved successfully!",
+    "rejectSuccess": "Content rejected.",
+    "rejectReasonPlaceholder": "Describe the reason for rejection (min. 10 characters)...",
+    "rejectReasonTooShort": "Reason must be at least 10 characters",
+    "selectAngleFirst": "Select an angle before approving",
+    "copySuccess": "Text copied!",
+    "copyError": "Error copying",
+    "charCount": "{count} of {limit} characters",
+    "adaptChannel": "Adapt for {channel}",
+    "adapting": "Adapting...",
+    "rateLimit": "Adaptation limit reached ({count}/{limit} per day)",
+    "historyTitle": "Version history",
+    "restoreVersion": "Restore version {version}",
+    "restoreConfirm": "Restore this version? The current edit will be replaced.",
+    "onlyOneVersion": "Only one version available",
+    "editorTitle": "Theme Content",
+    "editorDescription": "Generated angles for this positioning theme",
+    "listTitle": "Content Generation",
+    "listDescription": "Generation and management of articles, posts, and inbound material",
+    "emptyTitle": "No content yet",
+    "emptyDescription": "Add themes from the knowledge base to generate your first content",
+    "funnelStage": {
+      "label": "Funnel stage",
+      "AWARENESS": "Top — Awareness",
+      "CONSIDERATION": "Middle — Consideration",
+      "DECISION": "Bottom — Decision"
+    },
+    "cta": {
+      "label": "CTA destination",
+      "WHATSAPP": "WhatsApp",
+      "BLOG": "Blog",
+      "CONTACT_FORM": "Contact Form"
+    }
+  },
+  "theme": {
+    "title": "Themes",
+    "new": "New theme",
+    "score": "Score: {score}",
+    "status": {
+      "ACTIVE": "Active",
+      "DEPRIORITIZED": "Deprioritized",
+      "REJECTED": "Rejected"
+    }
+  },
+  "knowledge": {
+    "title": "Knowledge Base",
+    "pains": "Pain Points",
+    "cases": "Case Studies",
+    "solutions": "Solution Patterns",
+    "objections": "Objections",
+    "niches": "Niche Opportunities"
+  },
+  "leads": {
+    "title": "Leads",
+    "total": "{count} leads",
+    "funnel": {
+      "TOFU": "Top of Funnel",
+      "MOFU": "Middle of Funnel",
+      "BOFU": "Bottom of Funnel"
+    }
+  },
+  "blog": {
+    "title": "Blog",
+    "new": "New article",
+    "status": {
+      "DRAFT": "Draft",
+      "REVIEW": "In review",
+      "PUBLISHED": "Published",
+      "ARCHIVED": "Archived"
+    }
+  },
+  "errors": {
+    "ERR-001": "Invalid input data",
+    "ERR-010": "Not authenticated",
+    "ERR-011": "Permission denied",
+    "ERR-012": "Account locked",
+    "ERR-020": "Not found",
+    "ERR-022": "Operation not permitted",
+    "ERR-500": "Internal server error",
+    "generic": "Something went wrong. Please try again.",
+    "networkError": "Connection error. Check your internet connection."
+  },
+  "empty": {
+    "noContent": "No content yet",
+    "noContentDesc": "Create your first content to get started.",
+    "noLeads": "No leads yet",
+    "noLeadsDesc": "Set up your UTMs and track conversions.",
+    "noThemes": "No themes yet",
+    "noThemesDesc": "Explore opportunities and create your first themes.",
+    "searchEmpty": "No results for \"{query}\"",
+    "filteredEmpty": "No results with the applied filters"
+  },
+  "lgpd": {
+    "cookieConsent": "We use cookies to improve your experience.",
+    "accept": "Accept",
+    "decline": "Decline",
+    "learnMore": "Learn more"
+  },
+  "analytics": {
+    "title": "Analytics",
+    "period": "Period",
+    "conversionRate": "Conversion rate",
+    "totalLeads": "Total leads",
+    "topChannel": "Top channel"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "publishedToday": "Published today",
+    "pendingApproval": "Pending approval",
+    "workerStatus": "Worker status"
+  },
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "security": "Security",
+    "integrations": "Integrations",
+    "saved": "Settings saved",
+    "saveError": "Error saving settings"
+  }
+}

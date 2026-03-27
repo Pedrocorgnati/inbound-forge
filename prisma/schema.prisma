@@ -1,0 +1,745 @@
+// Prisma Schema — Inbound Forge
+// Gerado por: /back-end-build
+// Stack: Next.js 14+ (App Router) | PostgreSQL (Supabase) | Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  OPERATOR
+}
+
+enum EntryStatus {
+  DRAFT
+  VALIDATED
+}
+
+enum ThemeStatus {
+  ACTIVE
+  DEPRIORITIZED
+  REJECTED
+}
+
+enum ContentAngle {
+  AGGRESSIVE
+  CONSULTIVE
+  AUTHORIAL
+}
+
+enum ContentStatus {
+  DRAFT
+  REVIEW
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  FAILED
+  PENDING_ART
+}
+
+enum QueueStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum Channel {
+  BLOG
+  LINKEDIN
+  INSTAGRAM
+}
+
+enum WorkerStatus {
+  ACTIVE
+  IDLE
+  ERROR
+}
+
+enum WorkerType {
+  SCRAPING
+  IMAGE
+  PUBLISHING
+}
+
+enum ConversionType {
+  CONVERSATION
+  MEETING
+  PROPOSAL
+}
+
+enum AttributionType {
+  FIRST_TOUCH
+  ASSISTED_TOUCH
+}
+
+enum ArticleStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum FunnelStage {
+  AWARENESS
+  CONSIDERATION
+  DECISION
+}
+
+enum ImageType {
+  CAROUSEL
+  STATIC
+  STATIC_LANDSCAPE
+  STATIC_PORTRAIT
+  VIDEO_COVER
+  BEFORE_AFTER
+  ERROR_CARD
+  SOLUTION_CARD
+  BACKSTAGE_CARD
+}
+
+enum CTADestination {
+  WHATSAPP
+  BLOG
+  CONTACT_FORM
+}
+
+enum ObjectionType {
+  PRICE
+  TRUST
+  TIMING
+  NEED
+  AUTHORITY
+}
+
+// ─── Entidades ───────────────────────────────────────────────────────────────
+
+model Operator {
+  id                   String   @id @default(uuid())
+  email                String   @unique
+  onboardingCompleted  Boolean  @default(false) @map("onboarding_completed")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Relations — module-6
+  sources       Source[]
+  scrapedTexts  ScrapedText[]
+
+  @@map("operators")
+}
+
+model WorkerHealth {
+  id            String       @id @default(uuid())
+  type          WorkerType
+  status        WorkerStatus @default(ACTIVE)
+  lastHeartbeat DateTime     @default(now()) @map("last_heartbeat")
+  errorMessage  String?      @map("error_message")
+  metadata      Json?
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@unique([type])
+  @@index([type], name: "IDX_worker_healths_type")
+  @@map("worker_healths")
+}
+
+model CaseLibraryEntry {
+  id                    String      @id @default(uuid())
+  name                  String      @db.VarChar(255)
+  sector                String      @db.VarChar(100)
+  systemType            String      @map("system_type") @db.VarChar(100)
+  outcome               String      @db.Text
+  hasQuantifiableResult Boolean     @default(false) @map("has_quantifiable_result")
+  isDraft               Boolean     @default(true) @map("is_draft")
+  lastAutosave          DateTime?   @map("last_autosave")
+  status                EntryStatus @default(DRAFT)
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  solutionPatterns SolutionPattern[]
+  themes           Theme[]
+  casePains        CasePain[]
+
+  @@index([status], name: "IDX_case_library_status")
+  @@map("case_library_entries")
+}
+
+model PainLibraryEntry {
+  id          String      @id @default(uuid())
+  title       String      @db.VarChar(255)
+  description String      @db.Text
+  sectors     String[]
+  status      EntryStatus @default(DRAFT)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  solutionPatterns SolutionPattern[]
+  themes           Theme[]
+  casePains        CasePain[]
+
+  @@index([status], name: "IDX_pain_library_status")
+  @@map("pain_library_entries")
+}
+
+model CasePain {
+  caseId String           @map("case_id")
+  painId String           @map("pain_id")
+  case   CaseLibraryEntry @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  pain   PainLibraryEntry @relation(fields: [painId], references: [id], onDelete: Cascade)
+
+  @@id([caseId, painId])
+  @@map("case_pains")
+}
+
+model SolutionPattern {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(255)
+  description String   @db.Text
+  painId      String   @map("pain_id")
+  caseId      String   @map("case_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pain   PainLibraryEntry @relation(fields: [painId], references: [id])
+  case   CaseLibraryEntry @relation(fields: [caseId], references: [id])
+  themes Theme[]
+
+  @@index([painId], name: "IDX_solution_patterns_pain")
+  @@index([caseId], name: "IDX_solution_patterns_case")
+  @@map("solution_patterns")
+}
+
+model Objection {
+  id        String        @id @default(uuid())
+  content   String        @db.Text
+  type      ObjectionType
+  status    EntryStatus   @default(DRAFT)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  @@map("objections")
+}
+
+model NicheOpportunity {
+  id             String   @id @default(uuid())
+  sector         String   @db.VarChar(100)
+  painCategory   String   @map("pain_category") @db.VarChar(255)
+  potentialScore Float    @map("potential_score")
+  isGeoReady     Boolean  @default(false) @map("is_geo_ready")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  themes Theme[]
+
+  @@map("niche_opportunities")
+}
+
+// ─── Scraping Worker (module-6) ──────────────────────────────────────────────
+
+model Source {
+  id             String   @id @default(cuid())
+  operatorId     String   @map("operator_id")
+  name           String   @db.VarChar(255)
+  url            String   @db.VarChar(1024)
+  isActive       Boolean  @default(true) @map("is_active")
+  isProtected    Boolean  @default(false) @map("is_protected")
+  selector       String?  @db.VarChar(512)
+  crawlFrequency String   @default("daily") @map("crawl_frequency") @db.VarChar(50)
+  lastCrawledAt  DateTime? @map("last_crawled_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  operator     Operator      @relation(fields: [operatorId], references: [id])
+  scrapedTexts ScrapedText[]
+
+  @@unique([operatorId, url])
+  @@index([operatorId, isActive], name: "IDX_sources_operator_active")
+  @@map("sources")
+}
+
+model ScrapedText {
+  id                   String   @id @default(cuid())
+  operatorId           String   @map("operator_id")
+  sourceId             String   @map("source_id")
+  rawText              String?  @map("raw_text") @db.Text          // nullable — descartado após pipeline (COMP-006)
+  processedText        String?  @map("processed_text") @db.Text   // texto anonimizado
+  url                  String   @db.VarChar(1024)
+  title                String?  @db.VarChar(512)
+  classificationResult Json?    @map("classification_result")
+  isPainCandidate      Boolean  @default(false) @map("is_pain_candidate")
+  isProcessed          Boolean  @default(false) @map("is_processed")
+  piiRemoved           Boolean  @default(false) @map("pii_removed")
+  batchId              String?  @map("batch_id") @db.VarChar(128)
+  expiresAt            DateTime? @map("expires_at")               // TTL para COMP-004
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  operator Operator @relation(fields: [operatorId], references: [id])
+  source   Source   @relation(fields: [sourceId], references: [id])
+
+  @@index([operatorId, isPainCandidate], name: "IDX_scraped_texts_operator_pain")
+  @@index([sourceId, createdAt], name: "IDX_scraped_texts_source_created")
+  @@index([batchId], name: "IDX_scraped_texts_batch")
+  @@map("scraped_texts")
+}
+
+model Theme {
+  id                 String      @id @default(uuid())
+  title              String      @db.VarChar(500)
+  opportunityScore   Float       @default(0) @map("opportunity_score")
+  status             ThemeStatus @default(ACTIVE)
+  rejectionReason    String?     @map("rejection_reason") @db.Text
+  rejectedAt         DateTime?   @map("rejected_at")
+  rejectedBy         String?     @map("rejected_by") @db.VarChar(20) // "operator" | "system"
+  isNew              Boolean     @default(true) @map("is_new")
+  painId             String?     @map("pain_id")
+  caseId             String?     @map("case_id")
+  solutionPatternId  String?     @map("solution_pattern_id")
+  nicheOpportunityId String?     @map("niche_opportunity_id")
+
+  // Scoring fields (module-7)
+  conversionScore    Int   @default(0) @map("conversion_score") // CX-01: score final 0-100
+  painRelevanceScore Int   @default(0) @map("pain_relevance_score") // componente 0-100
+  caseStrengthScore  Int   @default(0) @map("case_strength_score") // componente 0-100
+  geoMultiplier      Float @default(1.0) @map("geo_multiplier") // 1.0 ou 1.2
+  recencyBonus       Float @default(1.0) @map("recency_bonus") // 0.0, 0.5 ou 1.0
+  rejectionCount     Int   @default(0) @map("rejection_count") // RN-006: acumula rejeições de ContentPieces
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  pain             PainLibraryEntry? @relation(fields: [painId], references: [id])
+  case             CaseLibraryEntry? @relation(fields: [caseId], references: [id])
+  solutionPattern  SolutionPattern?  @relation(fields: [solutionPatternId], references: [id])
+  nicheOpportunity NicheOpportunity? @relation(fields: [nicheOpportunityId], references: [id])
+  contentPieces    ContentPiece[]
+  firstTouchLeads  Lead[]            @relation("firstTouchTheme")
+
+  @@index([status, opportunityScore(sort: Desc)], name: "IDX_themes_status_score")
+  @@index([conversionScore(sort: Desc)], name: "IDX_themes_conversion_score")
+  @@index([isNew], name: "IDX_themes_is_new")
+  @@map("themes")
+}
+
+model ContentPiece {
+  id                 String         @id @default(uuid())
+  themeId            String         @map("theme_id")
+  baseTitle          String         @map("base_title") @db.VarChar(500)
+  painCategory       String         @map("pain_category") @db.VarChar(255)
+  targetNiche        String         @map("target_niche") @db.VarChar(255)
+  relatedService     String         @map("related_service") @db.VarChar(255)
+  funnelStage        FunnelStage    @map("funnel_stage")
+  idealFormat        String         @map("ideal_format") @db.VarChar(50)
+  recommendedChannel Channel        @map("recommended_channel")
+  ctaDestination     CTADestination @map("cta_destination")
+  status             ContentStatus  @default(DRAFT)
+  selectedAngle      ContentAngle?  @map("selected_angle")
+  editedText         String?        @map("edited_text") @db.Text
+  generatedImageUrl  String?        @map("generated_image_url") @db.VarChar(512)
+  imageJobId         String?        @unique @map("image_job_id")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  theme         Theme                 @relation(fields: [themeId], references: [id])
+  imageJob      ImageJob?             @relation(fields: [imageJobId], references: [id])
+  angles        ContentAngleVariant[]
+  rejections    ContentRejection[]
+  scheduledPost Post?
+  blogArticle   BlogArticle?
+
+  @@index([themeId], name: "IDX_content_pieces_theme")
+  @@index([status], name: "IDX_content_pieces_status")
+  @@map("content_pieces")
+}
+
+model ContentAngleVariant {
+  id                String       @id @default(uuid())
+  pieceId           String       @map("piece_id")
+  angle             ContentAngle
+  text              String       @db.Text
+  recommendedCTA    String       @map("recommended_cta") @db.Text
+  suggestedChannel  Channel      @map("suggested_channel")
+  isSelected        Boolean      @default(false) @map("is_selected")
+  // Content generation fields (module-8)
+  charCount         Int          @default(0) @map("char_count")
+  hashtags          String[]     @default([])
+  ctaText           String?      @map("cta_text") @db.VarChar(200)
+  editedBody        String?      @map("edited_body") @db.Text
+  generationVersion Int          @default(1) @map("generation_version")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  piece ContentPiece @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+
+  @@unique([pieceId, angle, generationVersion], name: "UQ_content_angle_variant_piece_angle_version")
+  @@index([pieceId], name: "IDX_content_angle_variants_piece")
+  @@map("content_angle_variants")
+}
+
+model ContentRejection {
+  id        String        @id @default(uuid())
+  pieceId   String        @map("piece_id")
+  angle     ContentAngle? @map("angle")
+  reason    String?       @db.Text
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  // Relations
+  piece ContentPiece @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+
+  @@map("content_rejections")
+}
+
+model ImageJob {
+  id             String    @id @default(uuid())
+  contentPieceId String?   @map("content_piece_id")
+  templateType   ImageType @default(CAROUSEL) @map("template_type")
+  templateId     String?   @map("template_id")
+  provider       String?   @db.VarChar(20)
+  status         String    @default("PENDING") @db.VarChar(20)
+  prompt         String?   @db.Text
+  imageUrl       String?   @map("image_url") @db.VarChar(512)
+  backgroundUrl  String?   @map("background_url") @db.VarChar(512)
+  outputUrl      String?   @map("output_url") @db.VarChar(512)
+  processingMs   Int?      @map("processing_ms")
+  retryCount     Int       @default(0) @map("retry_count")
+  metadata       Json?
+  errorMessage   String?   @map("error_message") @db.Text
+  completedAt    DateTime? @map("completed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  contentPiece ContentPiece?  @relation
+  template     ImageTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([status], name: "IDX_image_jobs_status")
+  @@index([contentPieceId], name: "IDX_image_jobs_content_piece_id")
+  @@map("image_jobs")
+}
+
+model VisualAsset {
+  id            String   @id @default(uuid())
+  fileName      String   @map("file_name") @db.VarChar(255)
+  originalName  String   @map("original_name") @db.VarChar(255)
+  fileType      String   @map("file_type") @db.VarChar(50)
+  fileSizeBytes Int      @default(0) @map("file_size_bytes")
+  widthPx       Int?     @map("width_px")
+  heightPx      Int?     @map("height_px")
+  storageUrl    String   @map("storage_url") @db.VarChar(512)
+  thumbnailUrl  String?  @map("thumbnail_url") @db.VarChar(512)
+  altText       String?  @map("alt_text") @db.Text
+  tags          String[] @default([])
+  usedInJobs    String[] @default([]) @map("used_in_jobs")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([fileType], name: "IDX_visual_assets_file_type")
+  @@map("visual_assets")
+}
+
+model ImageTemplate {
+  id           String    @id @default(uuid())
+  imageType    ImageType @default(CAROUSEL) @map("image_type")
+  templateType String?   @map("template_type") @db.VarChar(50)
+  name         String    @db.VarChar(255)
+  width        Int
+  height       Int
+  channel      String    @default("instagram") @db.VarChar(50)
+  configJson   Json?     @map("config_json")
+  description  String?   @db.Text
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  imageJobs ImageJob[]
+
+  @@map("image_templates")
+}
+
+model Post {
+  id             String        @id @default(uuid())
+  contentPieceId String?       @unique @map("content_piece_id") // nullable para posts manuais sem ContentPiece
+  channel        Channel
+  scheduledAt    DateTime?     @map("scheduled_at")
+  publishedAt    DateTime?     @map("published_at")
+  imageUrl       String?       @map("image_url") @db.VarChar(512)
+  caption        String        @db.Text
+  hashtags       String[]      @default([])
+  cta            String        @default("") @db.Text
+  ctaText        String?       @map("cta_text") @db.VarChar(500)
+  ctaUrl         String?       @map("cta_url") @db.VarChar(1024)
+  trackingUrl    String?       @map("tracking_url") @db.VarChar(1024)
+  status         ContentStatus @default(DRAFT)
+  approvedAt     DateTime?     @map("approved_at")
+  platform       String?       @db.VarChar(50) // 'instagram_graph_api' | 'linkedin_assisted'
+  platformPostId String?       @map("platform_post_id") @db.VarChar(255)
+  errorMessage   String?       @map("error_message") @db.Text
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  contentPiece    ContentPiece?    @relation(fields: [contentPieceId], references: [id])
+  utmLink         UTMLink?
+  publishingQueue PublishingQueue?
+  publishAuditLogs PublishAuditLog[]
+  firstTouchLeads Lead[]           @relation("firstTouchPost")
+  assistedLeads   Lead[]           @relation("assistedTouch")
+
+  @@index([channel, status], name: "IDX_posts_channel_status")
+  @@index([scheduledAt], name: "IDX_posts_scheduled_at")
+  @@index([contentPieceId], name: "IDX_posts_content_piece_id")
+  @@map("posts")
+}
+
+model PublishingQueue {
+  id            String      @id @default(uuid())
+  postId        String      @unique @map("post_id")
+  channel       String?     @db.VarChar(50)    // 'instagram' | 'linkedin'
+  scheduledAt   DateTime?   @map("scheduled_at")
+  priority      Int         @default(0)
+  attempts      Int         @default(0)
+  maxAttempts   Int         @default(3) @map("max_attempts")
+  lastAttemptAt DateTime?   @map("last_attempt_at")
+  nextAttemptAt DateTime?   @map("next_attempt_at")
+  lastError     String?     @map("last_error") @db.Text
+  status        QueueStatus @default(PENDING)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledAt], name: "IDX_publishing_queue_scheduled_at")
+  @@index([status], name: "IDX_publishing_queue_status")
+  @@map("publishing_queue")
+}
+
+// ─── M012: Publish Audit Log (module-12/TASK-4/ST006 — COMP-001) ─────────────
+
+model PublishAuditLog {
+  id             String   @id @default(uuid())
+  postId         String   @map("post_id")
+  action         String   @db.VarChar(50) // 'publish_attempt' | 'publish_success' | 'publish_failure' | 'queue_retry' | 'permanent_fail'
+  result         String   @db.VarChar(20) // 'success' | 'failure'
+  platformPostId String?  @map("platform_post_id") @db.VarChar(255)
+  errorMessage   String?  @map("error_message") @db.Text
+  attempts       Int      @default(1)
+  timestamp      DateTime @default(now())
+
+  // Relations
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId], name: "IDX_publish_audit_logs_post")
+  @@map("publish_audit_logs")
+}
+
+model BlogArticle {
+  id               String        @id @default(uuid())
+  contentPieceId   String?       @unique @map("content_piece_id")
+  slug             String        @unique @db.VarChar(255)
+  title            String        @db.VarChar(500)
+  excerpt          String        @db.VarChar(500)
+  body             String        @db.Text
+  featuredImageUrl String?       @map("featured_image_url") @db.VarChar(512)
+  coverImageAlt    String?       @map("cover_image_alt") @db.VarChar(255)
+  metaTitle        String?       @map("meta_title") @db.VarChar(70)
+  metaDescription  String?       @map("meta_description") @db.VarChar(160)
+  canonicalUrl     String?       @map("canonical_url") @db.VarChar(512)
+  schemaTypes      String[]      @default(["BlogPosting"]) @map("schema_types")
+  hreflang         Json?         // { "pt-BR": "/blog/slug", "en": "/en/blog/slug" }
+  tags             String[]      @default([])
+  status           ArticleStatus @default(DRAFT)
+  authorName       String        @default("Pedro Corgnati") @map("author_name") @db.VarChar(255)
+  jsonLd           String?       @map("json_ld") @db.Text
+  ctaType          CTADestination? @map("cta_type")
+  ctaUrl           String?       @map("cta_url") @db.VarChar(512)
+  ctaLabel         String?       @map("cta_label") @db.VarChar(255)
+  currentVersion   Int           @default(1) @map("current_version")
+  approvedAt       DateTime?     @map("approved_at")
+  approvedBy       String?       @map("approved_by") @db.VarChar(255)
+  publishedAt      DateTime?     @map("published_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  contentPiece ContentPiece?        @relation(fields: [contentPieceId], references: [id])
+  versions     BlogArticleVersion[]
+
+  @@index([status, publishedAt], name: "IDX_blog_articles_status")
+  @@index([slug], name: "IDX_blog_articles_slug")
+  @@map("blog_articles")
+}
+
+model BlogArticleVersion {
+  id            String   @id @default(uuid())
+  articleId     String   @map("article_id")
+  versionNumber Int      @map("version_number")
+  title         String   @db.VarChar(500)
+  body          String   @db.Text
+  changeNote    String?  @map("change_note") @db.VarChar(500)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  article BlogArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([articleId, versionNumber], name: "UQ_blog_article_versions_article_version")
+  @@map("blog_article_versions")
+}
+
+model Lead {
+  id                String       @id @default(uuid())
+  name              String?      @db.VarChar(255)
+  company           String?      @db.VarChar(255)
+  contactInfo       String?      @map("contact_info") @db.Text // AES-256 encrypted — COMP-002
+  firstTouchPostId  String       @map("first_touch_post_id")
+  firstTouchThemeId String       @map("first_touch_theme_id")
+  notes             String?      @db.Text
+  // M013: leads-conversions additions
+  channel           Channel?
+  funnelStage       FunnelStage? @map("funnel_stage")
+  lgpdConsent       Boolean      @default(false) @map("lgpd_consent")
+  lgpdConsentAt     DateTime?    @map("lgpd_consent_at")
+  firstTouchAt      DateTime?    @map("first_touch_at")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  firstTouchPost      Post                 @relation("firstTouchPost", fields: [firstTouchPostId], references: [id])
+  firstTouchTheme     Theme                @relation("firstTouchTheme", fields: [firstTouchThemeId], references: [id])
+  assistedPosts       Post[]               @relation("assistedTouch")
+  conversionEvents    ConversionEvent[]
+  reconciliationItems ReconciliationItem[]
+  auditLogs           AuditLog[]
+
+  @@index([firstTouchPostId], name: "IDX_leads_first_touch_post")
+  @@index([firstTouchThemeId], name: "IDX_leads_first_touch_theme")
+  @@index([channel], name: "IDX_leads_channel")
+  @@index([funnelStage], name: "IDX_leads_funnel_stage")
+  @@map("leads")
+}
+
+model ConversionEvent {
+  id          String          @id @default(uuid())
+  leadId      String          @map("lead_id")
+  type        ConversionType
+  attribution AttributionType @default(FIRST_TOUCH)
+  occurredAt  DateTime        @map("occurred_at")
+  notes       String?         @db.Text
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId], name: "IDX_conversion_events_lead")
+  @@map("conversion_events")
+}
+
+model UTMLink {
+  id        String   @id @default(uuid())
+  postId    String   @unique @map("post_id")
+  source    String   @db.VarChar(50)
+  medium    String   @db.VarChar(50)
+  campaign  String   @db.VarChar(255)
+  content   String   @db.VarChar(255)
+  fullUrl   String   @map("full_url") @db.VarChar(1024)
+  clicks    Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@map("utm_links")
+}
+
+model ReconciliationItem {
+  id         String   @id @default(uuid())
+  type       String   @db.VarChar(50)
+  postId     String?  @map("post_id")
+  leadId     String?  @map("lead_id")
+  weekOf     DateTime @map("week_of")
+  resolved   Boolean  @default(false)
+  resolution String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  lead Lead? @relation(fields: [leadId], references: [id])
+
+  @@index([resolved, weekOf], name: "IDX_reconciliation_items_status")
+  @@map("reconciliation_items")
+}
+
+// ─── M013: Audit Log (COMP-001) ──────────────────────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  action     String   @db.VarChar(100) // e.g. "lead.created", "lead.contact_revealed"
+  entityType String   @map("entity_type") @db.VarChar(50) // "Lead" | "ConversionEvent" | "UTMLink"
+  entityId   String   @map("entity_id") @db.VarChar(36)
+  userId     String   @map("user_id") @db.VarChar(255)
+  leadId     String?  @map("lead_id")
+  metadata   Json?    // NEVER include PII — SEC-008
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId], name: "IDX_audit_logs_entity")
+  @@index([userId], name: "IDX_audit_logs_user")
+  @@index([createdAt(sort: Desc)], name: "IDX_audit_logs_created")
+  @@map("audit_logs")
+}
+
+model ApiUsageLog {
+  id         String   @id @default(uuid())
+  service    String   @db.VarChar(50)
+  metric     String   @db.VarChar(50)
+  value      Float
+  cost       Float    @default(0)
+  recordedAt DateTime @default(now()) @map("recorded_at")
+
+  @@index([service, recordedAt], name: "IDX_api_usage_logs_service")
+  @@map("api_usage_logs")
+}
+
+model AlertLog {
+  id         String    @id @default(uuid())
+  type       String    @db.VarChar(50)
+  severity   String    @db.VarChar(20)
+  message    String    @db.Text
+  resolved   Boolean   @default(false)
+  resolvedAt DateTime? @map("resolved_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([resolved, createdAt], name: "IDX_alert_logs_status")
+  @@map("alert_logs")
+}
+
+// ─── M010: Seed Metadata Control (module-1/TASK-2) ───────────────────────────
+
+model SeedMetadata {
+  id         String   @id @default(uuid())
+  env        String   @unique @db.VarChar(50)
+  executedAt DateTime @default(now()) @map("executed_at")
+  version    String   @default("1.0") @db.VarChar(20)
+
+  @@map("seed_metadata")
+}

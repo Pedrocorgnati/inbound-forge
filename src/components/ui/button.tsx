@@ -1,0 +1,82 @@
+'use client'
+
+import * as React from 'react'
+import { Slot } from '@radix-ui/react-slot'
+import { cva, type VariantProps } from 'class-variance-authority'
+import { Loader2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground hover:bg-primary-hover',
+        secondary: 'bg-primary-light text-primary hover:bg-[#E0E7FF]',
+        ghost: 'hover:bg-muted hover:text-foreground',
+        destructive: 'bg-danger text-danger-foreground hover:bg-[#B91C1C]',
+        outline: 'border border-border bg-background hover:bg-muted hover:text-foreground',
+        link: 'text-primary underline-offset-4 hover:underline',
+      },
+      size: {
+        sm: 'h-9 px-3 text-xs',
+        md: 'h-11 min-h-[44px] px-4 text-sm',
+        default: 'h-11 min-h-[44px] px-4 text-sm',
+        lg: 'h-12 min-h-[48px] px-8 text-base',
+        icon: 'h-11 w-11 min-h-[44px] min-w-[44px]',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+  isLoading?: boolean
+  loadingText?: string
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      isLoading = false,
+      loadingText,
+      children,
+      disabled,
+      ...props
+    },
+    ref
+  ) => {
+    const Comp = asChild ? Slot : 'button'
+
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        disabled={disabled || isLoading}
+        {...props}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden />
+            {loadingText ?? children}
+          </>
+        ) : (
+          children
+        )}
+      </Comp>
+    )
+  }
+)
+Button.displayName = 'Button'
+
+export { Button, buttonVariants }

@@ -1,0 +1,1004 @@
+openapi: 3.1.0
+info:
+  title: Inbound Forge API
+  version: 1.0.0
+  description: |
+    API do Inbound Forge — plataforma de criação e distribuição de conteúdo inbound.
+    Todos os endpoints (exceto /health) requerem autenticação Bearer token via NextAuth.
+  contact:
+    name: Pedro Corgnati
+    email: pedro@corgnati.com
+  license:
+    name: Privado
+
+servers:
+  - url: http://localhost:3000
+    description: Desenvolvimento local
+  - url: https://inbound-forge.vercel.app
+    description: Produção
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          description: Payload de resposta
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details: {}
+
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: VAL_001
+        message:
+          type: string
+        field:
+          type: string
+
+    Theme:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        conversionScore:
+          type: integer
+          minimum: 0
+          description: "CX-01: Score calculado a partir de ConversionEvents"
+        status:
+          type: string
+          enum: [ACTIVE, DEPRIORITIZED, REJECTED]
+
+    ContentPiece:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        themeId:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, REVIEW, APPROVED, SCHEDULED, PUBLISHED, FAILED, PENDING_ART]
+        imageJobId:
+          type: string
+          nullable: true
+          description: "CX-02"
+        imageUrl:
+          type: string
+          nullable: true
+          description: "CX-02"
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+        contentPieceId:
+          type: string
+        channel:
+          type: string
+          enum: [BLOG, LINKEDIN, INSTAGRAM]
+        status:
+          type: string
+          enum: [DRAFT, SCHEDULED, PUBLISHED, FAILED]
+        trackingUrl:
+          type: string
+          nullable: true
+          description: "CX-04: preenchido ao criar UTMLink"
+
+    Lead:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        themeId:
+          type: string
+        lgpdConsent:
+          type: boolean
+          description: "COMP-002: obrigatório true"
+        funnelStage:
+          type: string
+          enum: [AWARENESS, CONSIDERATION, DECISION]
+
+    LeadInput:
+      type: object
+      required: [contactInfo, lgpdConsent, funnelStage]
+      properties:
+        themeId:
+          type: string
+        contactInfo:
+          type: string
+          description: "Será criptografado AES-256-GCM (COMP-002)"
+        lgpdConsent:
+          type: boolean
+          description: "LGPD: deve ser true. Retorna VAL_001 se false."
+        funnelStage:
+          type: string
+          enum: [AWARENESS, CONSIDERATION, DECISION]
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        version:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ─── Auth ─────────────────────────────────────────────────────────────────
+  /api/auth/{provider}:
+    post:
+      tags: [Auth]
+      summary: "NextAuth authentication (module-3)"
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Auth response
+        "401":
+          description: Invalid credentials
+
+  # ─── Themes ───────────────────────────────────────────────────────────────
+  /api/v1/themes:
+    get:
+      tags: [Themes]
+      summary: "List themes (module-7)"
+      responses:
+        "200":
+          description: List of themes
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Theme'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Themes]
+      summary: "Create theme (module-7)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        "201":
+          description: Theme created
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/themes/{id}:
+    get:
+      tags: [Themes]
+      summary: "Get theme by ID (module-7)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Theme
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: Theme not found (ou de outro usuário)
+    patch:
+      tags: [Themes]
+      summary: "Update theme (module-7)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Theme'
+      responses:
+        "200":
+          description: Theme updated
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: Theme not found
+    delete:
+      tags: [Themes]
+      summary: "Delete theme (module-7)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Theme deleted
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: Theme not found
+
+  /api/v1/themes/{id}/score:
+    post:
+      tags: [Themes]
+      summary: "Trigger theme scoring (module-7)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Score updated
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Content ──────────────────────────────────────────────────────────────
+  /api/v1/content:
+    get:
+      tags: [Content]
+      summary: "List content pieces (module-8)"
+      responses:
+        "200":
+          description: Content list
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/content/generate:
+    post:
+      tags: [Content]
+      summary: "Generate content with AI (module-8)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [themeId]
+              properties:
+                themeId:
+                  type: string
+                channel:
+                  type: string
+                angle:
+                  type: string
+      responses:
+        "201":
+          description: Content generated
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/content/{id}:
+    get:
+      tags: [Content]
+      summary: "Get content piece (module-8)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Content piece
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [Content]
+      summary: "Update content piece (module-8)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentPiece'
+      responses:
+        "200":
+          description: Updated
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/content/{id}/approve:
+    post:
+      tags: [Content]
+      summary: "Approve content piece (module-8)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Approved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/content/{id}/reject:
+    post:
+      tags: [Content]
+      summary: "Reject content piece (module-8)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: Rejected
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Images ───────────────────────────────────────────────────────────────
+  /api/v1/images/generate:
+    post:
+      tags: [Images]
+      summary: "Start image generation job (module-9)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contentPieceId]
+              properties:
+                contentPieceId:
+                  type: string
+                prompt:
+                  type: string
+      responses:
+        "201":
+          description: Image job created
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/images/{jobId}/status:
+    get:
+      tags: [Images]
+      summary: "Get image job status (module-9)"
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job status
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Assets ───────────────────────────────────────────────────────────────
+  /api/v1/assets:
+    get:
+      tags: [Assets]
+      summary: "List visual assets (module-10)"
+      responses:
+        "200":
+          description: Asset list
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Assets]
+      summary: "Upload visual asset (module-10)"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Asset created
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/assets/{id}:
+    delete:
+      tags: [Assets]
+      summary: "Delete visual asset (module-10)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Asset deleted
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Posts ────────────────────────────────────────────────────────────────
+  /api/v1/posts:
+    get:
+      tags: [Posts]
+      summary: "List posts (module-12)"
+      responses:
+        "200":
+          description: Post list
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Posts]
+      summary: "Create post (module-12)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contentPieceId, channel]
+              properties:
+                contentPieceId:
+                  type: string
+                channel:
+                  type: string
+      responses:
+        "201":
+          description: Post created (CX-03 triggered)
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/posts/{id}:
+    patch:
+      tags: [Posts]
+      summary: "Update post (module-12)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Post'
+      responses:
+        "200":
+          description: Post updated
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      tags: [Posts]
+      summary: "Delete post (module-12)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/posts/{id}/publish:
+    post:
+      tags: [Posts]
+      summary: "Publish post (module-12)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Published
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Blog ─────────────────────────────────────────────────────────────────
+  /api/v1/blog/articles:
+    get:
+      tags: [Blog]
+      summary: "List blog articles (module-11)"
+      responses:
+        "200":
+          description: Article list
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Blog]
+      summary: "Create blog article (module-11)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, postId]
+              properties:
+                title:
+                  type: string
+                postId:
+                  type: string
+      responses:
+        "201":
+          description: Article created
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/blog/articles/{slug}:
+    get:
+      tags: [Blog]
+      summary: "Get blog article by slug (module-11)"
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      security: []
+      responses:
+        "200":
+          description: Article
+        "404":
+          description: Not found
+
+  # ─── UTM Links ────────────────────────────────────────────────────────────
+  /api/v1/utm-links:
+    post:
+      tags: [UTM]
+      summary: "Create UTM link (module-13) — CX-04"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [postId, source, medium]
+              properties:
+                postId:
+                  type: string
+                source:
+                  type: string
+                medium:
+                  type: string
+                campaign:
+                  type: string
+      responses:
+        "201":
+          description: UTM link created, Post.trackingUrl updated (CX-04)
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      tags: [UTM]
+      summary: "List UTM links (module-13)"
+      responses:
+        "200":
+          description: UTM link list
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/utm-links/{postId}:
+    get:
+      tags: [UTM]
+      summary: "Get UTM link by postId (module-13)"
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: UTM link
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/utm/{id}:
+    delete:
+      tags: [UTM]
+      summary: "Delete UTM link (module-13)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Leads ────────────────────────────────────────────────────────────────
+  /api/v1/leads:
+    post:
+      tags: [Leads]
+      summary: "Create lead (module-13) — LGPD COMP-002"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeadInput'
+      responses:
+        "201":
+          description: Lead created (contactInfo encrypted AES-256-GCM)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Lead'
+        "400":
+          description: Validation error (lgpdConsent must be true — VAL_001)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      tags: [Leads]
+      summary: "List leads (module-13)"
+      responses:
+        "200":
+          description: Lead list (contactInfo redacted)
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/leads/{id}:
+    get:
+      tags: [Leads]
+      summary: "Get lead (module-13)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lead (contactInfo encrypted unless ?reveal=true)
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: Not found (ou de outro usuário)
+    patch:
+      tags: [Leads]
+      summary: "Update lead (module-13)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                funnelStage:
+                  type: string
+      responses:
+        "200":
+          description: Lead updated
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    delete:
+      tags: [Leads]
+      summary: "Delete lead (module-13) — LGPD direito ao esquecimento"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lead deleted (hard delete + AuditLog)
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Conversions ──────────────────────────────────────────────────────────
+  /api/v1/conversions:
+    post:
+      tags: [Conversions]
+      summary: "Register conversion event (module-13) — CX-01"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [leadId, themeId, conversionType]
+              properties:
+                leadId:
+                  type: string
+                themeId:
+                  type: string
+                conversionType:
+                  type: string
+                  enum: [CONVERSATION, MEETING, PROPOSAL]
+      responses:
+        "201":
+          description: Conversion created, Theme.conversionScore updated (CX-01)
+        "400":
+          $ref: '#/components/responses/ValidationError'
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      tags: [Conversions]
+      summary: "List conversions (module-13)"
+      responses:
+        "200":
+          description: Conversion list
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/conversions/{id}:
+    delete:
+      tags: [Conversions]
+      summary: "Delete conversion (module-13)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Analytics ────────────────────────────────────────────────────────────
+  /api/v1/analytics/funnel:
+    get:
+      tags: [Analytics]
+      summary: "Get funnel analytics (module-14)"
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d]
+      responses:
+        "200":
+          description: Funnel data
+        "400":
+          description: Invalid period (VAL_002)
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/analytics/themes:
+    get:
+      tags: [Analytics]
+      summary: "Get theme analytics (module-14)"
+      responses:
+        "200":
+          description: Theme analytics
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/analytics/export:
+    get:
+      tags: [Analytics]
+      summary: "Export analytics as CSV (module-14)"
+      responses:
+        "200":
+          description: CSV export
+          content:
+            text/csv:
+              schema:
+                type: string
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Reconciliation ───────────────────────────────────────────────────────
+  /api/v1/reconciliation:
+    get:
+      tags: [Reconciliation]
+      summary: "List reconciliation items (module-14)"
+      responses:
+        "200":
+          description: Items
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/reconciliation/{id}:
+    patch:
+      tags: [Reconciliation]
+      summary: "Resolve reconciliation item (module-14)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+      responses:
+        "200":
+          description: Resolved
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/reconciliation/sync:
+    post:
+      tags: [Reconciliation]
+      summary: "Trigger reconciliation sync (module-14)"
+      responses:
+        "200":
+          description: Sync completed
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "500":
+          description: Worker error (SYS_001)
+
+  # ─── Health ───────────────────────────────────────────────────────────────
+  /api/v1/health:
+    get:
+      tags: [Health]
+      summary: "Health check público nível 1 (module-15)"
+      security: []
+      responses:
+        "200":
+          description: Healthy (< 200ms)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        "503":
+          description: Unhealthy
+
+  /api/v1/health/detailed:
+    get:
+      tags: [Health]
+      summary: "Health check nível 2 — autenticado (module-15)"
+      responses:
+        "200":
+          description: Detailed status
+        "401":
+          description: Unauthorized (AUTH_001)
+
+  /api/v1/health/internal:
+    get:
+      tags: [Health]
+      summary: "Health check nível 3 — interno (module-16)"
+      security: []
+      parameters:
+        - name: x-internal-secret
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Detailed metrics
+        "401":
+          description: Invalid internal secret
+
+  # ─── API Usage ────────────────────────────────────────────────────────────
+  /api/v1/api-usage:
+    get:
+      tags: [Monitoring]
+      summary: "Get API usage breakdown (module-15)"
+      responses:
+        "200":
+          description: Usage breakdown
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: AUTH_001
+            message: Authentication required
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: VAL_001
+            message: Validation failed
+            field: lgpdConsent

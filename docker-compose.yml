@@ -1,0 +1,97 @@
+# docker-compose.yml — Inbound Forge (Desenvolvimento Local)
+# Gerado por: /docker-create
+#
+# Uso:
+#   docker compose up              # iniciar todos os serviços
+#   docker compose up app          # iniciar apenas o app (usa Supabase cloud)
+#   docker compose up app db       # app + postgres local
+#   docker compose down            # parar
+#   docker compose down -v         # parar e apagar volumes
+#
+# NOTA: Este projeto usa Supabase (cloud) por padrão.
+#       O serviço `db` é um postgres LOCAL opcional para desenvolvimento offline.
+#       Para usar o Supabase cloud, execute apenas: docker compose up app
+#
+# NOTA: Redis (Upstash) é HTTP-based — não requer container local.
+#       Configure UPSTASH_REDIS_REST_URL e UPSTASH_REDIS_REST_TOKEN em .env.docker
+
+services:
+
+  # ── Aplicação Next.js (hot reload) ─────────────────────────────────────────
+  app:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - app_node_modules:/app/node_modules
+      - app_next_cache:/app/.next
+    ports:
+      - "3000:3000"
+    command: >
+      sh -c "
+        apk add --no-cache python3 make g++ &&
+        npm install --ignore-scripts &&
+        npx prisma generate &&
+        npm run dev
+      "
+    env_file:
+      - .env.docker
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  # ── PostgreSQL Local (alternativa offline ao Supabase) ─────────────────────
+  # Usar apenas quando desenvolver sem acesso ao Supabase cloud.
+  # Para usar: docker compose up app db
+  # Configurar DATABASE_URL e DIRECT_URL no .env.docker para apontar para "db:5432"
+  db:
+    image: postgres:16-alpine
+    env_file:
+      - .env.docker
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── Adminer (UI para PostgreSQL local) ─────────────────────────────────────
+  # Acesse em: http://localhost:8080
+  # Server: db | Username: postgres | Password: dev_password
+  # Descomente para usar:
+  # adminer:
+  #   image: adminer:latest
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - db
+  #   restart: unless-stopped
+
+  # ── Mailpit (SMTP local para testes de email) ───────────────────────────────
+  # Útil para testar alertas enviados via Resend durante desenvolvimento offline.
+  # UI em: http://localhost:8025 | SMTP: localhost:1025
+  # Descomente para usar:
+  # mailpit:
+  #   image: axllent/mailpit:latest
+  #   ports:
+  #     - "8025:8025"   # Web UI
+  #     - "1025:1025"   # SMTP
+  #   restart: unless-stopped
+
+volumes:
+  app_node_modules:
+  app_next_cache:
+  db_data:
