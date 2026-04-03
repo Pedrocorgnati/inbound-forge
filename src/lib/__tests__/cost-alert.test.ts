@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { it, expect, vi, beforeEach } from 'vitest'
 import { checkCostAlerts, getServiceLimits } from '../cost-alert'
 
 vi.mock('@/lib/prisma', () => ({
@@ -17,7 +17,7 @@ vi.mock('@/lib/prisma', () => ({
 import { prisma } from '@/lib/prisma'
 
 const mockAggregate = vi.mocked(prisma.apiUsageLog.aggregate)
-const mockCount = vi.mocked(prisma.apiUsageLog.count)
+const _mockCount = vi.mocked(prisma.apiUsageLog.count)
 const mockFindFirst = vi.mocked(prisma.alertLog.findFirst)
 const mockCreate = vi.mocked(prisma.alertLog.create)
 

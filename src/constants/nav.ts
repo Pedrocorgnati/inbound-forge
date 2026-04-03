@@ -27,7 +27,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     label: 'Blog',
-    href: '/blog',
+    href: '/blog-manage',
     icon: 'Globe',
     badgeKey: null,
   },

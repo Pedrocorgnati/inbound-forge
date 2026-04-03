@@ -45,7 +45,7 @@ function EmptyCalendar() {
 export function CalendarGrid({
   posts,
   startDate,
-  endDate,
+  _endDate,
   view,
   onViewChange,
   onPeriodChange,

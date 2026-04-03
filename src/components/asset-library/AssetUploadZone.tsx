@@ -14,7 +14,7 @@ interface AssetUploadZoneProps {
 
 type ZoneState = 'idle' | 'dragging' | 'uploading' | 'done' | 'error'
 
-function formatFileSize(bytes: number): string {
+function _formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / 1_048_576).toFixed(1)} MB`

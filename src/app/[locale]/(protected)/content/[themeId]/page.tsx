@@ -1,9 +1,8 @@
 'use client'
 
-import { use, useState, useCallback, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Eye, EyeOff } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ContentEditorProvider, useContentEditorContext } from '@/contexts/ContentEditorContext'
@@ -16,6 +15,9 @@ import { HashtagSuggestor } from '@/components/content/HashtagSuggestor'
 import { FunnelStageSelector } from '@/components/content/FunnelStageSelector'
 import { ChannelPreview } from '@/components/content/ChannelPreview'
 import { AngleHistoryDrawer } from '@/components/content/AngleHistoryDrawer'
+import { ImagePreviewPanel } from '@/components/content/ImagePreviewPanel'
+import { TemplateSelector } from '@/components/content/TemplateSelector'
+import type { ImageTemplate } from '@/types/image-template'
 
 export default function ContentThemePage() {
   const { themeId } = useParams<{ themeId: string }>()
@@ -33,6 +35,7 @@ function ContentEditorInner({ themeId }: { themeId: string }) {
   const [historyAngleId, setHistoryAngleId] = useState<string | null>(null)
   const [localHashtags, setLocalHashtags] = useState<string[]>([])
   const [themeTitle, setThemeTitle] = useState('Conteúdo do Tema')
+  const [selectedTemplate, setSelectedTemplate] = useState<ImageTemplate | null>(null)
 
   // Fetch theme title
   useEffect(() => {
@@ -155,6 +158,19 @@ function ContentEditorInner({ themeId }: { themeId: string }) {
               disabled={editor.isGenerating}
             />
           </Card>
+        </div>
+      )}
+
+      {/* Image Generation + Template Selection */}
+      {hasAngles && editor.piece?.id && (
+        <div className="grid gap-4 md:grid-cols-2" data-testid="image-generation-area">
+          <ImagePreviewPanel contentPieceId={editor.piece.id} />
+          <TemplateSelector
+            selectedTemplateId={selectedTemplate?.id}
+            channel={editor.selectedChannel === 'LINKEDIN' ? 'linkedin' : editor.selectedChannel === 'INSTAGRAM' ? 'instagram' : 'blog'}
+            onSelect={setSelectedTemplate}
+            disabled={editor.isGenerating}
+          />
         </div>
       )}
 

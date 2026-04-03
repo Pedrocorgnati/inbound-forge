@@ -6,7 +6,6 @@
 import React, { memo, useState, useEffect } from 'react'
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { SparklineChart } from './SparklineChart'
 import { ChannelBreakdown } from './ChannelBreakdown'

@@ -1,7 +1,6 @@
 'use client'
 
 import { addDays, format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 import { CalendarDay } from './CalendarDay'
 import type { PublishingPost } from '@/types/publishing'
 

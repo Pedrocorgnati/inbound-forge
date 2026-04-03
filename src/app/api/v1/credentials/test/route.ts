@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireSession, badRequest, internalError } from '@/lib/api-auth'
+import { requireSession, badRequest } from '@/lib/api-auth'
 import { ZodError } from 'zod'
 import { CredentialTestBodySchema } from '@/schemas/health.schema'
 import { testIdeogramConnection } from '@/lib/ai/ideogram'

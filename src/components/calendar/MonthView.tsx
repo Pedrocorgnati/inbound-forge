@@ -9,7 +9,6 @@ import {
   format,
   isSameMonth,
 } from 'date-fns'
-import { CalendarDay } from './CalendarDay'
 import { PostMiniCard } from './PostMiniCard'
 import { cn } from '@/lib/utils'
 import type { PublishingPost } from '@/types/publishing'

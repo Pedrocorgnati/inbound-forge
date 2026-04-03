@@ -2,6 +2,9 @@ import { z } from 'zod'
 
 export const GenerateContentSchema = z.object({
   themeId: z.string().uuid(),
+  forceRegenerate: z.boolean().optional(),
+  funnelStage: z.enum(['AWARENESS', 'CONSIDERATION', 'DECISION']).optional(),
+  targetChannel: z.enum(['LINKEDIN', 'INSTAGRAM', 'BLOG']).optional(),
 })
 
 export const ApproveContentSchema = z.object({

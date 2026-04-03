@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { requireSession, ok, okPaginated, internalError } from '@/lib/api-auth'
+import { requireSession, internalError, okPaginated } from '@/lib/api-auth'
 import { prisma } from '@/lib/prisma'
 
 export const runtime = 'nodejs'

@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
-import { requireSession, ok, badRequest, internalError } from '@/lib/api-auth'
+import { requireSession, ok, badRequest } from '@/lib/api-auth'
 import { prisma } from '@/lib/prisma'
 import { redis } from '@/lib/redis'
 import { REDIS_KEYS } from '@/constants/redis-keys'
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   try {
     const raw = await request.json()
     body = TriggerSchema.parse(raw)
-  } catch (err) {
+  } catch (_err) {
     return badRequest('Dados inválidos. Verifique sourceIds e batchSize.')
   }
 

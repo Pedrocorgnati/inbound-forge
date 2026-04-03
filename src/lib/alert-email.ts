@@ -37,7 +37,7 @@ interface SendAlertEmailOptions {
  * })
  */
 export async function sendAlertEmail(options: SendAlertEmailOptions): Promise<void> {
-  const { subject, body, severity = 'ERROR', logType = 'alert', metadata } = options
+  const { subject, body, severity = 'ERROR', logType = 'alert', _metadata } = options
 
   // Criar AlertLog no banco (sempre — independente do email)
   try {

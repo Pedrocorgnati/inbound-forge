@@ -79,7 +79,7 @@ export async function getVersion(
 export async function rollback(
   articleId: string,
   versionId: string,
-  changeNote?: string,
+  _changeNote?: string,
 ): Promise<{ success: true; currentVersion: number }> {
   const [version, article] = await Promise.all([
     getVersion(articleId, versionId),

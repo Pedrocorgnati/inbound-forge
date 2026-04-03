@@ -35,7 +35,7 @@ const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
   minute: '2-digit',
 })
 
-export function ConversionHistory({ leadId, themeId, refreshKey }: ConversionHistoryProps) {
+export function ConversionHistory({ leadId, _themeId, refreshKey }: ConversionHistoryProps) {
   const [items, setItems] = useState<ConversionItem[]>([])
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(true)

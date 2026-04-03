@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { Plus, Pencil, CheckCircle, Send, Trash2, Eye } from 'lucide-react'
+import { Plus, Pencil, Send, Trash2, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,7 +24,7 @@ const PAGE_SIZE = 10
 
 export default function BlogAdminListPage() {
   const params = useParams()
-  const router = useRouter()
+  const _router = useRouter()
   const locale = (params?.locale as string) ?? 'pt-BR'
 
   const [data, setData] = React.useState<PaginatedArticles | null>(null)
@@ -34,11 +34,11 @@ export default function BlogAdminListPage() {
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = React.useState<BlogArticle | null>(null)
-  const [isDeleting, setIsDeleting] = React.useState(false)
+  const [_isDeleting, setIsDeleting] = React.useState(false)
 
   // Publish state
   const [publishTarget, setPublishTarget] = React.useState<BlogArticle | null>(null)
-  const [isPublishing, setIsPublishing] = React.useState(false)
+  const [_isPublishing, setIsPublishing] = React.useState(false)
 
   const fetchArticles = React.useCallback(async () => {
     setIsLoading(true)
@@ -123,7 +123,7 @@ export default function BlogAdminListPage() {
           <h1 className="text-2xl font-bold tracking-tight">Blog</h1>
           <p className="text-sm text-muted-foreground">Gerencie os artigos do blog</p>
         </div>
-        <Link href={`/${locale}/blog/new`}>
+        <Link href={`/${locale}/blog-manage/new`}>
           <Button>
             <Plus className="mr-1 h-4 w-4" aria-hidden />
             Novo Artigo
@@ -181,14 +181,14 @@ export default function BlogAdminListPage() {
                           </td>
                           <td className="py-3">
                             <div className="flex items-center justify-end gap-1">
-                              <Link href={`/${locale}/blog/${article.id}/edit`}>
+                              <Link href={`/${locale}/blog-manage/${article.id}/edit`}>
                                 <Button variant="ghost" size="sm" aria-label="Editar artigo">
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                               </Link>
 
                               {article.status === 'REVIEW' && (
-                                <Link href={`/${locale}/blog/${article.id}/review`}>
+                                <Link href={`/${locale}/blog-manage/${article.id}/review`}>
                                   <Button variant="ghost" size="sm" aria-label="Revisar artigo">
                                     <Eye className="h-4 w-4" />
                                   </Button>

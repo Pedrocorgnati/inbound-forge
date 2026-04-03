@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
-import { SkeletonCard } from '@/components/ui/skeleton'
 import { toast } from '@/components/ui/toast'
 import { AlertTriangle } from 'lucide-react'
 import type { CaseResponse } from '@/lib/dtos/case-library.dto'
@@ -24,7 +23,7 @@ export function CasePainLinkModal({
   painId,
   painTitle,
   currentCaseIds,
-  locale,
+  _locale,
   onSuccess,
 }: CasePainLinkModalProps) {
   const [cases, setCases] = useState<CaseResponse[]>([])

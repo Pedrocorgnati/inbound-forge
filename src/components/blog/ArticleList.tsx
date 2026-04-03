@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ArticleCard } from './ArticleCard'
 import type { BlogArticle } from '@/types/blog'

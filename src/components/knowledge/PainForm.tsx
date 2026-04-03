@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { toast } from '@/components/ui/toast'
 import { AlertCircle } from 'lucide-react'
+import { useAutosave } from '@/hooks/useAutosave'
 import type { PainResponse } from '@/lib/dtos/pain-library.dto'
 
 interface PainFormProps {
@@ -40,7 +40,7 @@ const SECTOR_OPTIONS = [
 
 const MIN_DESC_CHARS = 10
 
-export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, locale }: PainFormProps) {
+export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, _locale }: PainFormProps) {
   const [form, setForm] = useState<FormData>({
     title: initialData?.title ?? '',
     description: initialData?.description ?? '',
@@ -48,6 +48,37 @@ export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, locale
   })
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Autosave (edit mode only)
+  const formSerialized = useMemo(() => JSON.stringify(form), [form])
+
+  const autosaveFn = useCallback(
+    async (data: FormData) => {
+      if (!initialData?.id) return
+      const res = await fetch(`/api/knowledge/pains/${initialData.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: data.title.trim(),
+          description: data.description.trim(),
+          sectors: data.sectors,
+        }),
+      })
+      if (!res.ok) throw new Error('Falha ao salvar')
+    },
+    [initialData?.id]
+  )
+
+  const { status: autosaveStatus, lastSaved } = useAutosave(
+    formSerialized,
+    async () => autosaveFn(form),
+    2000,
+    mode === 'edit' && !!initialData?.id && isOpen
+  )
+
+  function formatTime(date: Date): string {
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  }
 
   function updateField<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -136,6 +167,17 @@ export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, locale
       size="lg"
     >
       <div data-testid="pain-form" className="space-y-4">
+        {/* Autosave indicator (edit mode) */}
+        {mode === 'edit' && (
+          <div aria-live="polite" className="text-xs text-muted-foreground text-right" data-testid="pain-autosave-status">
+            {autosaveStatus === 'saving' && 'Salvando...'}
+            {autosaveStatus === 'saved' && lastSaved && `Salvo às ${formatTime(lastSaved)}`}
+            {autosaveStatus === 'error' && (
+              <span className="text-danger">Erro ao salvar automaticamente</span>
+            )}
+          </div>
+        )}
+
         <Input
           label="Título"
           placeholder="Ex: Perda de tempo com processos manuais"

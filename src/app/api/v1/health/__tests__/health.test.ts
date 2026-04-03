@@ -3,7 +3,7 @@
  * Rastreabilidade: INT-044, INT-045, AUTH_001, TASK-4/ST002
  * Testes dos 3 níveis de health check
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, _beforeEach } from 'vitest'
 
 // Mock prisma
 vi.mock('@/lib/prisma', () => ({

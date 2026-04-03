@@ -2,7 +2,7 @@
 // Módulo: module-7-theme-scoring-engine (TASK-1/ST002 + TASK-2/ST004)
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireSession, ok, notFound, internalError, validationError } from '@/lib/api-auth'
+import { requireSession, ok, internalError, validationError } from '@/lib/api-auth'
 import { apiError } from '@/constants/errors'
 
 type Params = { params: Promise<{ id: string }> }

@@ -502,18 +502,18 @@ export async function seedDev(prisma: PrismaClient) {
   console.log(`  ✓ CasePain links: ${casePainLinks.length}`)
 
   // ScrapedTexts — amostras com todos os estados
-  const operator = await prisma.operator.findFirst({ where: { email: 'pedro@inboundforge.dev' } })
-  const firstSource = await prisma.source.findFirst({ where: { operatorId: operator?.id } })
-  if (operator && firstSource) {
+  const operatorForScraped = await prisma.operator.findFirst({ where: { email: 'pedro@inboundforge.dev' } })
+  const firstSource = await prisma.source.findFirst({ where: { operatorId: operatorForScraped?.id } })
+  if (operatorForScraped && firstSource) {
     const scrapedData = [
       // isProcessed: false, isPainCandidate: false — recém coletado
-      { id: 'dev-scraped-001', operatorId: operator.id, sourceId: firstSource.id, rawText: 'We are struggling to generate leads without paid ads. Our inbound strategy is non-existent.', url: 'https://news.ycombinator.com/item?id=99001', title: 'Ask HN: How to generate B2B leads organically?', isPainCandidate: false, isProcessed: false, piiRemoved: false },
+      { id: 'dev-scraped-001', operatorId: operatorForScraped.id, sourceId: firstSource.id, rawText: 'We are struggling to generate leads without paid ads. Our inbound strategy is non-existent.', url: 'https://news.ycombinator.com/item?id=99001', title: 'Ask HN: How to generate B2B leads organically?', isPainCandidate: false, isProcessed: false, piiRemoved: false },
       // isProcessed: true, isPainCandidate: true — candidato a dor identificada
-      { id: 'dev-scraped-002', operatorId: operator.id, sourceId: firstSource.id, rawText: null, processedText: 'Empresa sem sistema de inbound depende de indicações. Receita imprevisível.', url: 'https://www.reddit.com/r/smallbusiness/comments/abc123', title: 'Como vocês geram leads sem anúncios?', isPainCandidate: true, isProcessed: true, piiRemoved: true, classificationResult: { label: 'pain_candidate', confidence: 0.87, category: 'previsibilidade_receita' } },
+      { id: 'dev-scraped-002', operatorId: operatorForScraped.id, sourceId: firstSource.id, rawText: null, processedText: 'Empresa sem sistema de inbound depende de indicações. Receita imprevisível.', url: 'https://www.reddit.com/r/smallbusiness/comments/abc123', title: 'Como vocês geram leads sem anúncios?', isPainCandidate: true, isProcessed: true, piiRemoved: true, classificationResult: { label: 'pain_candidate', confidence: 0.87, category: 'previsibilidade_receita' } },
       // isProcessed: true, isPainCandidate: false — descartado
-      { id: 'dev-scraped-003', operatorId: operator.id, sourceId: firstSource.id, rawText: null, processedText: 'Looking for a good ERP system for manufacturing. Any recommendations?', url: 'https://www.g2.com/categories/erp-systems?page=3', title: 'ERP for Manufacturing - G2 Review', isPainCandidate: false, isProcessed: true, piiRemoved: false, classificationResult: { label: 'not_relevant', confidence: 0.92 } },
+      { id: 'dev-scraped-003', operatorId: operatorForScraped.id, sourceId: firstSource.id, rawText: null, processedText: 'Looking for a good ERP system for manufacturing. Any recommendations?', url: 'https://www.g2.com/categories/erp-systems?page=3', title: 'ERP for Manufacturing - G2 Review', isPainCandidate: false, isProcessed: true, piiRemoved: false, classificationResult: { label: 'not_relevant', confidence: 0.92 } },
       // Com TTL (expiresAt no futuro) — dado temporário conforme COMP-004
-      { id: 'dev-scraped-004', operatorId: operator.id, sourceId: firstSource.id, rawText: 'Our content team is burned out producing 5 posts a week with no clear ROI.', url: 'https://www.producthunt.com/discussions/content-burnout', title: 'Content team burnout — seeking automation tools', isPainCandidate: true, isProcessed: false, piiRemoved: false, expiresAt: new Date(Date.now() + 30 * 86400000), batchId: 'batch-dev-2026-03-26' },
+      { id: 'dev-scraped-004', operatorId: operatorForScraped.id, sourceId: firstSource.id, rawText: 'Our content team is burned out producing 5 posts a week with no clear ROI.', url: 'https://www.producthunt.com/discussions/content-burnout', title: 'Content team burnout — seeking automation tools', isPainCandidate: true, isProcessed: false, piiRemoved: false, expiresAt: new Date(Date.now() + 30 * 86400000), batchId: 'batch-dev-2026-03-26' },
     ]
     for (const scraped of scrapedData) {
       await prisma.scrapedText.upsert({

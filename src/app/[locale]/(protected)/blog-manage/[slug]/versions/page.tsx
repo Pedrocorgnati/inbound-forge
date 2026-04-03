@@ -14,7 +14,7 @@ import type { BlogArticle } from '@/types/blog'
 export default function BlogVersionsPage() {
   const params = useParams()
   const router = useRouter()
-  const id = params?.id as string
+  const id = params?.slug as string
   const locale = (params?.locale as string) ?? 'pt-BR'
 
   const [article, setArticle] = React.useState<BlogArticle | null>(null)
@@ -59,7 +59,7 @@ export default function BlogVersionsPage() {
           Blog
         </Link>
         <ChevronRight className="h-3 w-3" aria-hidden />
-        <Link href={`/${locale}/blog/${id}/edit`} className="hover:text-foreground transition-colors">
+        <Link href={`/${locale}/blog-manage/${id}/edit`} className="hover:text-foreground transition-colors">
           Artigo
         </Link>
         <ChevronRight className="h-3 w-3" aria-hidden />
@@ -76,7 +76,7 @@ export default function BlogVersionsPage() {
             <Badge variant="primary">Versao atual: v{article.currentVersion}</Badge>
           </div>
         </div>
-        <Link href={`/${locale}/blog/${id}/edit`}>
+        <Link href={`/${locale}/blog-manage/${id}/edit`}>
           <Button variant="outline" size="sm">
             <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
             Voltar para edicao

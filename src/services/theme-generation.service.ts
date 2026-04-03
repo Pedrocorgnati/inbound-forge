@@ -4,7 +4,6 @@
 
 import { prisma } from '@/lib/prisma'
 import { ThemeScoringService } from './theme-scoring.service'
-import { logAudit } from '@/lib/audit/log'
 import type { ThemeGenerationResult } from '@/types/scoring'
 
 const SYSTEM_OPERATOR_ID = 'system'
@@ -62,8 +61,8 @@ export class ThemeGenerationService {
 
         // Derivar título e descrição a partir das entidades
         const title = `${pain.title} — ${pattern.name}`
-        const description = [
-          pain.description,
+        const _description = [
+          pain._description,
           pattern.description,
           caseEntry.outcome,
         ]

@@ -10,7 +10,7 @@ export default function BlogNewArticlePage() {
   const locale = (params?.locale as string) ?? 'pt-BR'
 
   function handleSuccess(article: BlogArticle) {
-    router.push(`/${locale}/blog/${article.id}/edit`)
+    router.push(`/${locale}/blog-manage/${article.id}/edit`)
   }
 
   return (

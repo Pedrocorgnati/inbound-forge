@@ -3,7 +3,7 @@
  * Rastreabilidade: INT-091
  */
 import { PrismaClient } from '@prisma/client'
-import { WorkerType, WorkerStatus, ConversionType } from '@/types/enums'
+import { ConversionType } from '@/types/enums'
 
 export const prisma = new PrismaClient({
   datasources: {

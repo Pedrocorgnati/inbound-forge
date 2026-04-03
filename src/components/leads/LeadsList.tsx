@@ -55,7 +55,7 @@ export function LeadsList({ locale, themeId }: LeadsListProps) {
 
   // Delete modal state
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [_isDeleting, setIsDeleting] = useState(false)
 
   const fetchLeads = useCallback(async () => {
     setIsLoading(true)

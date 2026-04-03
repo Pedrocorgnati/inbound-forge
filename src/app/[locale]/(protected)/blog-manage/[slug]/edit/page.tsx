@@ -14,7 +14,7 @@ import type { BlogArticle } from '@/types/blog'
 export default function BlogEditArticlePage() {
   const params = useParams()
   const router = useRouter()
-  const id = params?.id as string
+  const id = params?.slug as string
   const locale = (params?.locale as string) ?? 'pt-BR'
 
   const [article, setArticle] = React.useState<BlogArticle | null>(null)
@@ -65,7 +65,7 @@ export default function BlogEditArticlePage() {
             <Badge variant="default">{article.status}</Badge>
           </div>
         </div>
-        <Link href={`/${locale}/blog/${id}/review`}>
+        <Link href={`/${locale}/blog-manage/${id}/review`}>
           <Button variant="outline" size="sm">
             <History className="mr-1 h-4 w-4" aria-hidden />
             Ver Historico

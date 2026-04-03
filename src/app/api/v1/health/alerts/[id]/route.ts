@@ -36,7 +36,7 @@ export async function PATCH(
     return badRequest('VAL_001: resolved deve ser true')
   }
 
-  const { resolvedNote } = parsed
+  const { } = parsed
 
   try {
     const existing = await prisma.alertLog.findUnique({ where: { id } })

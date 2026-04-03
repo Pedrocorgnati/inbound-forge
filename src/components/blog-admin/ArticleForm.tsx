@@ -17,7 +17,7 @@ import {
   createArticleSchema,
   updateArticleSchema,
   type CreateArticleInput,
-  type UpdateArticleInput,
+  type UpdateArticleInput as _UpdateArticleInput,
 } from '@/lib/validators/blog-article'
 import {
   MAX_META_DESCRIPTION_LENGTH,

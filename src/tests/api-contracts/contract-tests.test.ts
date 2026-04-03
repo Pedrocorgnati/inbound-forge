@@ -6,7 +6,7 @@
  * Em CI: usa supertest diretamente com o handler Next.js.
  * Localmente: executar com app em http://localhost:3000
  */
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, _beforeAll } from 'vitest'
 
 const BASE_URL = process.env.TEST_BASE_URL ?? 'http://localhost:3000'
 

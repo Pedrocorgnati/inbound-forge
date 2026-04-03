@@ -15,7 +15,7 @@ const COUNTER_CONFIG = [
   { key: 'objections' as const, label: 'Objeções' },
 ]
 
-export function ProgressGate({ locale }: ProgressGateProps) {
+export function ProgressGate({ _locale }: ProgressGateProps) {
   const { data, isLoading, error } = useKnowledgeProgress()
 
   // Loading state

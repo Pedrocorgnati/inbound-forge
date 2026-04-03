@@ -4,14 +4,14 @@
  * Helpers Sentry + sanitização de PII antes de envio
  */
 import * as Sentry from '@sentry/nextjs'
-import type { Event } from '@sentry/nextjs'
+import type { Event, ErrorEvent } from '@sentry/nextjs'
 import { sanitizeForLog, PII_FIELDS } from '@/lib/log-sanitizer'
 
 /**
  * Sanitiza evento Sentry removendo campos PII (SEC-008)
  * Chamado em beforeSend() — nunca expõe dados pessoais ao Sentry
  */
-export function sanitizeSentryEvent(event: Event): Event {
+export function sanitizeSentryEvent(event: Event | ErrorEvent): ErrorEvent {
   // Sanitizar extra
   if (event.extra) {
     event.extra = sanitizeForLog(event.extra) as Record<string, unknown>
@@ -39,7 +39,7 @@ export function sanitizeSentryEvent(event: Event): Event {
     event.request.data = sanitizeForLog(event.request.data) as string | Record<string, unknown> | undefined
   }
 
-  return event
+  return event as ErrorEvent
 }
 
 /**

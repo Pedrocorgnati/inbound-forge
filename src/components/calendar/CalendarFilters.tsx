@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Filter, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { PUBLISHING_CHANNELS } from '@/lib/constants/publishing'
 import type { PostStatus } from '@/types/publishing'
 

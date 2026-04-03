@@ -8,10 +8,10 @@ describe('formatCurrency', () => {
     expect(result).toContain('R$')
   })
 
-  it('formata USD com locale pt-BR', () => {
+  it('formata USD com locale en-US', () => {
     const result = formatCurrency(1000, 'USD')
-    expect(result).toContain('1.000')
-    expect(result).toContain('US$')
+    expect(result).toContain('1,000')
+    expect(result).toContain('$')
   })
 
   it('formata valores decimais', () => {

@@ -19,6 +19,10 @@ const securityHeaders = [
 const nextConfig = {
   // Necessário para o Dockerfile multi-stage (Stage 3: runner usa .next/standalone)
   output: 'standalone',
+  experimental: {
+    // Native modules que não devem ser bundled pelo webpack
+    serverComponentsExternalPackages: ['@resvg/resvg-js', 'sharp'],
+  },
   headers: async () => [
     {
       source: '/(.*)',

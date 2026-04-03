@@ -26,7 +26,7 @@ function snippet(text: string, maxLen = 80): string {
   return text.slice(0, maxLen).trimEnd() + '...'
 }
 
-export function PainCard({ pain, onEdit, onDelete, onLinkCases, locale }: PainCardProps) {
+export function PainCard({ pain, onEdit, onDelete, onLinkCases, _locale }: PainCardProps) {
   const casesCount = pain.casesCount ?? 0
 
   return (

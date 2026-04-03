@@ -44,7 +44,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
   // SEC-007: Ownership validation via ContentPiece
   if (job.contentPieceId) {
     const supabase = await createClient()
-    const { data: { user: supabaseUser } } = await supabase.auth.getUser()
+    const { data: { user: _supabaseUser } } = await supabase.auth.getUser()
 
     // Verificar que o contentPiece pertence a este operador (single-tenant: qualquer operador autenticado pode acessar)
     const piece = await prisma.contentPiece.findUnique({ where: { id: job.contentPieceId }, select: { id: true } })

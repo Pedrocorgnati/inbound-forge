@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, FileWarning, Save } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -106,7 +106,7 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
 
     try {
       if (mode === 'create') {
-        const body = {
+        const _body = {
           ...form,
           isDraft: asDraft,
           // For draft creation, outcome validation is relaxed

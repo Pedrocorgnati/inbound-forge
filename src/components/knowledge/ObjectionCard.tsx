@@ -32,7 +32,7 @@ function snippetContent(text: string, maxLen = 120): string {
   return text.slice(0, maxLen).trimEnd() + '...'
 }
 
-export function ObjectionCard({ objection, onEdit, onDelete, locale }: ObjectionCardProps) {
+export function ObjectionCard({ objection, onEdit, onDelete, _locale }: ObjectionCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
 
   const typeInfo = TYPE_MAP[objection.type] ?? { label: objection.type, variant: 'default' as const }

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
-import { notFound } from 'next/navigation'
 import { LeadDetailClient } from '@/components/leads/LeadDetailClient'
 
 type Props = {

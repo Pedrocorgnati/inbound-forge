@@ -1,33 +1,70 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { requireSession, notFound, validationError, internalError } from '@/lib/api-auth'
+/**
+ * POST /api/v1/content/generate
+ * Módulo: module-8-content-generation
+ *
+ * Wrapper v1 que delega para AngleGenerationService.
+ * Aceita { themeId, forceRegenerate?, funnelStage?, targetChannel? } no body.
+ */
+import { NextRequest } from 'next/server'
+import { requireSession, ok, notFound, validationError, internalError } from '@/lib/api-auth'
 import { GenerateContentSchema } from '@/schemas/content.schema'
+import { AngleGenerationService } from '@/lib/services/angle-generation.service'
+import {
+  ContentBusinessRuleError,
+  ContentNotFoundError,
+} from '@/lib/errors/content-errors'
+import { logAudit } from '@/lib/audit/log'
 
-// POST /api/v1/content/generate
 export async function POST(request: NextRequest) {
-  const { response } = await requireSession()
+  const { user, response } = await requireSession()
   if (response) return response
 
   let body: unknown
-  try { body = await request.json() } catch { return validationError(new Error('Body inválido')) }
+  try {
+    body = await request.json()
+  } catch {
+    return validationError(new Error('Body inválido'))
+  }
 
   const parsed = GenerateContentSchema.safeParse(body)
   if (!parsed.success) return validationError(parsed.error)
 
   try {
-    const theme = await prisma.theme.findUnique({ where: { id: parsed.data.themeId } })
-    if (!theme) return notFound('Tema não encontrado')
+    const piece = await AngleGenerationService.generate(parsed.data.themeId, {
+      forceRegenerate: parsed.data.forceRegenerate ?? false,
+      funnelStage: parsed.data.funnelStage,
+      targetChannel: parsed.data.targetChannel,
+    })
 
-    // TODO: Implementar via /auto-flow execute — chamar Claude API para gerar 3 ângulos
-    // 1. Criar ContentPiece com status DRAFT
-    // 2. Gerar AGGRESSIVE, CONSULTIVE, AUTHORIAL via Claude (paralelo)
-    // 3. Criar ContentAngleVariant para cada ângulo
-    // 4. Atualizar ContentPiece status para REVIEW
-    return NextResponse.json(
-      { success: false, error: 'Geração de conteúdo não implementada. Execute /auto-flow execute.' },
-      { status: 501 }
-    )
-  } catch {
+    await logAudit({
+      action: 'content.generate',
+      entityType: 'ContentPiece',
+      entityId: piece.id,
+      operatorId: user!.id,
+      metadata: { themeId: parsed.data.themeId, source: 'v1' },
+    })
+
+    return ok(piece)
+  } catch (error) {
+    if (error instanceof ContentNotFoundError) {
+      return notFound('Tema não encontrado')
+    }
+    if (error instanceof ContentBusinessRuleError) {
+      const statusMap: Record<string, number> = {
+        CONTENT_050: 422,
+        CONTENT_051: 422,
+        CONTENT_052: 502,
+        CONTENT_053: 422,
+        SYS_001: 503,
+        CONTENT_002: 404,
+      }
+      const status = statusMap[error.code] ?? 500
+      return new Response(
+        JSON.stringify({ error: error.code, message: error.message }),
+        { status, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+    console.error('[POST /api/v1/content/generate]', error)
     return internalError()
   }
 }

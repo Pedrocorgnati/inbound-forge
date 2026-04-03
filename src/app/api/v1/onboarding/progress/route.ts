@@ -8,7 +8,7 @@ export const runtime = 'nodejs'
 
 // GET /api/v1/onboarding/progress — retorna contagens para verificação de threshold
 export async function GET() {
-  const { user, response } = await requireSession()
+  const { user: _user, response } = await requireSession()
   if (response) return response
 
   try {

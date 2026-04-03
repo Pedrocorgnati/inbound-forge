@@ -4,7 +4,7 @@
  * Interface: src/types/worker.ts / WorkerHealth.lastHeartbeat
  */
 import { describe, it, expect, afterEach } from 'vitest'
-import { prisma, createTestOperator, cleanupTestData } from './helpers'
+import { prisma, cleanupTestData } from './helpers'
 import { WorkerType, WorkerStatus } from '@/types/enums'
 
 afterEach(async () => {

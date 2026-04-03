@@ -16,7 +16,7 @@ import type { BlogArticle } from '@/types/blog'
 export default function BlogReviewPage() {
   const params = useParams()
   const router = useRouter()
-  const id = params?.id as string
+  const id = params?.slug as string
   const locale = (params?.locale as string) ?? 'pt-BR'
 
   const [article, setArticle] = React.useState<BlogArticle | null>(null)

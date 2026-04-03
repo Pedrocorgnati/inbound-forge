@@ -7,7 +7,7 @@ import { encryptPII, decryptPII } from '@/lib/crypto'
 import { auditLog } from '@/lib/audit'
 import { CreateLeadSchema, ListLeadsSchema } from '@/schemas/lead.schema'
 import { updateThemeConversionScore } from '@/lib/conversion-score'
-import type { CreateLeadInput, ListLeadsInput } from '@/schemas/lead.schema'
+import type { CreateLeadInput } from '@/schemas/lead.schema'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

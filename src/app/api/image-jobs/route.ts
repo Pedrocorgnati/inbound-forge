@@ -8,7 +8,7 @@
 
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { requireSession, ok, conflict, validationError } from '@/lib/api-auth'
+import { requireSession, ok, validationError } from '@/lib/api-auth'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { redis, QUEUE_KEYS } from '@/lib/redis'

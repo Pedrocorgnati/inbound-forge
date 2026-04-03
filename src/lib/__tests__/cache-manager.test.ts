@@ -87,7 +87,7 @@ describe('CACHE_TTL — constantes documentadas', () => {
   })
 
   it('todos os TTLs são números positivos', () => {
-    for (const [key, value] of Object.entries(CACHE_TTL)) {
+    for (const [_key, value] of Object.entries(CACHE_TTL)) {
       expect(typeof value).toBe('number')
       expect(value).toBeGreaterThan(0)
     }

@@ -11,14 +11,14 @@
  * AUTH_001: exige JWT via Supabase session.
  * SEC-008: sem dados de conteúdo nos logs.
  */
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import { requireSession, ok, internalError } from '@/lib/api-auth'
 import { prisma } from '@/lib/prisma'
 
 const ONLINE_THRESHOLD_MS = 2 * 60 * 1000       // 2 minutos
 const OFFLINE_ALERT_THRESHOLD_MS = 30 * 60 * 1000 // 30 minutos
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   // AUTH_001: exigir sessão ativa
   const { response: authError } = await requireSession()
   if (authError) return authError
