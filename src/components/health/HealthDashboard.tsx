@@ -10,6 +10,9 @@ import { HealthCard } from './HealthCard'
 import { AlertLogPanel } from './AlertLogPanel'
 import { ApiUsageBreakdown } from './ApiUsageBreakdown'
 import { ErrorHistoryList } from './ErrorHistoryList'
+import { WorkerAlertBanner } from './WorkerAlertBanner'
+import { ScrapingDegradedBadge } from './ScrapingDegradedBadge'
+import { RateLimitPanel } from './RateLimitPanel'
 import type { HealthStatus } from '@/types/health'
 
 const STATUS_CONFIG: Record<HealthStatus, { label: string; variant: 'success' | 'warning' | 'danger' }> = {
@@ -42,6 +45,7 @@ export function HealthDashboard() {
           {error && (
             <span className="text-xs text-danger">{error}</span>
           )}
+          <ScrapingDegradedBadge />
         </div>
         <Button
           data-testid="health-refresh-button"
@@ -54,6 +58,19 @@ export function HealthDashboard() {
           Atualizar
         </Button>
       </div>
+
+      {/* TASK-4 ST001: alertas amarelos para workers em ERROR (CL-127) */}
+      {data?.workers
+        ?.filter((w) => w.status === 'ERROR')
+        .map((w) => (
+          <WorkerAlertBanner
+            key={w.service}
+            workerType={w.service.toUpperCase()}
+            status={w.status as 'ERROR'}
+            lastError={w.errorMessage}
+            lastHeartbeat={w.lastCheck}
+          />
+        ))}
 
       {/* Worker health cards */}
       {isLoading ? (
@@ -87,6 +104,9 @@ export function HealthDashboard() {
         <AlertLogPanel />
         <ApiUsageBreakdown />
       </div>
+
+      {/* TASK-10 (CL-216): Rate limit panel per integration */}
+      <RateLimitPanel />
 
       {/* Error History */}
       <ErrorHistoryList />

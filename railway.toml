@@ -1,0 +1,26 @@
+# railway.toml — Inbound Forge
+# Declaracao de services Railway. Provisionamento operacional documentado em
+# output/docs/inbound-forge/project/DEPLOY.md.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+
+[[services]]
+name = "inbound-forge-web"
+builder = "NIXPACKS"
+
+[[services]]
+name = "publishing-worker"
+builder = "DOCKERFILE"
+dockerfilePath = "apps/publishing-worker/Dockerfile"
+startCommand = "node dist/main.js"
+healthcheckPath = "/"
+healthcheckTimeout = 60
+restartPolicyType = "ALWAYS"

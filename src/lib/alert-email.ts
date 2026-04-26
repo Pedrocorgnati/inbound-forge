@@ -10,6 +10,7 @@
  * - AlertLog sempre criado no banco (independente do email)
  */
 import { prisma } from '@/lib/prisma'
+import { getAlertsEmail } from '@/lib/settings/system-settings'
 
 export type AlertSeverity = 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL'
 
@@ -37,7 +38,7 @@ interface SendAlertEmailOptions {
  * })
  */
 export async function sendAlertEmail(options: SendAlertEmailOptions): Promise<void> {
-  const { subject, body, severity = 'ERROR', logType = 'alert', _metadata } = options
+  const { subject, body, severity = 'ERROR', logType = 'alert', metadata: _metadata } = options
 
   // Criar AlertLog no banco (sempre — independente do email)
   try {
@@ -54,8 +55,14 @@ export async function sendAlertEmail(options: SendAlertEmailOptions): Promise<vo
   }
 
   // Verificar configuração de email
+  // TASK-8 ST002 (CL-293): ler email do DB com fallback para env.
   const resendApiKey = process.env.RESEND_API_KEY
-  const alertEmailTo = process.env.ALERT_EMAIL_TO
+  let alertEmailTo: string | undefined
+  try {
+    alertEmailTo = await getAlertsEmail()
+  } catch {
+    alertEmailTo = process.env.ALERT_EMAIL_TO
+  }
 
   if (!resendApiKey || !alertEmailTo) {
     console.warn('[alert-email] Email alertas não configurados — pulando envio')

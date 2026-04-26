@@ -12,11 +12,14 @@ import { requireSession, ok, validationError } from '@/lib/api-auth'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { redis, QUEUE_KEYS } from '@/lib/redis'
+import { IMAGE_JOB_STATUS } from '@/constants/status'
+import { selectBackgroundProvider } from '@/lib/image-generation/backgroundRouter'
 
 const CreateImageJobSchema = z.object({
   contentPieceId: z.string().uuid().optional(),
   templateId:     z.string().uuid().optional(),
   prompt:         z.string().min(1).max(2000),
+  backgroundNeedsText: z.boolean().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -35,7 +38,18 @@ export async function POST(request: NextRequest) {
     return validationError(parsed.error.issues.map((i) => i.message).join('; '))
   }
 
-  const { contentPieceId, templateId, prompt } = parsed.data
+  const { contentPieceId, templateId, prompt, backgroundNeedsText } = parsed.data
+
+  // Resolver needsText: input > template.backgroundNeedsText > false
+  let needsText = backgroundNeedsText ?? false
+  if (backgroundNeedsText === undefined && templateId) {
+    const tpl = await prisma.imageTemplate.findUnique({
+      where: { id: templateId },
+      select: { backgroundNeedsText: true },
+    })
+    if (tpl) needsText = tpl.backgroundNeedsText
+  }
+  const backgroundProvider = selectBackgroundProvider({ needsText })
 
   // Verificar worker health — IMAGE_052
   const workerHealth = await prisma.workerHealth.findUnique({ where: { type: 'IMAGE' } })
@@ -56,7 +70,7 @@ export async function POST(request: NextRequest) {
     const existingJob = await prisma.imageJob.findFirst({
       where: {
         contentPieceId,
-        status: { in: ['PENDING', 'PROCESSING'] },
+        status: { in: [IMAGE_JOB_STATUS.PENDING, IMAGE_JOB_STATUS.PROCESSING] },
       },
     })
 
@@ -74,13 +88,15 @@ export async function POST(request: NextRequest) {
       contentPieceId: contentPieceId ?? null,
       templateId:     templateId ?? null,
       prompt,
-      status:       'PENDING',
+      backgroundProvider,
+      backgroundNeedsText: needsText,
+      status:       IMAGE_JOB_STATUS.PENDING,
       retryCount:   0,
     },
   })
 
   // Enfileirar no Redis
-  await redis.rpush(QUEUE_KEYS.image, JSON.stringify({ jobId: job.id }))
+  await redis.rpush(QUEUE_KEYS.image, JSON.stringify({ jobId: job.id, backgroundProvider }))
 
   return ok({ jobId: job.id }, 201)
 }

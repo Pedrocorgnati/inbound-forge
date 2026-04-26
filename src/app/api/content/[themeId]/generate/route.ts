@@ -5,7 +5,7 @@
  * Dispara geração de 3 ângulos via Claude.
  * Idempotente: retorna existentes se forceRegenerate=false.
  */
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { requireSession, ok } from '@/lib/api-auth'
 import { GenerateAnglesDto } from '@/lib/dtos/content-piece.dto'
 import { AngleGenerationService } from '@/lib/services/angle-generation.service'
@@ -43,12 +43,23 @@ export async function POST(request: NextRequest, { params }: Params) {
     return ok(piece)
   } catch (error) {
     if (error instanceof ContentBusinessRuleError) {
+      // TASK-2 ST003: degraded response para Claude indisponível (CL-165)
+      if (error.code === 'SYS_001') {
+        return NextResponse.json(
+          {
+            success: false,
+            degraded: true,
+            code: 'SYS_001',
+            error: 'Geração temporariamente indisponível — tente novamente em alguns minutos.',
+          },
+          { status: 503, headers: { 'Retry-After': '60' } }
+        )
+      }
       const codeToStatus: Record<string, number> = {
         CONTENT_050: 422,
         CONTENT_051: 422,
         CONTENT_052: 502,
         CONTENT_053: 422,
-        SYS_001: 503,
         CONTENT_002: 404,
       }
       const status = codeToStatus[error.code] ?? 500

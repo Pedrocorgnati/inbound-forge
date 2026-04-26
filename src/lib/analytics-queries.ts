@@ -146,19 +146,48 @@ export async function getThemeRanking(
         count,
       }))
 
-      // Trend: 7 pontos de conversionScore (score atual replicado — sem histórico de score)
-      const trend = Array(7).fill(theme.conversionScore)
-
       return {
         themeId: theme.id,
         themeName: theme.title,
         conversionScore: theme.conversionScore,
         leadsCount,
         conversionsCount,
-        trend,
+        trend: [] as number[], // populated below
         channelBreakdown,
       }
     })
+
+    // Trend: weekly conversion counts for last 7 weeks per theme
+    const themeIds = items.map((i) => i.themeId)
+    if (themeIds.length > 0) {
+      const sevenWeeksAgo = new Date()
+      sevenWeeksAgo.setDate(sevenWeeksAgo.getDate() - 49)
+
+      const weeklyEvents = await prisma.conversionEvent.findMany({
+        where: {
+          lead: { firstTouchThemeId: { in: themeIds } },
+          occurredAt: { gte: sevenWeeksAgo },
+        },
+        select: {
+          occurredAt: true,
+          lead: { select: { firstTouchThemeId: true } },
+        },
+      })
+
+      // Build weekly buckets per theme
+      const now = Date.now()
+      for (const item of items) {
+        const weeks = Array(7).fill(0)
+        for (const evt of weeklyEvents) {
+          if (evt.lead?.firstTouchThemeId === item.themeId) {
+            const weeksAgo = Math.floor((now - evt.occurredAt.getTime()) / (7 * 24 * 60 * 60 * 1000))
+            const idx = 6 - Math.min(weeksAgo, 6) // 0=oldest, 6=current
+            weeks[idx]++
+          }
+        }
+        item.trend = weeks
+      }
+    }
 
     return { items, total }
   })
@@ -230,4 +259,42 @@ export async function getReconciliationStats(userId: string): Promise<Reconcilia
 
     return { clicksWithoutConversion, conversionsWithoutPost, pendingResolution }
   })
+}
+
+// TASK-13 ST004 (CL-139): tendencia de ASoV (Active Share of Voice) por dia
+export interface AsovTrendPoint {
+  date: string // ISO date (YYYY-MM-DD)
+  mentions: number
+  total: number
+  rate: number // mentions / total (0..1)
+}
+
+export async function getAsovTrend(days = 30): Promise<AsovTrendPoint[]> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+  const rows = await prisma.asovSnapshot.findMany({
+    where: { probeDate: { gte: since } },
+    select: { probeDate: true, mentioned: true },
+  })
+  const buckets = new Map<string, { mentions: number; total: number }>()
+  for (const row of rows) {
+    const key = row.probeDate.toISOString().slice(0, 10)
+    const cur = buckets.get(key) ?? { mentions: 0, total: 0 }
+    cur.total += 1
+    if (row.mentioned) cur.mentions += 1
+    buckets.set(key, cur)
+  }
+  // Preencher dias sem dados (placeholder rate=0)
+  const result: AsovTrendPoint[] = []
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+    const key = d.toISOString().slice(0, 10)
+    const cur = buckets.get(key) ?? { mentions: 0, total: 0 }
+    result.push({
+      date: key,
+      mentions: cur.mentions,
+      total: cur.total,
+      rate: cur.total > 0 ? cur.mentions / cur.total : 0,
+    })
+  }
+  return result
 }

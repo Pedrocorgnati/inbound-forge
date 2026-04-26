@@ -1,0 +1,42 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "reporters": ["html", "clear-text", "progress", "json"],
+  "testRunner": "vitest",
+  "coverageAnalysis": "perTest",
+  "checkers": ["typescript"],
+  "tsconfigFile": "tsconfig.json",
+  "mutate": [
+    "src/lib/auth/**/*.ts",
+    "src/lib/ai/**/*.ts",
+    "src/lib/services/**/*.ts",
+    "src/lib/state-machines/**/*.ts",
+    "src/lib/validators/**/*.ts",
+    "src/lib/utils/**/*.ts",
+    "src/lib/seo/**/*.ts",
+    "src/actions/**/*.ts",
+    "src/components/publishing/**/*.tsx",
+    "src/components/blog/**/*.tsx",
+    "src/components/knowledge/**/*.tsx",
+    "src/components/auth/**/*.tsx",
+    "src/components/calendar/**/*.tsx",
+    "!src/**/*.test.ts",
+    "!src/**/*.spec.ts",
+    "!src/**/*.d.ts",
+    "!src/__tests__/**",
+    "!src/__mocks__/**",
+    "!src/tests/**"
+  ],
+  "thresholds": {
+    "high": 80,
+    "low": 60,
+    "break": 40
+  },
+  "timeoutMS": 60000,
+  "concurrency": 4,
+  "incremental": true,
+  "incrementalFile": ".stryker-incremental.json",
+  "vitest": {
+    "configFile": "vitest.config.ts"
+  }
+}

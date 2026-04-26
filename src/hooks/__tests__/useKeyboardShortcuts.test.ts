@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderHook } from '@testing-library/react'
 import { fireEvent } from '@testing-library/dom'
 import { vi, describe, it, expect } from 'vitest'

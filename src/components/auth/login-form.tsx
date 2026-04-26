@@ -1,23 +1,27 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { sanitizeRedirect } from '@/lib/auth/session-expired-handler'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { AccountLockBanner } from '@/components/shared/account-lock-banner'
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 
-const loginSchema = z.object({
-  email: z.string().email('E-mail inválido'),
-  password: z.string().min(8, 'Senha deve ter no mínimo 8 caracteres'),
-})
+function createLoginSchema(t: (key: string) => string) {
+  return z.object({
+    email: z.string().email(t('emailInvalid')),
+    password: z.string().min(8, t('passwordMin')),
+  })
+}
 
-type LoginFormData = z.infer<typeof loginSchema>
+type LoginFormData = z.infer<ReturnType<typeof createLoginSchema>>
 
 interface LoginFormProps {
   locale: string
@@ -25,10 +29,19 @@ interface LoginFormProps {
 
 export function LoginForm({ locale }: LoginFormProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  // Intake Review TASK-6 ST003 (CL-276): preserva URL de retorno.
+  // Aceita `redirect` (novo) e `returnTo` (mantido para compat com middleware legado).
+  const redirectParam =
+    sanitizeRedirect(searchParams?.get('redirect')) ??
+    sanitizeRedirect(searchParams?.get('returnTo'))
   const { signIn } = useAuth()
+  const t = useTranslations('auth')
   const [showPassword, setShowPassword] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
   const [lockState, setLockState] = useState<{ locked: boolean; ttl: number } | null>(null)
+
+  const loginSchema = createLoginSchema(t)
 
   const {
     register,
@@ -36,6 +49,8 @@ export function LoginForm({ locale }: LoginFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   })
 
   async function onSubmit(data: LoginFormData) {
@@ -53,8 +68,8 @@ export function LoginForm({ locale }: LoginFormProps) {
       return
     }
 
-    // Success — redirect to dashboard
-    router.push(`/${locale}/dashboard`)
+    // Success — redirect para URL original (TASK-6 ST003) ou dashboard default.
+    router.push(redirectParam ?? `/${locale}/dashboard`)
     router.refresh()
   }
 
@@ -64,14 +79,14 @@ export function LoginForm({ locale }: LoginFormProps) {
   return (
     <form
       data-testid="form-login"
-      aria-label="Formulário de login"
+      aria-label={t('formLabel')}
       aria-busy={isSubmitting}
       onSubmit={handleSubmit(onSubmit)}
       className="space-y-4"
     >
       {/* Screen reader announcements */}
       <div className="sr-only" aria-live="polite">
-        {isSubmitting && 'Enviando formulário...'}
+        {isSubmitting && t('submitting')}
         {authError && authError}
       </div>
 
@@ -96,11 +111,12 @@ export function LoginForm({ locale }: LoginFormProps) {
 
       {/* Email */}
       <div className="space-y-1.5">
-        <Label htmlFor="login-email">E-mail</Label>
+        <Label htmlFor="login-email">{t('email')}</Label>
         <input
           id="login-email"
           data-testid="form-login-email-input"
           type="email"
+          inputMode="email"
           autoComplete="email"
           autoFocus
           disabled={isDisabled}
@@ -108,7 +124,7 @@ export function LoginForm({ locale }: LoginFormProps) {
           aria-describedby={errors.email ? 'login-email-error' : undefined}
           {...register('email')}
           className={cn(
-            'flex min-h-[44px] w-full rounded-md border bg-background px-3 py-2 text-sm',
+            'flex min-h-[44px] w-full rounded-md border bg-background px-3 py-2 text-base sm:text-sm',
             'placeholder:text-muted-foreground',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-0',
             'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted',
@@ -117,7 +133,7 @@ export function LoginForm({ locale }: LoginFormProps) {
               ? 'border-danger bg-danger/5'
               : 'border-input hover:border-foreground/30'
           )}
-          placeholder="seu@email.com"
+          placeholder={t('emailPlaceholder')}
         />
         {errors.email && (
           <p id="login-email-error" role="alert" className="text-xs text-danger">
@@ -128,7 +144,7 @@ export function LoginForm({ locale }: LoginFormProps) {
 
       {/* Password */}
       <div className="space-y-1.5">
-        <Label htmlFor="login-password">Senha</Label>
+        <Label htmlFor="login-password">{t('password')}</Label>
         <div className="relative">
           <input
             id="login-password"
@@ -140,7 +156,7 @@ export function LoginForm({ locale }: LoginFormProps) {
             aria-describedby={errors.password ? 'login-password-error' : undefined}
             {...register('password')}
             className={cn(
-              'flex min-h-[44px] w-full rounded-md border bg-background px-3 py-2 pr-12 text-sm',
+              'flex min-h-[44px] w-full rounded-md border bg-background px-3 py-2 pr-12 text-base sm:text-sm',
               'placeholder:text-muted-foreground',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-0',
               'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted',
@@ -155,7 +171,7 @@ export function LoginForm({ locale }: LoginFormProps) {
             data-testid="form-login-show-password-button"
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+            aria-label={showPassword ? t('hidePassword') : t('showPassword')}
             className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-center h-11 w-11 min-h-[44px] min-w-[44px] text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary rounded"
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -178,10 +194,10 @@ export function LoginForm({ locale }: LoginFormProps) {
         {isSubmitting ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden />
-            Entrando...
+            {t('loginLoading')}
           </>
         ) : (
-          'Entrar'
+          t('loginButton')
         )}
       </Button>
     </form>

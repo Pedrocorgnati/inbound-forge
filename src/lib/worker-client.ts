@@ -6,6 +6,8 @@
  * Usado pelos modules 6 (scraping), 9 (image), 12 (publishing).
  */
 
+import { logger } from '@/lib/logger'
+
 const WORKER_BASE_URL = process.env.WORKER_BASE_URL ?? 'http://localhost:3001'
 const WORKER_AUTH_TOKEN = process.env.WORKER_AUTH_TOKEN
 
@@ -16,6 +18,8 @@ interface WorkerResponse<T = unknown> {
   data?: T
   error?: string
 }
+
+const WORKER_TIMEOUT_MS = 15_000
 
 async function workerFetch<T = unknown>(
   path: string,
@@ -28,6 +32,7 @@ async function workerFetch<T = unknown>(
   try {
     const res = await fetch(`${WORKER_BASE_URL}${path}`, {
       ...options,
+      signal: AbortSignal.timeout(WORKER_TIMEOUT_MS),
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${WORKER_AUTH_TOKEN}`,
@@ -42,8 +47,9 @@ async function workerFetch<T = unknown>(
     const data = (await res.json()) as T
     return { ok: true, data }
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    console.error(`[WORKER] Request failed: ${path}`, message)
+    const isTimeout = err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError')
+    const message = isTimeout ? `Worker timeout after ${WORKER_TIMEOUT_MS}ms` : (err instanceof Error ? err.message : 'Unknown error')
+    logger.error('WORKER', `Request failed: ${path}`, { error: message })
     return { ok: false, error: message }
   }
 }

@@ -5,6 +5,7 @@
 import { prisma } from '@/lib/prisma'
 import { redis } from '@/lib/redis'
 import { checkCostAlerts } from '@/lib/cost-alert'
+import { logger } from '@/lib/logger'
 
 type ApiService = 'anthropic' | 'ideogram' | 'flux' | 'browserless' | 'instagram'
 
@@ -33,7 +34,7 @@ export async function trackApiUsage(params: TrackApiUsageParams): Promise<void> 
   // 2. Verificar threshold — fire-and-forget: nunca bloqueia o caller
   checkCostAlerts(params.service, params.operatorId).catch((err: unknown) => {
     const message = err instanceof Error ? err.message : 'unknown'
-    console.error('Cost alert check failed (non-critical):', message)
+    logger.error('api-usage-tracker', 'Cost alert check failed (non-critical)', { error: message })
   })
 
   // 3. Invalidar cache Redis — todos os períodos e variantes de totais

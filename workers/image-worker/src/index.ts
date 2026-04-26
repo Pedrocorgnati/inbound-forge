@@ -2,6 +2,7 @@
 // IMPORTANTE: loadWorkerEnv() DEVE ser o primeiro import/call (fail-fast antes de qualquer conexão)
 // Rastreabilidade: TASK-0 ST005, TASK-1 ST004, FEAT-creative-generation-001
 
+import http from 'http'
 import { loadWorkerEnv } from './env'
 
 // ─── FAIL-FAST: validar env antes de qualquer import de cliente ────────────────
@@ -9,6 +10,18 @@ const env = loadWorkerEnv()
 
 // Apenas após validação bem-sucedida importar clientes que usam variáveis de ambiente
 import('dotenv/config').catch(() => {})
+
+// ─── Health check HTTP server (Railway healthcheckPath="/health") ──────────────
+const PORT = Number(process.env.PORT ?? 3001)
+const healthServer = http.createServer((req, res) => {
+  if (req.url === '/health' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ status: 'ok', worker: 'image', ts: new Date().toISOString() }))
+  } else {
+    res.writeHead(404)
+    res.end()
+  }
+})
 
 async function main() {
   const { PrismaClient } = await import('@prisma/client')
@@ -33,7 +46,13 @@ async function main() {
 
   process.on('SIGTERM', async () => {
     clearInterval(heartbeatInterval)
+    healthServer.close()
     await db.$disconnect()
+  })
+
+  // Start health check server
+  healthServer.listen(PORT, () => {
+    process.stdout.write(JSON.stringify({ event: 'health_server_started', port: PORT, timestamp: new Date().toISOString() }) + '\n')
   })
 
   // Start heartbeat e consumer em paralelo

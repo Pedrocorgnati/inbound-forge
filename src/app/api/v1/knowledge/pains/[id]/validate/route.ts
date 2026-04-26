@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession, ok, notFound, internalError } from '@/lib/api-auth'
+import { KNOWLEDGE_STATUS } from '@/constants/status'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -15,7 +16,7 @@ export async function PATCH(_request: NextRequest, { params }: Params) {
     const existing = await prisma.painLibraryEntry.findUnique({ where: { id } })
     if (!existing) return notFound('Dor não encontrada')
 
-    const updated = await prisma.painLibraryEntry.update({ where: { id }, data: { status: 'VALIDATED' } })
+    const updated = await prisma.painLibraryEntry.update({ where: { id }, data: { status: KNOWLEDGE_STATUS.VALIDATED } })
     return ok(updated)
   } catch {
     return internalError()

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { LegalVersionHeader } from '@/components/legal/LegalVersionHeader'
 
 interface PrivacyPageProps {
   params: Promise<{ locale: string }>
@@ -21,6 +22,7 @@ export default async function PrivacyPage({ params }: PrivacyPageProps) {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8" lang={locale}>
+      <LegalVersionHeader doc="privacy" locale={locale} />
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">
         Política de Privacidade
       </h1>

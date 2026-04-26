@@ -1,27 +1,30 @@
+import { getTranslations } from 'next-intl/server'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { ArticleCard } from './ArticleCard'
-import type { BlogArticle } from '@/types/blog'
+import type { BlogArticleSummary } from '@/types/blog'
 import { cn } from '@/lib/utils'
 
 interface ArticleListProps {
-  articles: BlogArticle[]
+  articles: BlogArticleSummary[]
   locale: string
   page: number
   totalPages: number
   className?: string
 }
 
-export function ArticleList({
+export async function ArticleList({
   articles,
   locale,
   page,
   totalPages,
   className,
 }: ArticleListProps) {
+  const t = await getTranslations('blog.articleList')
+
   if (articles.length === 0) {
     return (
       <div className="py-12 text-center">
-        <p className="text-muted-foreground">Nenhum artigo publicado ainda.</p>
+        <p className="text-muted-foreground">{t('empty')}</p>
       </div>
     )
   }
@@ -38,7 +41,13 @@ export function ArticleList({
       </div>
 
       {totalPages > 1 && (
-        <SeoPagination page={page} totalPages={totalPages} />
+        <SeoPagination
+          page={page}
+          totalPages={totalPages}
+          ariaLabel={t('pagination')}
+          prevLabel={t('prevPage')}
+          nextLabel={t('nextPage')}
+        />
       )}
     </div>
   )
@@ -49,6 +58,9 @@ export function ArticleList({
 interface SeoPaginationProps {
   page: number
   totalPages: number
+  ariaLabel: string
+  prevLabel: string
+  nextLabel: string
 }
 
 function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
@@ -74,7 +86,7 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
   return pages
 }
 
-function SeoPagination({ page, totalPages }: SeoPaginationProps) {
+function SeoPagination({ page, totalPages, ariaLabel, prevLabel, nextLabel }: SeoPaginationProps) {
   const pages = getPageNumbers(page, totalPages)
   const isFirst = page === 1
   const isLast = page === totalPages
@@ -84,7 +96,7 @@ function SeoPagination({ page, totalPages }: SeoPaginationProps) {
   return (
     <nav
       role="navigation"
-      aria-label="Paginacao do blog"
+      aria-label={ariaLabel}
       className="flex items-center justify-center gap-1"
     >
       {isFirst ? (
@@ -98,7 +110,7 @@ function SeoPagination({ page, totalPages }: SeoPaginationProps) {
         <a
           href={pageHref(page - 1)}
           className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-foreground hover:bg-muted transition-colors"
-          aria-label="Pagina anterior"
+          aria-label={prevLabel}
         >
           <ChevronLeft className="h-4 w-4" />
         </a>
@@ -123,7 +135,7 @@ function SeoPagination({ page, totalPages }: SeoPaginationProps) {
                   ? 'bg-primary text-primary-foreground'
                   : 'border border-border hover:bg-muted'
               )}
-              aria-label={`Pagina ${p}`}
+              aria-label={`${p}`}
               aria-current={p === page ? 'page' : undefined}
             >
               {p}
@@ -147,7 +159,7 @@ function SeoPagination({ page, totalPages }: SeoPaginationProps) {
         <a
           href={pageHref(page + 1)}
           className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border text-foreground hover:bg-muted transition-colors"
-          aria-label="Proxima pagina"
+          aria-label={nextLabel}
         >
           <ChevronRight className="h-4 w-4" />
         </a>

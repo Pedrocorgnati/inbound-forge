@@ -1,14 +1,9 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
-import dynamic from 'next/dynamic'
-import { Toaster } from '@/components/ui/toast'
+import { WebVitalsReporter } from '@/components/analytics/WebVitalsReporter'
+// Camada 2: Client Component wrapper — ssr:false requer Client Component no Next.js 15+
+import { DevDataTestOverlayClient } from '@/components/dev/DevDataTestOverlayClient'
 import './globals.css'
-
-// Camada 2: import dinâmico — tree-shakeable, zero bundle em produção
-const DevDataTestOverlay = dynamic(
-  () => import('@/components/dev/DataTestOverlay').then((mod) => mod.DevDataTestOverlay),
-  { ssr: false }
-)
 
 const inter = Inter({
   subsets: ['latin'],
@@ -21,6 +16,10 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
+    { media: '(prefers-color-scheme: dark)', color: '#0F172A' },
+  ],
 }
 
 export const metadata: Metadata = {
@@ -30,10 +29,21 @@ export const metadata: Metadata = {
   },
   description: 'Ferramenta pessoal de inbound marketing automatizado',
   icons: {
-    icon: '/images/favicon.ico',
-    apple: '/images/apple-icon.png',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' }, // RESOLVED: G08 — placeholder SVG com iniciais IF
+      { url: '/images/logo-symbol.svg' },
+    ],
+    // PENDING-ACTIONS: gerar apple-icon.png 180×180px e adicionar em public/images/
   },
   robots: 'noindex, nofollow',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Inbound Forge',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -41,9 +51,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         {children}
+        <WebVitalsReporter />
         {/* Camada 3: condicional de ambiente — eliminado pelo bundler em produção */}
-        {process.env.NODE_ENV === 'development' && <DevDataTestOverlay />}
-        <Toaster />
+        {process.env.NODE_ENV === 'development' && <DevDataTestOverlayClient />}
       </body>
     </html>
   )

@@ -1,6 +1,7 @@
 // Module-11: JSON-LD Script Renderer — Server Component
 // Rastreabilidade: TASK-8 ST001, INT-096, INT-098, FEAT-publishing-blog-004
 // A-006: sanitização com isomorphic-dompurify para evitar XSS via </script> injection
+// RESOLVED: G03 — dangerouslySetInnerHTML auditado; DOMPurify.sanitize() confiramdo em uso
 
 import DOMPurify from 'isomorphic-dompurify'
 

@@ -1,0 +1,45 @@
+# Intake-Review TASK-10 ST002 (CL-OP-011/012/013)
+# Snapshot logico mensal do Postgres Supabase.
+name: Monthly DB Backup
+
+on:
+  schedule:
+    # Dia 1 as 03:00 UTC
+    - cron: '0 3 1 * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    name: pg_dump -> Supabase Storage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      SUPABASE_DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      BACKUP_BUCKET: backups
+      BACKUP_RETENTION_MONTHS: '12'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install postgresql-client (for pg_dump)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-16
+
+      - name: Run backup script
+        run: bash scripts/backup-supabase.sh
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Monthly backup FAILED — investigar GitHub Actions log e runbook RUNBOOK-BACKUP-RESTORE.md."
+          # Integrar com BetterStack / Slack webhook se desejado:
+          # curl -X POST "$SLACK_OPS_WEBHOOK" -d '{"text":"Monthly backup FAILED"}'

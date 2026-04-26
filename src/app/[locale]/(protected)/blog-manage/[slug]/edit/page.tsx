@@ -3,6 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ export default function BlogEditArticlePage() {
   const router = useRouter()
   const id = params?.slug as string
   const locale = (params?.locale as string) ?? 'pt-BR'
+  const t = useTranslations('blog.editPage')
 
   const [article, setArticle] = React.useState<BlogArticle | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
@@ -24,7 +26,7 @@ export default function BlogEditArticlePage() {
     async function load() {
       try {
         const res = await fetch(`/api/blog-articles/${id}`)
-        if (!res.ok) throw new Error('Artigo nao encontrado')
+        if (!res.ok) throw new Error('Artigo não encontrado')
         const data: BlogArticle = await res.json()
         setArticle(data)
       } catch {
@@ -59,16 +61,16 @@ export default function BlogEditArticlePage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Editar Artigo</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t('title')}</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Versao {article.currentVersion}</span>
+            <span>{t('version')} {article.currentVersion}</span>
             <Badge variant="default">{article.status}</Badge>
           </div>
         </div>
         <Link href={`/${locale}/blog-manage/${id}/review`}>
           <Button variant="outline" size="sm">
             <History className="mr-1 h-4 w-4" aria-hidden />
-            Ver Historico
+            {t('viewHistory')}
           </Button>
         </Link>
       </div>

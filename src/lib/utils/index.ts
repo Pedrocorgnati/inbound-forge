@@ -4,4 +4,7 @@ export * from './currency'
 export * from './slug'
 export * from './env'
 export * from './utm'
+// utm-builder exporta uma sobrecarga de buildUTMUrl com assinatura diferente — re-exportar selectivamente
+export { buildPostUTM } from './utm-builder'
 export * from './pii'
+export * from './pii-check'

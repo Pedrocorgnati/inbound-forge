@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { Plus, FolderOpen, AlertTriangle } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -17,18 +18,20 @@ interface ObjectionListProps {
 
 type ObjectionType = 'PRICE' | 'TRUST' | 'TIMING' | 'NEED' | 'AUTHORITY'
 
-const TYPE_SECTIONS: { type: ObjectionType; label: string }[] = [
-  { type: 'PRICE', label: 'Objeções de Preço' },
-  { type: 'TRUST', label: 'Objeções de Confiança' },
-  { type: 'TIMING', label: 'Objeções de Timing' },
-  { type: 'NEED', label: 'Objeções de Necessidade' },
-  { type: 'AUTHORITY', label: 'Objeções de Autoridade' },
-]
-
 export function ObjectionList({ locale }: ObjectionListProps) {
+  const t = useTranslations('knowledge.objectionList')
+  const tCommon = useTranslations('common')
   const [objections, setObjections] = useState<ObjectionResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const TYPE_SECTIONS: { type: ObjectionType; label: string }[] = [
+    { type: 'PRICE', label: t('price') },
+    { type: 'TRUST', label: t('trust') },
+    { type: 'TIMING', label: t('timing') },
+    { type: 'NEED', label: t('need') },
+    { type: 'AUTHORITY', label: t('authority') },
+  ]
 
   // Form modal state
   const [formOpen, setFormOpen] = useState(false)
@@ -44,16 +47,16 @@ export function ObjectionList({ locale }: ObjectionListProps) {
 
     try {
       const res = await fetch('/api/knowledge/objections?limit=100')
-      if (!res.ok) throw new Error('Falha ao carregar objeções')
+      if (!res.ok) throw new Error(t('loadError'))
 
       const json = await res.json()
       setObjections(json.data ?? [])
     } catch {
-      setError('Não foi possível carregar as objeções. Tente novamente.')
+      setError(t('loadErrorDesc'))
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     fetchObjections()
@@ -91,13 +94,13 @@ export function ObjectionList({ locale }: ObjectionListProps) {
         method: 'DELETE',
       })
 
-      if (!res.ok) throw new Error('Falha ao deletar')
+      if (!res.ok) throw new Error(t('deleteFailure'))
 
-      toast.success('Objeção deletada')
+      toast.success(t('deleteSuccess'))
     } catch {
       // Rollback
       setObjections(previousObjections)
-      toast.error('Erro ao deletar objeção. Tente novamente.')
+      toast.error(t('deleteError'))
     } finally {
       setIsDeleting(false)
     }
@@ -114,14 +117,14 @@ export function ObjectionList({ locale }: ObjectionListProps) {
       {/* Header bar */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {!isLoading && !error && `${objections.length} objeção(ões) cadastrada(s)`}
+          {!isLoading && !error && t('count', { count: objections.length })}
         </p>
         <Button
           onClick={handleNewObjection}
           data-testid="objection-new-button"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          Nova Objeção
+          {t('new')}
         </Button>
       </div>
 
@@ -135,7 +138,7 @@ export function ObjectionList({ locale }: ObjectionListProps) {
           <AlertTriangle className="h-4 w-4 shrink-0 text-danger" aria-hidden />
           <p className="text-sm text-danger">{error}</p>
           <Button variant="ghost" size="sm" onClick={fetchObjections} className="ml-auto">
-            Tentar novamente
+            {tCommon('retry')}
           </Button>
         </div>
       )}
@@ -156,9 +159,9 @@ export function ObjectionList({ locale }: ObjectionListProps) {
       {!isLoading && !error && objections.length === 0 && (
         <EmptyState
           icon={<FolderOpen className="h-12 w-12" />}
-          title="Nenhuma objeção encontrada"
-          description="Comece adicionando objeções comuns dos seus prospects para alimentar a base de conhecimento."
-          ctaLabel="Criar primeira objeção"
+          title={t('empty')}
+          description={t('emptyFirst')}
+          ctaLabel={t('createFirst')}
           onCtaClick={handleNewObjection}
         />
       )}

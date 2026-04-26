@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Z-INDEX SCALE — Inbound Forge
+ * ──────────────────────────────────────────────────────────────────
+ * z-10   : Elementos internos (chart tooltip, asset overlay, card content)
+ * z-30   : Barra de ação fixa (StickyActionBar, FAB)
+ * z-40   : Header sticky, banners, backdrop de drawers, AccountLockBanner
+ * z-50   : Modais, drawers, BottomSheet, tooltips, banners globais
+ * z-9998 : DEV-ONLY — DataTestOverlay labels (acima de tudo em produção)
+ * z-9999 : DEV-ONLY — DataTestOverlay botão trigger
+ * ──────────────────────────────────────────────────────────────────
+ */
+
 @layer base {
   :root {
     /* ===== CORES ===== */
@@ -118,6 +130,10 @@
     font-family: var(--font-family-base);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   /* Reduced motion */
@@ -135,7 +151,7 @@
     @apply sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md;
   }
 
-  /* Scrollbar personalizada */
+  /* Scrollbar personalizada — usa tokens semânticos (G09: RESOLVED) */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -144,11 +160,30 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #D1D5DB;
+    background: hsl(var(--border));
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #9CA3AF;
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Oculta o botão nativo de revelar senha do browser (Edge/Chrome)
+     para evitar conflito com o toggle customizado */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+
+  /* touch-action: manipulation — elimina 300ms tap delay em iOS/Android (G04: RESOLVED) */
+  button,
+  a,
+  [role="button"],
+  [role="tab"],
+  [role="menuitem"],
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
   }
 }
 

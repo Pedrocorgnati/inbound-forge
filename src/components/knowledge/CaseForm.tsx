@@ -1,13 +1,14 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, FileWarning, Save } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
-import { useAutosave } from '@/hooks/useAutosave'
+import { useKnowledgeAutosave } from '@/hooks/useKnowledgeAutosave'
+import { useFormatters } from '@/lib/i18n/formatters'
 import type { CaseResponse } from '@/lib/dtos/case-library.dto'
 
 interface CaseFormProps {
@@ -43,28 +44,14 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
   const canPublish = form.outcome.length >= MIN_OUTCOME_CHARS
   const outcomeCharCount = form.outcome.length
 
-  // Stable serialized form for autosave dependency
-  const formSerialized = useMemo(() => JSON.stringify(form), [form])
-
-  const saveFn = useCallback(
-    async (data: FormData) => {
-      if (!initialData?.id) return
-      const res = await fetch(`/api/knowledge/cases/${initialData.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error('Falha ao salvar')
-    },
-    [initialData?.id]
-  )
-
-  const { status: autosaveStatus, lastSaved, triggerSave } = useAutosave(
-    formSerialized,
-    async () => saveFn(form),
-    2000,
-    mode === 'edit' && !!initialData?.id
-  )
+  // Autosave (edit mode only)
+  const { autosaveStatus, lastSaved, triggerSave } = useKnowledgeAutosave({
+    form,
+    endpoint: `/api/knowledge/cases/${initialData?.id}`,
+    getPayload: (data) => ({ ...data }),
+    entityId: initialData?.id,
+    mode,
+  })
 
   function updateField<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -169,12 +156,16 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
     }
   }
 
-  function formatTime(date: Date): string {
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  }
+  // RESOLVED: G002 — useFormatters usa locale dinâmico
+  const fmt = useFormatters()
 
   return (
-    <div data-testid="case-form" className="mx-auto max-w-2xl space-y-6">
+    <form
+      data-testid="case-form"
+      className="mx-auto max-w-2xl space-y-6"
+      onSubmit={(e) => { e.preventDefault(); handleSubmit(false) }}
+      noValidate
+    >
       {/* Draft banner */}
       {isDraft && mode === 'edit' && (
         <div
@@ -193,7 +184,7 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
       {mode === 'edit' && (
         <div aria-live="polite" className="text-xs text-muted-foreground text-right" data-testid="autosave-status">
           {autosaveStatus === 'saving' && 'Salvando...'}
-          {autosaveStatus === 'saved' && lastSaved && `Salvo às ${formatTime(lastSaved)}`}
+          {autosaveStatus === 'saved' && lastSaved && `Salvo às ${fmt.time(lastSaved)}`}
           {autosaveStatus === 'error' && (
             <span className="text-danger">Erro ao salvar automaticamente</span>
           )}
@@ -290,6 +281,7 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
       {/* Actions */}
       <div className="flex flex-col-reverse gap-3 border-t border-border pt-4 sm:flex-row sm:justify-end">
         <Button
+          type="button"
           variant="outline"
           onClick={() => router.push(`/${locale}/knowledge?tab=cases`)}
           disabled={isSubmitting}
@@ -297,6 +289,7 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
           Cancelar
         </Button>
         <Button
+          type="button"
           variant="outline"
           onClick={() => handleSubmit(true)}
           isLoading={isSubmitting}
@@ -307,7 +300,7 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
           Salvar Rascunho
         </Button>
         <Button
-          onClick={() => handleSubmit(false)}
+          type="submit"
           disabled={!canPublish || isSubmitting}
           isLoading={isSubmitting}
           loadingText="Publicando..."
@@ -331,6 +324,6 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
           .
         </p>
       )}
-    </div>
+    </form>
   )
 }

@@ -4,17 +4,35 @@
 
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
-import type { BlogArticle, PaginatedArticles } from '@/types/blog'
+import type { BlogArticle as PrismaBlogArticle, BlogArticleVersion as PrismaBlogArticleVersion } from '@prisma/client'
+import type { BlogArticle, HreflangConfig, PaginatedArticles } from '@/types/blog'
 import type { CreateArticleInput, UpdateArticleInput, ApproveArticleInput, ListArticlesInput } from '@/lib/validators/blog-article'
 import { blogVersionService } from './blog-version.service'
+import { BLOG_STATUS } from '@/constants/status'
+import { buildSearchWhere } from '@/lib/search/text-search'
+
+/**
+ * Converte tipo Prisma para domínio.
+ * Único cast necessário: hreflang (Json? no schema → JsonValue no Prisma, HreflangConfig na interface).
+ */
+function mapBlogArticle(
+  article: PrismaBlogArticle & { versions?: PrismaBlogArticleVersion[] },
+): BlogArticle {
+  return {
+    ...article,
+    hreflang: article.hreflang as HreflangConfig | null,
+  }
+}
 
 // ─── Listagem Admin ──────────────────────────────────────────────────────────
 
 export async function listArticles(params: ListArticlesInput): Promise<PaginatedArticles> {
-  const { page, limit, status } = params
+  const { page, limit, status, search } = params
   const skip = (page - 1) * limit
 
-  const where = status ? { status } : {}
+  const where: Record<string, unknown> = status ? { status } : {}
+  const searchWhere = buildSearchWhere(search, ['title', 'slug', 'body'] as const)
+  if (searchWhere) Object.assign(where, searchWhere)
 
   const [items, total] = await prisma.$transaction([
     prisma.blogArticle.findMany({
@@ -27,7 +45,7 @@ export async function listArticles(params: ListArticlesInput): Promise<Paginated
   ])
 
   return {
-    items: items as unknown as BlogArticle[],
+    items: items.map(mapBlogArticle),
     total,
     page,
     limit,
@@ -54,7 +72,7 @@ export async function createArticle(input: CreateArticleInput): Promise<BlogArti
     },
   })
 
-  return article as unknown as BlogArticle
+  return mapBlogArticle(article)
 }
 
 // ─── Leitura ─────────────────────────────────────────────────────────────────
@@ -65,7 +83,7 @@ export async function getArticle(id: string): Promise<BlogArticle | null> {
     where: { id },
     include: { versions: { orderBy: { versionNumber: 'desc' }, take: 1 } },
   })
-  return article as unknown as BlogArticle | null
+  return article ? mapBlogArticle(article) : null
 }
 
 // ─── Atualização com versionamento automático ─────────────────────────────────
@@ -92,17 +110,42 @@ export async function updateArticle(id: string, input: UpdateArticleInput): Prom
 
   const { changeNote: _changeNote, ...updateData } = input
 
-  const updated = await prisma.blogArticle.update({
-    where: { id },
-    data: {
-      ...updateData,
-      hreflang: updateData.hreflang ?? undefined,
-      ctaType: updateData.ctaType ?? undefined,
-      ...(bodyChanged || titleChanged ? { currentVersion: existing.currentVersion + 1 } : {}),
-    },
+  // Intake-Review TASK-2 (CL-298): registrar BlogSlugRedirect 301 quando slug
+  // muda em artigo publicado. Rascunhos nao geram redirect.
+  const slugChanged =
+    typeof updateData.slug === 'string' &&
+    updateData.slug !== existing.slug &&
+    existing.status === BLOG_STATUS.PUBLISHED
+
+  const updated = await prisma.$transaction(async (tx) => {
+    if (slugChanged) {
+      await tx.blogSlugRedirect.upsert({
+        where: { oldSlug: existing.slug },
+        create: {
+          oldSlug: existing.slug,
+          newSlug: updateData.slug!,
+          articleId: existing.id,
+        },
+        update: { newSlug: updateData.slug!, articleId: existing.id },
+      })
+      await tx.blogSlugRedirect.updateMany({
+        where: { newSlug: existing.slug },
+        data: { newSlug: updateData.slug! },
+      })
+    }
+
+    return tx.blogArticle.update({
+      where: { id },
+      data: {
+        ...updateData,
+        hreflang: updateData.hreflang ?? undefined,
+        ctaType: updateData.ctaType ?? undefined,
+        ...(bodyChanged || titleChanged ? { currentVersion: existing.currentVersion + 1 } : {}),
+      },
+    })
   })
 
-  return updated as unknown as BlogArticle
+  return mapBlogArticle(updated)
 }
 
 // ─── Aprovação Humana ────────────────────────────────────────────────────────
@@ -115,7 +158,7 @@ export async function updateArticle(id: string, input: UpdateArticleInput): Prom
 export async function approveArticle(id: string, input: ApproveArticleInput): Promise<BlogArticle> {
   const article = await prisma.blogArticle.findUniqueOrThrow({ where: { id } })
 
-  if (article.status === 'PUBLISHED') {
+  if (article.status === BLOG_STATUS.PUBLISHED) {
     throw new Error('Artigo já está publicado')
   }
 
@@ -124,11 +167,11 @@ export async function approveArticle(id: string, input: ApproveArticleInput): Pr
     data: {
       approvedAt: new Date(),
       approvedBy: input.approvedBy,
-      status: 'REVIEW',
+      status: BLOG_STATUS.REVIEW,
     },
   })
 
-  return updated as unknown as BlogArticle
+  return mapBlogArticle(updated)
 }
 
 // ─── Publicação ──────────────────────────────────────────────────────────────
@@ -147,10 +190,25 @@ export async function publishArticle(id: string): Promise<BlogArticle> {
     )
   }
 
+  // BLOG_051 (M10.15): Cada locale traduzido precisa de revisão humana antes da publicação.
+  // Traduções em DRAFT ou REJECTED bloqueiam a publicação até serem APPROVED.
+  const pendingTranslations = await prisma.blogArticleTranslation.findMany({
+    where: { articleId: id, status: { not: 'APPROVED' } },
+    select: { locale: true, status: true },
+  })
+  if (pendingTranslations.length > 0) {
+    const summary = pendingTranslations
+      .map((t) => `${t.locale}:${t.status}`)
+      .join(', ')
+    throw new Error(
+      `BLOG_051: Traduções pendentes de revisão humana — ${summary}. Aprovar cada locale antes de publicar.`,
+    )
+  }
+
   const published = await prisma.blogArticle.update({
     where: { id },
     data: {
-      status: 'PUBLISHED',
+      status: BLOG_STATUS.PUBLISHED,
       publishedAt: article.publishedAt ?? new Date(),
     },
   })
@@ -160,7 +218,7 @@ export async function publishArticle(id: string): Promise<BlogArticle> {
   revalidatePath(`/blog/${published.slug}`)
   revalidatePath('/sitemap.xml')
 
-  return published as unknown as BlogArticle
+  return mapBlogArticle(published)
 }
 
 // ─── Exclusão ────────────────────────────────────────────────────────────────

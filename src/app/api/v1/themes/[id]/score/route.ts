@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireSession, ok, internalError } from '@/lib/api-auth'
 import { apiError } from '@/constants/errors'
-import { themeScoringService } from '@/services/theme-scoring.service'
+import { themeScoringService } from '@/lib/services/theme-scoring.service'
 
 type Params = { params: Promise<{ id: string }> }
 

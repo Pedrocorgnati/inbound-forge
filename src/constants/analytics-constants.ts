@@ -10,11 +10,13 @@ export const ANALYTICS_PERIODS: { value: AnalyticsPeriod; label: string }[] = [
   { value: '90d', label: '90 dias' },
 ]
 
-// Cores por canal — Canal enum: BLOG | LINKEDIN | INSTAGRAM
+// Cores por canal — Canal enum: BLOG | LINKEDIN | INSTAGRAM | TIKTOK | YOUTUBE_SHORTS
 export const CHANNEL_COLORS: Record<Channel, string> = {
-  [Channel.BLOG]: '#4F46E5',       // indigo
-  [Channel.LINKEDIN]: '#0A66C2',   // linkedin blue
-  [Channel.INSTAGRAM]: '#E4405F',  // instagram pink
+  [Channel.BLOG]: '#4F46E5',           // indigo
+  [Channel.LINKEDIN]: '#0A66C2',       // linkedin blue
+  [Channel.INSTAGRAM]: '#E4405F',      // instagram pink
+  [Channel.TIKTOK]: '#69C9D0',         // tiktok teal — post-MVP CL-064
+  [Channel.YOUTUBE_SHORTS]: '#FF0000', // youtube red — post-MVP CL-065
 }
 
 export const FUNNEL_STAGE_LABELS: Record<string, string> = {

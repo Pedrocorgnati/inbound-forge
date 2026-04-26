@@ -33,8 +33,20 @@ export function useAngleHistory(themeId: string): UseAngleHistoryReturn {
       try {
         const res = await fetch(`/api/content/${themeId}/angles/${angleId}/history`)
         if (!res.ok) throw new Error('Falha ao carregar histórico')
-        const data: AngleVersion[] = await res.json()
-        setVersions(data)
+        const json = await res.json()
+        const payload = json.data ?? json
+        const rawVersions = payload.data ?? payload
+        const mapped: AngleVersion[] = (Array.isArray(rawVersions) ? rawVersions : []).map(
+          (v: { id: string; generationVersion: number; text: string; editedBody?: string | null; charCount: number; isSelected: boolean; createdAt: string }) => ({
+            id: v.id,
+            version: v.generationVersion,
+            text: v.editedBody ?? v.text,
+            charCount: v.charCount,
+            isCurrent: v.isSelected,
+            createdAt: v.createdAt,
+          })
+        )
+        setVersions(mapped)
       } catch {
         setError('Não foi possível carregar o histórico de versões.')
         setVersions([])

@@ -14,6 +14,7 @@ import { ConversionForm } from '@/components/conversions/ConversionForm'
 import { AttributionCard } from '@/components/attribution/AttributionCard'
 import type { Channel, FunnelStage } from '@/types/enums'
 import Link from 'next/link'
+import { useFormatters } from '@/lib/i18n/formatters'
 
 // --- Types for the API response ---
 
@@ -58,15 +59,11 @@ const CHANNEL_MAP: Record<string, { label: string; variant: 'instagram' | 'linke
 
 const FUNNEL_MAP: Record<string, { label: string; variant: 'info' | 'warning' | 'success' }> = {
   AWARENESS: { label: 'Descoberta', variant: 'info' },
-  CONSIDERATION: { label: 'Consideracao', variant: 'warning' },
-  DECISION: { label: 'Decisao', variant: 'success' },
+  CONSIDERATION: { label: 'Consideração', variant: 'warning' },
+  DECISION: { label: 'Decisão', variant: 'success' },
 }
 
-const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-})
+// RESOLVED: G002 — dateFormatter substituído por useFormatters com locale dinâmico
 
 // --- Component ---
 
@@ -74,6 +71,7 @@ export function LeadDetailClient() {
   const params = useParams<{ locale: string; id: string }>()
   const router = useRouter()
   const locale = params.locale
+  const fmt = useFormatters()
   const id = params.id
 
   const [lead, setLead] = useState<LeadDetail | null>(null)
@@ -92,7 +90,7 @@ export function LeadDetailClient() {
       const res = await fetch(`/api/v1/leads/${id}`)
       if (!res.ok) {
         if (res.status === 404) {
-          toast.error('Lead nao encontrado')
+          toast.error('Lead não encontrado')
           router.push(`/${locale}/leads`)
           return
         }
@@ -102,7 +100,7 @@ export function LeadDetailClient() {
       const json = await res.json()
       setLead(json.data)
     } catch {
-      setError('Nao foi possivel carregar o lead.')
+      setError('Não foi possível carregar o lead.')
     } finally {
       setIsLoading(false)
     }
@@ -154,7 +152,7 @@ export function LeadDetailClient() {
         className="mx-auto max-w-3xl flex flex-col items-center gap-4 py-12"
       >
         <AlertTriangle className="h-10 w-10 text-danger" />
-        <p className="text-sm text-muted-foreground">{error ?? 'Lead nao encontrado'}</p>
+        <p className="text-sm text-muted-foreground">{error ?? 'Lead não encontrado'}</p>
         <Button variant="outline" onClick={() => router.push(`/${locale}/leads`)}>
           Voltar para leads
         </Button>
@@ -212,7 +210,7 @@ export function LeadDetailClient() {
       {/* Lead Info Card */}
       <Card variant="elevated" data-testid="lead-info-card">
         <CardHeader>
-          <CardTitle className="text-base">Informacoes do Lead</CardTitle>
+          <CardTitle className="text-base">Informações do Lead</CardTitle>
         </CardHeader>
         <CardContent>
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -261,7 +259,7 @@ export function LeadDetailClient() {
               </dt>
               <dd className="mt-1 text-sm text-foreground">
                 {lead.firstTouchAt
-                  ? dateFormatter.format(new Date(lead.firstTouchAt))
+                  ? fmt.date(lead.firstTouchAt)
                   : '—'}
               </dd>
             </div>
@@ -324,7 +322,7 @@ export function LeadDetailClient() {
       {/* Conversions Section */}
       <div className="space-y-4" data-testid="lead-conversions-section">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Conversoes</h2>
+          <h2 className="text-lg font-semibold text-foreground">Conversões</h2>
           <Button
             variant="outline"
             size="sm"
@@ -332,7 +330,7 @@ export function LeadDetailClient() {
             data-testid="lead-add-conversion"
           >
             <Plus className="h-3.5 w-3.5" aria-hidden />
-            Registrar Conversao
+            Registrar Conversão
           </Button>
         </div>
 
@@ -347,8 +345,8 @@ export function LeadDetailClient() {
       <Modal
         open={showForm}
         onClose={() => setShowForm(false)}
-        title="Registrar Conversao"
-        description="Adicione uma nova conversao para este lead."
+        title="Registrar Conversão"
+        description="Adicione uma nova conversão para este lead."
         size="md"
       >
         <ConversionForm

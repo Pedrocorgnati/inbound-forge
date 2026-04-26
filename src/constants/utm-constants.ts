@@ -12,6 +12,7 @@ export const UTM_MEDIUMS = {
   BLOG: 'blog',
   LINKEDIN: 'linkedin',
   INSTAGRAM: 'instagram',
+  CALENDAR: 'calendar',
 } as const
 
 export const WHATSAPP_UTM_CONFIG = {

@@ -23,6 +23,7 @@ npm install
 # 2. Configurar env vars
 cp .env.example .env.local
 # Preencher valores no .env.local
+# Onde pegar cada chave: ver docs/KEY-ROTATION.md (secao 3 — por provider)
 
 # 3. Gerar Prisma Client e aplicar migrations
 npx prisma generate
@@ -80,3 +81,10 @@ Backup automático: Supabase diário (7 dias de retenção).
 ## Próximos Passos
 
 Ver [docs/POST-MVP-ROADMAP.md](./docs/POST-MVP-ROADMAP.md) para features e melhorias planejadas pós-MVP (Q3/Q4 2026).
+
+## Governança e Compliance
+
+- [docs/governance/COST-TARGETS.md](./docs/governance/COST-TARGETS.md) — faixas de custo, thresholds de alerta e cadência de review mensal
+- [docs/governance/SUCCESS-CRITERIA.md](./docs/governance/SUCCESS-CRITERIA.md) — metas 90 dias e critério de sucesso pós-90d
+- [docs/governance/MVP-VALIDATION.md](./docs/governance/MVP-VALIDATION.md) — checklist de validação do MVP
+- [docs/compliance/LGPD-PURPOSE.md](./docs/compliance/LGPD-PURPOSE.md) — finalidade específica LGPD e base legal por categoria de dado

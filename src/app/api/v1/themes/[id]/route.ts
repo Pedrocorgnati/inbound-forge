@@ -36,7 +36,20 @@ export async function GET(_request: NextRequest, { params }: Params) {
       return NextResponse.json(body, { status })
     }
 
-    return ok(theme)
+    // Intake Review TASK-5 ST001 (CL-170): expor geoBonus top-level a partir do scoreBreakdown.
+    const breakdown = (theme.scoreBreakdown ?? null) as
+      | { geoBonus?: { totalBonus?: number; isQuestion?: boolean; hasData?: boolean; isComparison?: boolean } }
+      | null
+    const geoBonusPayload = breakdown?.geoBonus
+      ? {
+          totalBonus: Number(breakdown.geoBonus.totalBonus ?? 0),
+          isQuestion: Boolean(breakdown.geoBonus.isQuestion),
+          hasData: Boolean(breakdown.geoBonus.hasData),
+          isComparison: Boolean(breakdown.geoBonus.isComparison),
+        }
+      : null
+
+    return ok({ ...theme, geoBonus: geoBonusPayload })
   } catch {
     return internalError()
   }

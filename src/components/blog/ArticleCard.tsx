@@ -1,23 +1,15 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
-import type { BlogArticle } from '@/types/blog'
+import { formatDate } from '@/lib/utils/date'
+import type { BlogArticleSummary } from '@/types/blog'
 
 interface ArticleCardProps {
-  article: BlogArticle
+  article: BlogArticleSummary
   locale: string
 }
 
-function formatDate(date: Date | string | null | undefined): string {
-  if (!date) return ''
-  const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  })
-}
-
+// RESOLVED: G002 — formatDate usa locale dinâmico em vez de 'pt-BR' hardcoded
 export function ArticleCard({ article, locale }: ArticleCardProps) {
   const href = `/${locale}/blog/${article.slug}`
 
@@ -70,7 +62,7 @@ export function ArticleCard({ article, locale }: ArticleCardProps) {
             )}
             {article.publishedAt && (
               <time dateTime={new Date(article.publishedAt).toISOString()}>
-                {formatDate(article.publishedAt)}
+                {formatDate(article.publishedAt, { day: '2-digit', month: 'long', year: 'numeric' }, locale)}
               </time>
             )}
           </div>

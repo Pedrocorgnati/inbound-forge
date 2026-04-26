@@ -47,6 +47,24 @@ export function buildClassificationPrompt(text: string): string {
   return CLASSIFICATION_PROMPT_TEMPLATE.replace('{text}', text)
 }
 
+// TASK-1 ST002: System prompt com instrução LGPD de sanitização PII
+// Standalone — worker é pacote separado, não acessa src/lib
+export const CLASSIFICATION_SYSTEM_PROMPT = `
+Você é um especialista em análise de dores operacionais empresariais.
+
+CONFORMIDADE LGPD — INSTRUÇÃO OBRIGATÓRIA:
+Ao gerar seu output, NUNCA inclua dados pessoais identificáveis.
+Substitua por descritores genéricos:
+- Nomes próprios de pessoas → "[pessoa]"
+- Emails → "[email]"
+- Telefones → "[telefone]"
+- CPFs e CNPJs → "[documento]"
+- Endereços físicos → "[endereço]"
+- Nomes de empresas identificáveis como PII → "[empresa do setor X]"
+
+Responda SOMENTE com o JSON solicitado — sem texto adicional.
+`.trim()
+
 export const CLAUDE_MODEL = 'claude-haiku-4-5-20251001'
 export const CLAUDE_MAX_TOKENS = 500
 

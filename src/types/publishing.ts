@@ -13,7 +13,7 @@ export type PostStatus =
   | 'PUBLISHED'
   | 'FAILED'
 
-export type QueueStatus = 'PENDING' | 'PROCESSING' | 'DONE' | 'FAILED'
+export type QueueStatus = 'PENDING' | 'PROCESSING' | 'PAUSED' | 'DONE' | 'FAILED' | 'CANCELLED'
 
 export interface PublishingPost {
   id: string
@@ -35,6 +35,10 @@ export interface PublishingPost {
   trackingUrl: string | null
   createdAt: Date
   updatedAt: Date
+  /** Intake Review TASK-4 ST005 — id do PublishingQueue associado (para acoes do kebab). */
+  queueId?: string | null
+  /** Status do item na fila. Usado pelo kebab para expor "Pausar"/"Retomar". */
+  queueStatus?: QueueStatus | null
 }
 
 export interface PublishingQueueItem {

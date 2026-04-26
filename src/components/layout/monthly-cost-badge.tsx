@@ -25,7 +25,7 @@ const THRESHOLD_CLASSES = {
   none: 'text-muted-foreground border-border bg-transparent',
 }
 
-export function MonthlyCostBadge({ cost, budget = DEFAULT_BUDGET }: MonthlyCostBadgeProps) {
+export function MonthlyCostBadge({ cost, budget = DEFAULT_BUDGET, locale }: MonthlyCostBadgeProps & { locale?: string }) {
   const threshold =
     cost != null && budget > 0 ? getThreshold(cost, budget) : 'none'
   const thresholdKey = cost != null ? threshold : 'none'
@@ -43,7 +43,7 @@ export function MonthlyCostBadge({ cost, budget = DEFAULT_BUDGET }: MonthlyCostB
         </span>
       </TooltipTrigger>
       <TooltipContent side="bottom">
-        <Link href="/health" className="text-xs underline hover:text-primary">
+        <Link href={locale ? `/${locale}/health` : '/health'} className="text-xs underline hover:text-primary">
           Ver detalhes de custo
         </Link>
       </TooltipContent>

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { formatDateRelative } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -28,19 +29,35 @@ export function AlertLogPanel() {
   const [alerts, setAlerts] = useState<AlertLogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [resolvingIds, setResolvingIds] = useState<Set<string>>(new Set())
+  const searchParams = useSearchParams()
+
+  // Intake-Review G3 (CL-DX-027): consome filtros type/severity/resolved da URL.
+  const filterQs = (() => {
+    const q = new URLSearchParams()
+    const resolved = searchParams.get('resolved') ?? 'false'
+    q.set('resolved', resolved)
+    const type = searchParams.get('type')
+    if (type) q.set('type', type)
+    const severity = searchParams.get('severity')
+    if (severity) q.set('severity', severity)
+    return q.toString()
+  })()
 
   const fetchAlerts = useCallback(async () => {
+    setIsLoading(true)
     try {
-      const res = await fetch('/api/v1/health/alerts?resolved=false')
+      const res = await fetch(`/api/v1/health/alerts?${filterQs}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const json: AlertLogEntry[] = await res.json()
-      setAlerts(json)
+      const json = await res.json()
+      // route retorna okPaginated { success, data, pagination }
+      const items: AlertLogEntry[] = Array.isArray(json) ? json : (json.data ?? [])
+      setAlerts(items)
     } catch {
       // silencioso na carga
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [filterQs])
 
   useEffect(() => {
     fetchAlerts()

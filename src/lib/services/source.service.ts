@@ -19,6 +19,11 @@ export interface SourceDto {
   selector: string | null
   crawlFrequency: string
   lastCrawledAt: string | null
+  // TASK-3 CL-030
+  antiBotBlocked: boolean
+  antiBotReason: string | null
+  antiBotBlockedAt: string | null
+  consecutiveFailures: number
   createdAt: string
   updatedAt: string
 }
@@ -48,12 +53,17 @@ function toDto(source: {
   selector: string | null
   crawlFrequency: string
   lastCrawledAt: Date | null
+  antiBotBlocked: boolean
+  antiBotReason: string | null
+  antiBotBlockedAt: Date | null
+  consecutiveFailures: number
   createdAt: Date
   updatedAt: Date
 }): SourceDto {
   return {
     ...source,
     lastCrawledAt: source.lastCrawledAt?.toISOString() ?? null,
+    antiBotBlockedAt: source.antiBotBlockedAt?.toISOString() ?? null,
     createdAt: source.createdAt.toISOString(),
     updatedAt: source.updatedAt.toISOString(),
   }
@@ -175,6 +185,23 @@ export async function deleteSource(
     return { ok: false, code: 'PROTECTED' }
   }
 
-  await prisma.source.delete({ where: { id } })
+  // CL-252: delete em transacao + audit log
+  await prisma.$transaction(async (tx) => {
+    await tx.source.delete({ where: { id } })
+  })
+
+  try {
+    const { auditLog } = await import('@/lib/audit')
+    await auditLog({
+      action: 'SOURCE_DELETED',
+      entityType: 'Source',
+      entityId: id,
+      userId: operatorId,
+      metadata: { url: source.url, name: source.name },
+    })
+  } catch {
+    // Audit failure nunca bloqueia a operacao
+  }
+
   return { ok: true }
 }

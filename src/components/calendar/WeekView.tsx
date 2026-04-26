@@ -24,7 +24,7 @@ export function WeekView({ posts, startDate }: WeekViewProps) {
         {DAY_HEADERS.map((name) => (
           <div
             key={name}
-            className="py-1 text-center text-xs font-semibold uppercase text-gray-500"
+            className="py-1 text-center text-xs font-semibold uppercase text-muted-foreground"
           >
             {name}
           </div>

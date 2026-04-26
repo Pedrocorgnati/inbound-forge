@@ -3,6 +3,7 @@
 // E-E-A-T = Experience, Expertise, Authoritativeness, Trustworthiness
 
 import type { BlogArticle } from '@/types/blog'
+import { DEFAULT_AUTHOR_CREDENTIALS } from '@/lib/blog/schema-ld'
 
 export interface EEATMetadata {
   author: {
@@ -10,9 +11,35 @@ export interface EEATMetadata {
     url: string
     jobTitle: string
     knowsAbout: string[]
+    sameAs: string[]
+    description: string
   }
   reviewedAt?: string
   contentType: 'original'
+}
+
+function readArticleCredentials(article: BlogArticle): {
+  jobTitle?: string
+  description?: string
+  knowsAbout?: string[]
+  sameAs?: string[]
+  url?: string
+} {
+  // TASK-7 ST001 (CL-200): honrar authorCredentials do artigo quando presente.
+  const raw = (article as unknown as { authorCredentials?: unknown }).authorCredentials
+  if (!raw || typeof raw !== 'object') return {}
+  const record = raw as Record<string, unknown>
+  return {
+    jobTitle: typeof record.jobTitle === 'string' ? record.jobTitle : undefined,
+    description: typeof record.description === 'string' ? record.description : undefined,
+    url: typeof record.url === 'string' ? record.url : undefined,
+    knowsAbout: Array.isArray(record.knowsAbout)
+      ? record.knowsAbout.filter((x): x is string => typeof x === 'string')
+      : undefined,
+    sameAs: Array.isArray(record.sameAs)
+      ? record.sameAs.filter((x): x is string => typeof x === 'string')
+      : undefined,
+  }
 }
 
 /**
@@ -21,19 +48,16 @@ export interface EEATMetadata {
  */
 export function buildEEATMetadata(article: BlogArticle): EEATMetadata {
   const siteUrl = process.env.NEXT_PUBLIC_BASE_URL ?? ''
+  const supplied = readArticleCredentials(article)
 
   return {
     author: {
       name: article.authorName,
-      url: siteUrl,
-      jobTitle: 'Especialista em Posicionamento Estratégico',
-      knowsAbout: [
-        'marketing digital',
-        'aquisição de clientes',
-        'posicionamento B2B',
-        'inbound marketing',
-        'growth strategy',
-      ],
+      url: supplied.url ?? siteUrl,
+      jobTitle: supplied.jobTitle ?? DEFAULT_AUTHOR_CREDENTIALS.jobTitle,
+      knowsAbout: supplied.knowsAbout ?? DEFAULT_AUTHOR_CREDENTIALS.knowsAbout,
+      sameAs: supplied.sameAs ?? DEFAULT_AUTHOR_CREDENTIALS.sameAs,
+      description: supplied.description ?? DEFAULT_AUTHOR_CREDENTIALS.description,
     },
     reviewedAt: article.approvedAt?.toISOString(),
     contentType: 'original',
@@ -42,7 +66,7 @@ export function buildEEATMetadata(article: BlogArticle): EEATMetadata {
 
 /**
  * Enriquece BlogPosting schema com dados E-E-A-T.
- * Adiciona jobTitle e knowsAbout ao campo author.
+ * Adiciona jobTitle, knowsAbout, sameAs, description ao campo author.
  */
 export function enrichBlogPostingWithEEAT(
   blogPostingSchema: Record<string, unknown>,
@@ -58,6 +82,8 @@ export function enrichBlogPostingWithEEAT(
       url: eeeat.author.url,
       jobTitle: eeeat.author.jobTitle,
       knowsAbout: eeeat.author.knowsAbout,
+      sameAs: eeeat.author.sameAs,
+      description: eeeat.author.description,
     },
     ...(eeeat.reviewedAt ? { reviewedAt: eeeat.reviewedAt } : {}),
   }

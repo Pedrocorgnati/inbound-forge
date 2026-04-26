@@ -31,11 +31,11 @@ export function VersionHistory({
     setIsLoading(true)
     try {
       const res = await fetch(`/api/blog-articles/${articleId}/versions`)
-      if (!res.ok) throw new Error('Erro ao carregar versoes')
+      if (!res.ok) throw new Error('Erro ao carregar versões')
       const data: BlogArticleVersion[] = await res.json()
       setVersions(data.sort((a, b) => b.versionNumber - a.versionNumber))
     } catch {
-      toast.error('Falha ao carregar historico de versoes')
+      toast.error('Falha ao carregar histórico de versões')
     } finally {
       setIsLoading(false)
     }
@@ -73,7 +73,7 @@ export function VersionHistory({
     return (
       <div className="rounded-lg border border-border p-8 text-center">
         <p className="text-muted-foreground">
-          Este artigo nao tem versoes anteriores.
+          Este artigo não tem versões anteriores.
         </p>
       </div>
     )

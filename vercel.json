@@ -1,0 +1,17 @@
+{
+  "regions": ["gru1"],
+  "crons": [
+    {
+      "path": "/api/cron/worker-silence-check",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/ga4-sync",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/lgpd-purge",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}

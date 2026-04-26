@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { Trash2, FileImage } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { AssetDownloadMenu } from './AssetDownloadMenu'
 import type { VisualAsset } from '@/types/visual-asset'
 
 interface AssetCardProps {
@@ -60,10 +61,10 @@ export function AssetCard({ asset, onDelete, onClick, selected = false }: AssetC
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       aria-label={`Asset: ${asset.originalName}`}
-      aria-selected={selected}
+      aria-pressed={selected}
       className={cn(
         'group relative rounded-lg border border-border bg-card overflow-hidden',
-        'cursor-pointer transition-all duration-200',
+        'cursor-pointer transition-[border-color,box-shadow] duration-200',
         'hover:border-foreground/20 hover:shadow-sm',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
         selected && 'ring-2 ring-primary border-primary',
@@ -82,6 +83,14 @@ export function AssetCard({ asset, onDelete, onClick, selected = false }: AssetC
         ) : (
           <FileImage className="h-10 w-10 text-muted-foreground" aria-hidden />
         )}
+
+        {/* Download menu overlay */}
+        <div
+          className="absolute top-2 left-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <AssetDownloadMenu assetId={asset.id} />
+        </div>
 
         {/* Delete button overlay */}
         <button

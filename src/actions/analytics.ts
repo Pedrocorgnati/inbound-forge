@@ -10,22 +10,28 @@ import type { AnalyticsPeriod } from '@/types/analytics'
 
 export async function getAnalyticsOverview(period: AnalyticsPeriod = '30d') {
   const { user, response } = await requireSession()
-  if (response) return null
-  return getFunnelMetrics(period, user!.id)
+  if (response) return { error: 'Não autorizado', data: null }
+  const data = await getFunnelMetrics(period, user!.id)
+  return { data }
 }
 
 export async function getContentPerformance() {
+  const { user, response } = await requireSession()
+  if (response) return { error: 'Não autorizado', data: [] }
+  void user
   return { data: [] }
 }
 
 export async function getChannelBreakdown(period: AnalyticsPeriod = '30d') {
   const { user, response } = await requireSession()
-  if (response) return []
-  return getChannelPerformance(period, user!.id)
+  if (response) return { error: 'Não autorizado', data: [] }
+  const data = await getChannelPerformance(period, user!.id)
+  return { data }
 }
 
 export async function getReconciliationSummary() {
   const { user, response } = await requireSession()
-  if (response) return null
-  return getReconciliationStats(user!.id)
+  if (response) return { error: 'Não autorizado', data: null }
+  const data = await getReconciliationStats(user!.id)
+  return { data }
 }

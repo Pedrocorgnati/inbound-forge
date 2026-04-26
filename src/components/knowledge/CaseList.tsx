@@ -1,121 +1,57 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Plus, FolderOpen, AlertTriangle } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
-import { toast } from '@/components/ui/toast'
 import { CaseCard } from './CaseCard'
 import { CaseDeleteModal } from './CaseDeleteModal'
+import { useKnowledgeList } from '@/hooks/useKnowledgeList'
 import type { CaseResponse } from '@/lib/dtos/case-library.dto'
 
 interface CaseListProps {
   locale: string
 }
 
-interface PaginationData {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-  hasMore: boolean
-}
-
-const STATUS_OPTIONS = [
-  { value: '', label: 'Todos' },
-  { value: 'DRAFT', label: 'Rascunho' },
-  { value: 'VALIDATED', label: 'Publicado' },
-]
-
 const PAGE_SIZE = 20
 
 export function CaseList({ locale }: CaseListProps) {
-  const router = useRouter()
-
-  const [cases, setCases] = useState<CaseResponse[]>([])
-  const [pagination, setPagination] = useState<PaginationData | null>(null)
-  const [page, setPage] = useState(1)
+  const t = useTranslations()
   const [statusFilter, setStatusFilter] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  // Delete modal state
-  const [deleteTarget, setDeleteTarget] = useState<CaseResponse | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const STATUS_OPTIONS = [
+    { value: '', label: t('knowledge.caseList.all') },
+    { value: 'DRAFT', label: t('knowledge.caseList.draft') },
+    { value: 'VALIDATED', label: t('knowledge.caseList.published') },
+  ]
 
-  const fetchCases = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(PAGE_SIZE),
-    })
-    if (statusFilter) {
-      params.set('status', statusFilter)
-    }
-
-    try {
-      const res = await fetch(`/api/knowledge/cases?${params}`)
-      if (!res.ok) throw new Error('Falha ao carregar cases')
-
-      const json = await res.json()
-      setCases(json.data ?? [])
-      setPagination(json.pagination ?? null)
-    } catch {
-      setError('Não foi possível carregar os cases. Tente novamente.')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [page, statusFilter])
-
-  useEffect(() => {
-    fetchCases()
-  }, [fetchCases])
+  const {
+    items: cases,
+    pagination,
+    page,
+    isLoading,
+    error,
+    deleteTarget,
+    isDeleting,
+    setPage,
+    setDeleteTarget,
+    refresh,
+    handleDelete,
+  } = useKnowledgeList<CaseResponse>({
+    endpoint: '/api/knowledge/cases',
+    pageSize: PAGE_SIZE,
+    filters: { status: statusFilter },
+  })
 
   // Reset page when filter changes
   useEffect(() => {
     setPage(1)
-  }, [statusFilter])
-
-  async function handleDelete() {
-    if (!deleteTarget) return
-
-    const removedCase = deleteTarget
-    const previousCases = [...cases]
-
-    // Optimistic removal
-    setCases((prev) => prev.filter((c) => c.id !== removedCase.id))
-    setDeleteTarget(null)
-    setIsDeleting(true)
-
-    try {
-      const res = await fetch(`/api/knowledge/cases/${removedCase.id}`, {
-        method: 'DELETE',
-      })
-
-      if (!res.ok) throw new Error('Falha ao deletar')
-
-      toast.success(`Case "${removedCase.name}" deletado`)
-
-      // Adjust pagination total
-      if (pagination) {
-        setPagination((prev) =>
-          prev ? { ...prev, total: prev.total - 1 } : prev
-        )
-      }
-    } catch {
-      // Rollback
-      setCases(previousCases)
-      toast.error('Erro ao deletar case. Tente novamente.')
-    } finally {
-      setIsDeleting(false)
-    }
-  }
+  }, [statusFilter, setPage])
 
   return (
     <div data-testid="case-list" className="space-y-4">
@@ -125,17 +61,16 @@ export function CaseList({ locale }: CaseListProps) {
           options={STATUS_OPTIONS}
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          aria-label="Filtrar por status"
+          aria-label={t('common.filter')}
           className="w-full sm:w-48"
           data-testid="case-filter-status"
         />
 
-        <Button
-          onClick={() => router.push(`/${locale}/knowledge/cases/new`)}
-          data-testid="case-new-button"
-        >
-          <Plus className="h-4 w-4" aria-hidden />
-          Novo Case
+        <Button asChild data-testid="case-new-button">
+          <Link href={`/${locale}/knowledge/cases/new`}>
+            <Plus className="h-4 w-4" aria-hidden />
+            {t('knowledge.caseList.new')}
+          </Link>
         </Button>
       </div>
 
@@ -148,8 +83,8 @@ export function CaseList({ locale }: CaseListProps) {
         >
           <AlertTriangle className="h-4 w-4 shrink-0 text-danger" aria-hidden />
           <p className="text-sm text-danger">{error}</p>
-          <Button variant="ghost" size="sm" onClick={fetchCases} className="ml-auto">
-            Tentar novamente
+          <Button variant="ghost" size="sm" onClick={refresh} className="ml-auto">
+            {t('common.retry')}
           </Button>
         </div>
       )}
@@ -170,18 +105,14 @@ export function CaseList({ locale }: CaseListProps) {
       {!isLoading && !error && cases.length === 0 && (
         <EmptyState
           icon={<FolderOpen className="h-12 w-12" />}
-          title="Nenhum case encontrado"
+          title={t('knowledge.caseList.empty')}
           description={
             statusFilter
-              ? 'Nenhum case encontrado com este filtro. Tente outro status.'
-              : 'Comece adicionando seu primeiro case de sucesso para alimentar a base de conhecimento.'
+              ? t('knowledge.caseList.emptyFilter')
+              : t('knowledge.caseList.emptyFirst')
           }
-          ctaLabel={!statusFilter ? 'Criar primeiro case' : undefined}
-          onCtaClick={
-            !statusFilter
-              ? () => router.push(`/${locale}/knowledge/cases/new`)
-              : undefined
-          }
+          ctaLabel={!statusFilter ? t('knowledge.caseList.createFirst') : undefined}
+          ctaHref={!statusFilter ? `/${locale}/knowledge/cases/new` : undefined}
         />
       )}
 
@@ -190,12 +121,14 @@ export function CaseList({ locale }: CaseListProps) {
         <>
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {cases.map((c) => (
-              <CaseCard
-                key={c.id}
-                caseData={c}
-                locale={locale}
-                onDelete={() => setDeleteTarget(c)}
-              />
+              // content-visibility:auto — FE-023: skip off-screen rendering for long lists
+              <div key={c.id} className="[content-visibility:auto] [contain-intrinsic-size:0_280px]">
+                <CaseCard
+                  caseData={c}
+                  locale={locale}
+                  onDelete={() => setDeleteTarget(c)}
+                />
+              </div>
             ))}
           </div>
 
@@ -216,7 +149,14 @@ export function CaseList({ locale }: CaseListProps) {
       <CaseDeleteModal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
+        onConfirm={() =>
+          handleDelete({
+            itemId: deleteTarget!.id,
+            getLabel: (c) => c.name,
+            successMessage: (label) => t('knowledge.caseList.deleteSuccess', { name: label }),
+            errorMessage: t('knowledge.caseList.deleteError'),
+          })
+        }
         caseName={deleteTarget?.name ?? ''}
         isDeleting={isDeleting}
       />

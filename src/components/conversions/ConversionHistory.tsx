@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/modal'
 import { EmptyState } from '@/components/shared/empty-state'
 import { toast } from '@/components/ui/toast'
 import { ConversionBadge } from './ConversionBadge'
+import { useFormatters } from '@/lib/i18n/formatters'
 import type { ConversionType } from '@/types/enums'
 
 interface ConversionItem {
@@ -27,19 +28,14 @@ interface ConversionHistoryProps {
   refreshKey?: number
 }
 
-const dateFormatter = new Intl.DateTimeFormat('pt-BR', {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-})
+// RESOLVED: G002 — dateFormatter substituído por useFormatters com locale dinâmico
 
-export function ConversionHistory({ leadId, _themeId, refreshKey }: ConversionHistoryProps) {
+export function ConversionHistory({ leadId, themeId: _themeId, refreshKey }: ConversionHistoryProps) {
   const [items, setItems] = useState<ConversionItem[]>([])
   const [total, setTotal] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<ConversionItem | null>(null)
+  const fmt = useFormatters()
 
   const fetchConversions = useCallback(async () => {
     setIsLoading(true)
@@ -92,14 +88,14 @@ export function ConversionHistory({ leadId, _themeId, refreshKey }: ConversionHi
   return (
     <div data-testid="conversion-history" className="space-y-4">
       <h3 className="text-lg font-semibold text-foreground">
-        Conversoes ({total})
+        Conversões ({total})
       </h3>
 
       {items.length === 0 ? (
         <EmptyState
           icon={<History className="h-12 w-12" />}
-          title="Nenhuma conversao"
-          description="Nenhuma conversao registrada para este lead."
+          title="Nenhuma conversão"
+          description="Nenhuma conversão registrada para este lead."
         />
       ) : (
         <ul className="divide-y divide-border rounded-lg border border-border">
@@ -113,7 +109,7 @@ export function ConversionHistory({ leadId, _themeId, refreshKey }: ConversionHi
                 <div className="flex items-center gap-2 flex-wrap">
                   <ConversionBadge type={item.type} />
                   <span className="text-xs text-muted-foreground">
-                    {dateFormatter.format(new Date(item.occurredAt))}
+                    {fmt.dateTime(item.occurredAt)}
                   </span>
                 </div>
                 {item.notes && (
@@ -152,7 +148,7 @@ export function ConversionHistory({ leadId, _themeId, refreshKey }: ConversionHi
       >
         <div className="rounded-md border border-warning/20 bg-warning/10 p-3">
           <p className="text-sm text-warning-foreground">
-            O score de conversao do tema sera recalculado. Esta acao nao pode ser desfeita.
+            O score de conversão do tema será recalculado. Esta ação não pode ser desfeita.
           </p>
         </div>
       </Modal>

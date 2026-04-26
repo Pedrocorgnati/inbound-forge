@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession, ok, okPaginated, validationError, internalError } from '@/lib/api-auth'
 import { CreateCaseSchema } from '@/schemas/knowledge.schema'
+import { KnowledgeStatus } from '@/constants/status'
 
 // GET /api/v1/knowledge/cases
 export async function GET(request: NextRequest) {
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20')))
-    const status = searchParams.get('status') as 'DRAFT' | 'VALIDATED' | null
+    const status = searchParams.get('status') as KnowledgeStatus | null
 
     const where = status ? { status } : {}
 

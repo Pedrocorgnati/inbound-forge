@@ -8,6 +8,7 @@ export const REDIS_KEYS = {
   // Queues de processamento
   SCRAPING_QUEUE: 'worker:scraping:queue',
   IMAGE_QUEUE: 'worker:image:queue',
+  VIDEO_QUEUE: 'worker:video:queue',
   PUBLISH_QUEUE: 'worker:publishing:queue',
 
   // Health / heartbeat
@@ -31,4 +32,5 @@ export const REDIS_KEYS = {
 export type QueueKey =
   | typeof REDIS_KEYS.SCRAPING_QUEUE
   | typeof REDIS_KEYS.IMAGE_QUEUE
+  | typeof REDIS_KEYS.VIDEO_QUEUE
   | typeof REDIS_KEYS.PUBLISH_QUEUE

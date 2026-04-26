@@ -47,21 +47,21 @@ export function LinkedInPostPreview({
         className={cn('mt-2 md:mt-0 md:block', !showPreview && 'hidden md:block')}
         aria-label="Pre-visualizacao do post no LinkedIn"
       >
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-lg border border-border bg-card shadow-sm">
           {/* Header */}
           <div className="flex items-center gap-3 p-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-200">
-              <Linkedin className="h-5 w-5 text-gray-500" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted">
+              <Linkedin className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">Seu perfil</p>
-              <p className="text-xs text-gray-500">Agora</p>
+              <p className="text-sm font-semibold text-foreground">Seu perfil</p>
+              <p className="text-xs text-muted-foreground">Agora</p>
             </div>
           </div>
 
           {/* Body */}
           <div className="px-4 pb-2">
-            <p className="whitespace-pre-wrap text-sm text-gray-800 leading-relaxed">
+            <p className="whitespace-pre-wrap text-sm text-foreground leading-relaxed">
               {displayText}
             </p>
 
@@ -69,14 +69,14 @@ export function LinkedInPostPreview({
               <button
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
-                className="mt-1 text-sm font-medium text-gray-500 hover:text-gray-700"
+                className="mt-1 text-sm font-medium text-muted-foreground hover:text-foreground"
               >
                 {expanded ? 'Ver menos' : 'Ver mais'}
               </button>
             )}
 
             {hashtags.length > 0 && (
-              <p className="mt-2 text-sm text-blue-600">
+              <p className="mt-2 text-sm text-primary">
                 {hashtags.join(' ')}
               </p>
             )}
@@ -84,7 +84,7 @@ export function LinkedInPostPreview({
 
           {/* Image */}
           {imageUrl && (
-            <div className="border-t border-gray-100">
+            <div className="border-t border-border">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imageUrl}
@@ -96,8 +96,8 @@ export function LinkedInPostPreview({
           )}
 
           {/* Footer */}
-          <div className="flex items-center justify-between border-t border-gray-100 px-4 py-2">
-            <span className="text-xs text-gray-400">{charCount} caracteres</span>
+          <div className="flex items-center justify-between border-t border-border px-4 py-2">
+            <span className="text-xs text-muted-foreground">{charCount} caracteres</span>
           </div>
         </div>
       </div>

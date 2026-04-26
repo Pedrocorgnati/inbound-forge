@@ -1,0 +1,19 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "node dist/index.js"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Variáveis de ambiente necessárias (configurar no painel Railway):
+# DATABASE_URL                — Supabase PostgreSQL connection string
+# UPSTASH_REDIS_REST_URL      — URL do Redis Upstash
+# UPSTASH_REDIS_REST_TOKEN    — Token do Redis Upstash
+# NEXT_PUBLIC_SUPABASE_URL    — URL pública do Supabase
+# SUPABASE_SERVICE_ROLE_KEY   — Service role key do Supabase
+# WORKER_AUTH_TOKEN           — Token de autenticação do worker
+# ENABLE_PUBLISHING_WORKER    — Feature flag (true para ativar, default: false)

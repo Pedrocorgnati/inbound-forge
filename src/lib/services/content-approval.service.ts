@@ -12,6 +12,7 @@ import { ContentBusinessRuleError, ContentNotFoundError } from '@/lib/errors/con
 import { PromptFeedbackService } from './prompt-feedback.service'
 import { logAudit } from '@/lib/audit/log'
 import { SCORE_DECAY } from '@/lib/constants/content.constants'
+import { captureException } from '@/lib/sentry'
 
 export class ContentApprovalService {
   /**
@@ -165,7 +166,7 @@ export class ContentApprovalService {
     try {
       await PromptFeedbackService.recordAndAnalyze(piece.themeId)
     } catch (err) {
-      console.error('[PromptFeedback] Análise falhou', { err, themeId: piece.themeId })
+      captureException(err, { service: 'PromptFeedback', themeId: piece.themeId })
     }
 
     return updatedPiece

@@ -26,7 +26,7 @@ function SkeletonGrid() {
       {Array.from({ length: 35 }).map((_, i) => (
         <div
           key={i}
-          className="h-[100px] animate-pulse rounded-md bg-gray-100"
+          className="h-[100px] animate-pulse rounded-md bg-muted"
         />
       ))}
     </div>
@@ -36,8 +36,8 @@ function SkeletonGrid() {
 function EmptyCalendar() {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <Calendar className="mb-4 h-12 w-12 text-gray-300" />
-      <p className="text-sm text-gray-500">Nenhum post agendado neste periodo</p>
+      <Calendar className="mb-4 h-12 w-12 text-muted-foreground/40" />
+      <p className="text-sm text-muted-foreground">Nenhum post agendado neste periodo</p>
     </div>
   )
 }
@@ -45,7 +45,7 @@ function EmptyCalendar() {
 export function CalendarGrid({
   posts,
   startDate,
-  _endDate,
+  endDate: _endDate,
   view,
   onViewChange,
   onPeriodChange,
@@ -60,15 +60,15 @@ export function CalendarGrid({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           {/* View toggle */}
-          <div className="inline-flex rounded-md border border-gray-200 bg-white text-sm">
+          <div className="inline-flex rounded-md border border-border bg-card text-sm">
             <button
               type="button"
               onClick={() => onViewChange('week')}
               className={cn(
                 'px-3 py-1.5 font-medium transition-colors',
                 view === 'week'
-                  ? 'bg-indigo-600 text-white rounded-l-md'
-                  : 'text-gray-600 hover:bg-gray-50 rounded-l-md',
+                  ? 'bg-primary text-primary-foreground rounded-l-md'
+                  : 'text-muted-foreground hover:bg-muted rounded-l-md',
               )}
             >
               Semana
@@ -79,8 +79,8 @@ export function CalendarGrid({
               className={cn(
                 'px-3 py-1.5 font-medium transition-colors',
                 view === 'month'
-                  ? 'bg-indigo-600 text-white rounded-r-md'
-                  : 'text-gray-600 hover:bg-gray-50 rounded-r-md',
+                  ? 'bg-primary text-primary-foreground rounded-r-md'
+                  : 'text-muted-foreground hover:bg-muted rounded-r-md',
               )}
             >
               Mes
@@ -93,20 +93,20 @@ export function CalendarGrid({
           <button
             type="button"
             onClick={() => onPeriodChange('prev')}
-            className="rounded-md border border-gray-200 p-1.5 text-gray-600 hover:bg-gray-50"
+            className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-muted"
             aria-label="Periodo anterior"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
 
-          <span className="min-w-[160px] text-center text-sm font-semibold capitalize text-gray-800">
+          <span className="min-w-[160px] text-center text-sm font-semibold capitalize text-foreground">
             {periodLabel}
           </span>
 
           <button
             type="button"
             onClick={() => onPeriodChange('next')}
-            className="rounded-md border border-gray-200 p-1.5 text-gray-600 hover:bg-gray-50"
+            className="rounded-md border border-border p-1.5 text-muted-foreground hover:bg-muted"
             aria-label="Proximo periodo"
           >
             <ChevronRight className="h-4 w-4" />
@@ -115,7 +115,7 @@ export function CalendarGrid({
           <button
             type="button"
             onClick={() => onPeriodChange('today')}
-            className="rounded-md border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+            className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted"
           >
             Hoje
           </button>

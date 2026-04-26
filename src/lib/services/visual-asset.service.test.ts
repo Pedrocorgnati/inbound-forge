@@ -52,6 +52,11 @@ vi.mock('./thumbnail.service', () => ({
   },
 }))
 
+vi.mock('@/lib/sentry', () => ({
+  captureException: vi.fn(),
+  captureMessage:   vi.fn(),
+}))
+
 vi.mock('@/lib/constants/asset-library', () => ({
   ASSET_UPLOAD_CONFIG: {
     maxFileSizeBytes:    5_000_000,

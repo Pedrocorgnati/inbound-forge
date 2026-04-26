@@ -1,101 +1,61 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, FolderOpen, AlertTriangle } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
-import { toast } from '@/components/ui/toast'
 import { PainCard } from './PainCard'
 import { PainForm } from './PainForm'
 import { PainDeleteModal } from './PainDeleteModal'
 import { CasePainLinkModal } from './CasePainLinkModal'
+import { useKnowledgeList } from '@/hooks/useKnowledgeList'
+import { SECTOR_FILTER_OPTIONS } from '@/constants/knowledge'
 import type { PainResponse } from '@/lib/dtos/pain-library.dto'
 
 interface PainListProps {
   locale: string
 }
 
-interface PaginationData {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-  hasMore: boolean
-}
-
-const SECTOR_OPTIONS = [
-  { value: '', label: 'Todas as categorias' },
-  { value: 'operational_time', label: 'Tempo Operacional' },
-  { value: 'spreadsheet_dependency', label: 'Dependência de Planilhas' },
-  { value: 'systems_integration', label: 'Integração de Sistemas' },
-  { value: 'manual_budgeting', label: 'Orçamento Manual' },
-  { value: 'visibility_dashboards', label: 'Visibilidade / Dashboards' },
-  { value: 'slow_customer_service', label: 'Atendimento Lento' },
-  { value: 'scaling_difficulty', label: 'Dificuldade de Escalar' },
-  { value: 'low_predictability', label: 'Baixa Previsibilidade' },
-  { value: 'human_errors', label: 'Erros Humanos' },
-  { value: 'ad_hoc_operation', label: 'Operação Ad-hoc' },
-]
-
 const PAGE_SIZE = 20
 
 export function PainList({ locale }: PainListProps) {
-  const [pains, setPains] = useState<PainResponse[]>([])
-  const [pagination, setPagination] = useState<PaginationData | null>(null)
-  const [page, setPage] = useState(1)
+  const t = useTranslations()
   const [sectorFilter, setSectorFilter] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+
+  const {
+    items: pains,
+    pagination,
+    page,
+    isLoading,
+    error,
+    deleteTarget,
+    isDeleting,
+    setPage,
+    setDeleteTarget,
+    refresh,
+    handleDelete,
+  } = useKnowledgeList<PainResponse>({
+    endpoint: '/api/knowledge/pains',
+    pageSize: PAGE_SIZE,
+    filters: { sector: sectorFilter },
+  })
 
   // Form modal state
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
   const [formTarget, setFormTarget] = useState<PainResponse | undefined>(undefined)
   const [isFormOpen, setIsFormOpen] = useState(false)
 
-  // Delete modal state
-  const [deleteTarget, setDeleteTarget] = useState<PainResponse | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-
   // Link modal state
   const [linkTarget, setLinkTarget] = useState<PainResponse | null>(null)
-
-  const fetchPains = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(PAGE_SIZE),
-    })
-    if (sectorFilter) {
-      params.set('sector', sectorFilter)
-    }
-
-    try {
-      const res = await fetch(`/api/knowledge/pains?${params}`)
-      if (!res.ok) throw new Error('Falha ao carregar dores')
-
-      const json = await res.json()
-      setPains(json.data ?? [])
-      setPagination(json.pagination ?? null)
-    } catch {
-      setError('Não foi possível carregar as dores. Tente novamente.')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [page, sectorFilter])
-
-  useEffect(() => {
-    fetchPains()
-  }, [fetchPains])
 
   // Reset page when filter changes
   useEffect(() => {
     setPage(1)
-  }, [sectorFilter])
+  }, [sectorFilter, setPage])
 
   function openCreateForm() {
     setFormMode('create')
@@ -109,49 +69,15 @@ export function PainList({ locale }: PainListProps) {
     setIsFormOpen(true)
   }
 
-  async function handleDelete() {
-    if (!deleteTarget) return
-
-    const removedPain = deleteTarget
-    const previousPains = [...pains]
-
-    // Optimistic removal
-    setPains((prev) => prev.filter((p) => p.id !== removedPain.id))
-    setDeleteTarget(null)
-    setIsDeleting(true)
-
-    try {
-      const res = await fetch(`/api/knowledge/pains/${removedPain.id}`, {
-        method: 'DELETE',
-      })
-
-      if (!res.ok) throw new Error('Falha ao deletar')
-
-      toast.success(`Dor "${removedPain.title}" deletada`)
-
-      if (pagination) {
-        setPagination((prev) =>
-          prev ? { ...prev, total: prev.total - 1 } : prev
-        )
-      }
-    } catch {
-      // Rollback
-      setPains(previousPains)
-      toast.error('Erro ao deletar dor. Tente novamente.')
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
   return (
     <div data-testid="pain-list" className="space-y-4">
       {/* Header bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Select
-          options={SECTOR_OPTIONS}
+          options={[...SECTOR_FILTER_OPTIONS]}
           value={sectorFilter}
           onChange={(e) => setSectorFilter(e.target.value)}
-          aria-label="Filtrar por categoria"
+          aria-label={t('knowledge.painList.filterByCategory')}
           className="w-full sm:w-56"
           data-testid="pain-filter-sector"
         />
@@ -161,7 +87,7 @@ export function PainList({ locale }: PainListProps) {
           data-testid="pain-new-button"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          Nova Dor
+          {t('knowledge.painList.new')}
         </Button>
       </div>
 
@@ -174,8 +100,8 @@ export function PainList({ locale }: PainListProps) {
         >
           <AlertTriangle className="h-4 w-4 shrink-0 text-danger" aria-hidden />
           <p className="text-sm text-danger">{error}</p>
-          <Button variant="ghost" size="sm" onClick={fetchPains} className="ml-auto">
-            Tentar novamente
+          <Button variant="ghost" size="sm" onClick={refresh} className="ml-auto">
+            {t('common.retry')}
           </Button>
         </div>
       )}
@@ -196,13 +122,13 @@ export function PainList({ locale }: PainListProps) {
       {!isLoading && !error && pains.length === 0 && (
         <EmptyState
           icon={<FolderOpen className="h-12 w-12" />}
-          title="Nenhuma dor encontrada"
+          title={t('knowledge.painList.empty')}
           description={
             sectorFilter
-              ? 'Nenhuma dor encontrada com este filtro. Tente outra categoria.'
-              : 'Comece adicionando sua primeira dor para alimentar a base de conhecimento.'
+              ? t('knowledge.painList.emptyFilter')
+              : t('knowledge.painList.emptyFirst')
           }
-          ctaLabel={!sectorFilter ? 'Criar primeira dor' : undefined}
+          ctaLabel={!sectorFilter ? t('knowledge.painList.createFirst') : undefined}
           onCtaClick={!sectorFilter ? openCreateForm : undefined}
         />
       )}
@@ -212,14 +138,15 @@ export function PainList({ locale }: PainListProps) {
         <>
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {pains.map((p) => (
-              <PainCard
-                key={p.id}
-                pain={p}
-                locale={locale}
-                onEdit={() => openEditForm(p)}
-                onDelete={() => setDeleteTarget(p)}
-                onLinkCases={() => setLinkTarget(p)}
-              />
+              <div key={p.id} className="[content-visibility:auto] [contain-intrinsic-size:0_260px]">
+                <PainCard
+                  pain={p}
+                  locale={locale}
+                  onEdit={() => openEditForm(p)}
+                  onDelete={() => setDeleteTarget(p)}
+                  onLinkCases={() => setLinkTarget(p)}
+                />
+              </div>
             ))}
           </div>
 
@@ -242,7 +169,7 @@ export function PainList({ locale }: PainListProps) {
         initialData={formTarget}
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        onSuccess={fetchPains}
+        onSuccess={refresh}
         locale={locale}
       />
 
@@ -250,7 +177,14 @@ export function PainList({ locale }: PainListProps) {
       <PainDeleteModal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
+        onConfirm={() =>
+          handleDelete({
+            itemId: deleteTarget!.id,
+            getLabel: (p) => p.title,
+            successMessage: (label) => t('knowledge.painList.deleteSuccess', { name: label }),
+            errorMessage: t('knowledge.painList.deleteError'),
+          })
+        }
         painTitle={deleteTarget?.title ?? ''}
         isDeleting={isDeleting}
       />
@@ -264,7 +198,7 @@ export function PainList({ locale }: PainListProps) {
           painTitle={linkTarget.title}
           currentCaseIds={[]}
           locale={locale}
-          onSuccess={fetchPains}
+          onSuccess={refresh}
         />
       )}
     </div>

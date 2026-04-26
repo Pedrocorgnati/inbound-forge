@@ -1,10 +1,13 @@
-// module-9: BEFORE_AFTER Template — 1080x1350
+// module-9: BEFORE_AFTER Template — dimensao em ./dimensions.ts (INSTAGRAM_FEED)
 // Canal: Instagram Feed (portrait)
 // CONSTRAINTS: flexbox only, no hooks, no dynamic imports
 
 import React from 'react'
 import type { BeforeAfterTemplateProps } from './types'
 import { BRAND_COLOR_DEFAULT } from '../constants'
+import { TEMPLATE_TYPE_TO_DIMENSION } from './dimensions'
+
+const DIM = TEMPLATE_TYPE_TO_DIMENSION.BEFORE_AFTER
 
 export function BeforeAfterTemplate({
   headline,
@@ -20,8 +23,8 @@ export function BeforeAfterTemplate({
       style={{
         display:         'flex',
         flexDirection:   'column',
-        width:           1080,
-        height:          1350,
+        width:           DIM.w,
+        height:          DIM.h,
         backgroundColor: '#0F172A',
         padding:         64,
         gap:             48,

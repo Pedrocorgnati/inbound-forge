@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -37,16 +36,16 @@ function getTodayString(): string {
 }
 
 export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ConversionFormData>({
     resolver: zodResolver(ConversionFormSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       conversionType: undefined,
       occurredAt: getTodayString(),
@@ -58,33 +57,26 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
   const notesValue = watch('notes') ?? ''
 
   async function onSubmit(data: ConversionFormData) {
-    setIsSubmitting(true)
+    const res = await fetch('/api/v1/conversions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        leadId,
+        type: data.conversionType,
+        occurredAt: new Date(data.occurredAt).toISOString(),
+        notes: data.notes || undefined,
+        attribution: 'FIRST_TOUCH',
+      }),
+    })
 
-    try {
-      const res = await fetch('/api/v1/conversions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          leadId,
-          type: data.conversionType,
-          occurredAt: new Date(data.occurredAt).toISOString(),
-          notes: data.notes || undefined,
-          attribution: 'FIRST_TOUCH',
-        }),
-      })
-
-      if (!res.ok) {
-        const json = await res.json().catch(() => null)
-        throw new Error(json?.error ?? 'Erro ao registrar conversao')
-      }
-
-      toast.success('Conversao registrada!')
-      onSuccess?.()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro inesperado')
-    } finally {
-      setIsSubmitting(false)
+    if (!res.ok) {
+      const json = await res.json().catch(() => null)
+      toast.error(json?.error ?? 'Erro ao registrar conversao')
+      return
     }
+
+    toast.success('Conversao registrada!')
+    onSuccess?.()
   }
 
   return (
@@ -98,8 +90,8 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
       <input type="hidden" value={themeId} name="themeId" />
 
       {/* Tipo de conversao */}
-      <div className="flex flex-col gap-1">
-        <Label>Tipo de conversao</Label>
+      <fieldset className="flex flex-col gap-1">
+        <legend className="mb-1 text-sm font-medium text-foreground">Tipo de conversao</legend>
         <RadioGroup
           value={selectedType}
           onValueChange={(val) =>
@@ -107,6 +99,7 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
               shouldValidate: true,
             })
           }
+          aria-describedby={errors.conversionType ? 'conversion-type-error' : undefined}
           data-testid="conversion-field-type"
         >
           {CONVERSION_OPTIONS.map((opt) => (
@@ -119,12 +112,12 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
           ))}
         </RadioGroup>
         {errors.conversionType && (
-          <p role="alert" className="flex items-center gap-1 text-xs text-danger">
+          <p id="conversion-type-error" role="alert" className="flex items-center gap-1 text-xs text-danger">
             <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
             {errors.conversionType.message}
           </p>
         )}
-      </div>
+      </fieldset>
 
       {/* Data */}
       <div className="flex flex-col gap-1">
@@ -132,12 +125,14 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
         <input
           type="date"
           id="conversion-occurred-at"
+          aria-invalid={!!errors.occurredAt}
+          aria-describedby={errors.occurredAt ? 'conversion-occurred-at-error' : undefined}
           className="flex min-h-[44px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors duration-[150ms] hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:border-primary"
           {...register('occurredAt')}
           data-testid="conversion-field-date"
         />
         {errors.occurredAt && (
-          <p role="alert" className="flex items-center gap-1 text-xs text-danger">
+          <p id="conversion-occurred-at-error" role="alert" className="flex items-center gap-1 text-xs text-danger">
             <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
             {errors.occurredAt.message}
           </p>
@@ -168,7 +163,7 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
           loadingText="Registrando..."
           data-testid="conversion-submit"
         >
-          Registrar Conversao
+          Registrar Conversão
         </Button>
       </div>
     </form>

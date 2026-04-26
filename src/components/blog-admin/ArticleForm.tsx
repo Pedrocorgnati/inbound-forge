@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ArticleEditor } from './ArticleEditor'
 import { SlugField } from './SlugField'
 import { CTAConfig } from './CTAConfig'
+import { PostMetadataPanel } from './PostMetadataPanel'
 import {
   createArticleSchema,
   updateArticleSchema,
@@ -38,6 +39,7 @@ type FormValues = CreateArticleInput
 
 export function ArticleForm({ mode, article, onSuccess }: ArticleFormProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+  const [metadataOpen, setMetadataOpen] = React.useState(false)
   const [tagInput, setTagInput] = React.useState('')
 
   const schema = mode === 'create' ? createArticleSchema : updateArticleSchema
@@ -52,12 +54,14 @@ export function ArticleForm({ mode, article, onSuccess }: ArticleFormProps) {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
     defaultValues: {
       title: article?.title ?? '',
       slug: article?.slug ?? '',
       body: article?.body ?? '',
       excerpt: article?.excerpt ?? '',
-      status: article?.status ?? 'DRAFT',
+      status: (article?.status ?? 'DRAFT') as 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'ARCHIVED' | undefined,
       metaTitle: article?.metaTitle ?? '',
       metaDescription: article?.metaDescription ?? '',
       canonicalUrl: article?.canonicalUrl ?? '',
@@ -164,6 +168,37 @@ export function ArticleForm({ mode, article, onSuccess }: ArticleFormProps) {
 
   return (
     <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+      {mode === 'edit' && article && (
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setMetadataOpen(true)}
+          >
+            Editar metadados
+          </Button>
+          <PostMetadataPanel
+            articleId={article.id}
+            initial={{
+              slug: article.slug,
+              tags: article.tags ?? [],
+              featuredImageUrl: article.featuredImageUrl ?? null,
+              coverImageAlt: article.coverImageAlt ?? null,
+              authorName: article.authorName ?? DEFAULT_AUTHOR,
+              publishedAt: article.publishedAt
+                ? new Date(article.publishedAt).toISOString().slice(0, 16)
+                : null,
+              metaTitle: article.metaTitle ?? null,
+              metaDescription: article.metaDescription ?? null,
+              canonicalUrl: article.canonicalUrl ?? null,
+            }}
+            open={metadataOpen}
+            onClose={() => setMetadataOpen(false)}
+          />
+        </div>
+      )}
+
       {/* Titulo */}
       <Input
         label="Titulo"
@@ -192,12 +227,14 @@ export function ArticleForm({ mode, article, onSuccess }: ArticleFormProps) {
         <textarea
           id="excerpt"
           {...register('excerpt')}
+          aria-invalid={!!errors.excerpt}
+          aria-describedby={errors.excerpt ? 'excerpt-error' : undefined}
           className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           placeholder="Resumo curto do artigo (exibido na listagem)"
           rows={3}
         />
         {errors.excerpt && (
-          <p className="text-xs text-danger" role="alert">{errors.excerpt.message}</p>
+          <p id="excerpt-error" className="text-xs text-danger" role="alert">{errors.excerpt.message}</p>
         )}
       </div>
 
@@ -237,21 +274,25 @@ export function ArticleForm({ mode, article, onSuccess }: ArticleFormProps) {
           <textarea
             id="metaDescription"
             {...register('metaDescription')}
+            aria-invalid={!!errors.metaDescription}
+            aria-describedby={errors.metaDescription ? 'metaDescription-error' : 'metaDescription-counter'}
             className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             placeholder="Descricao para SEO (max 160 caracteres)"
             rows={2}
           />
           <p
+            id="metaDescription-counter"
             className={`text-xs ${
               (metaDescription ?? '').length > MAX_META_DESCRIPTION_LENGTH
                 ? 'text-danger font-medium'
                 : 'text-muted-foreground'
             }`}
+            aria-live="polite"
           >
             {(metaDescription ?? '').length}/{MAX_META_DESCRIPTION_LENGTH} caracteres
           </p>
           {errors.metaDescription && (
-            <p className="text-xs text-danger" role="alert">{errors.metaDescription.message}</p>
+            <p id="metaDescription-error" className="text-xs text-danger" role="alert">{errors.metaDescription.message}</p>
           )}
         </div>
 
@@ -260,6 +301,7 @@ export function ArticleForm({ mode, article, onSuccess }: ArticleFormProps) {
           {...register('canonicalUrl')}
           error={errors.canonicalUrl?.message}
           placeholder="https://..."
+          inputMode="url" // G05: RESOLVED
         />
 
         {/* Tags */}

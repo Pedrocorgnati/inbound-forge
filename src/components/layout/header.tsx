@@ -3,7 +3,8 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Menu, LogOut, AlertTriangle } from 'lucide-react'
+import { Menu, LogOut, Settings, User } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -11,8 +12,11 @@ import { WorkerDot } from './worker-dot'
 import { MonthlyCostBadge } from './monthly-cost-badge'
 import { UserAvatar } from '@/components/shared/user-avatar'
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
-import { useAuth } from '@/hooks/use-auth'
-import { useReconciliationStats } from '@/hooks/useReconciliationStats'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
+import { NotificationBell } from './NotificationBell'
+import { HeaderReconciliationBadge } from './HeaderReconciliationBadge'
+import { LocaleSwitcher } from '@/components/ui/locale-switcher'
+import { useAuth } from '@/hooks/useAuth'
 import type { WorkerHeartbeat } from '@/types'
 
 interface HeaderProps {
@@ -38,8 +42,9 @@ export function Header({
 }: HeaderProps) {
   const { signOut } = useAuth()
   const router = useRouter()
+  const tAuth = useTranslations('auth')
+  const tHeader = useTranslations('header')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const { pendingCount: reconciliationCount } = useReconciliationStats()
 
   const displayWorkers = workers.length > 0 ? workers : DEFAULT_WORKERS
 
@@ -47,10 +52,10 @@ export function Header({
     setIsLoggingOut(true)
     try {
       await signOut()
-      toast.success('Sessão encerrada com sucesso')
+      toast.success(tAuth('logoutSuccess'))
       router.push(`/${locale}/login`)
     } catch {
-      toast.error('Erro ao encerrar sessão. Tente novamente.')
+      toast.error(tAuth('logoutError'))
     } finally {
       setIsLoggingOut(false)
     }
@@ -70,7 +75,7 @@ export function Header({
         <button
           data-testid="header-mobile-menu-button"
           type="button"
-          aria-label="Abrir menu de navegação"
+          aria-label={tHeader('openMenu')}
           onClick={onMenuToggle}
           className={cn(
             'flex md:hidden items-center justify-center h-11 w-11 rounded-md',
@@ -106,32 +111,54 @@ export function Header({
           ))}
         </div>
 
-        {/* Reconciliation badge */}
-        {reconciliationCount > 0 && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                href={`/${locale}/analytics`}
-                data-testid="header-reconciliation-badge"
-                aria-label={`${reconciliationCount} itens de reconciliação pendentes`}
-                className="relative flex items-center justify-center h-9 w-9 rounded-md hover:bg-muted transition-colors"
-              >
-                <AlertTriangle className="h-4 w-4 text-warning" />
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                  {reconciliationCount}
-                </span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>
-              {reconciliationCount} itens de reconciliação pendentes
-            </TooltipContent>
-          </Tooltip>
-        )}
+        {/* Reconciliation badge — TASK-3 ST003 (CL-129) */}
+        <HeaderReconciliationBadge locale={locale} />
 
         {/* Cost badge */}
         <div data-testid="header-cost-badge" className="hidden md:flex">
-          <MonthlyCostBadge cost={monthlyCost ?? null} />
+          <MonthlyCostBadge cost={monthlyCost ?? null} locale={locale} />
         </div>
+
+        {/* Locale switcher */}
+        <div data-testid="header-locale-switcher" className="hidden md:flex">
+          <LocaleSwitcher />
+        </div>
+
+        {/* Notification bell — Intake Review TASK-11 (CL-245) */}
+        <NotificationBell />
+
+        {/* Theme toggle */}
+        <ThemeToggle />
+
+        {/* Profile link */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href={`/${locale}/profile`}
+              data-testid="header-profile-link"
+              aria-label={tHeader('profileLabel') || 'Perfil'}
+              className="flex h-11 w-11 items-center justify-center rounded-md hover:bg-muted transition-colors"
+            >
+              <User className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Perfil</TooltipContent>
+        </Tooltip>
+
+        {/* Settings link */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              href={`/${locale}/settings`}
+              data-testid="header-settings-link"
+              aria-label={tHeader('settingsLabel') || 'Configurações'}
+              className="flex h-11 w-11 items-center justify-center rounded-md hover:bg-muted transition-colors"
+            >
+              <Settings className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Configurações</TooltipContent>
+        </Tooltip>
 
         {/* Avatar */}
         <UserAvatar data-testid="header-user-avatar" name={userName} size="sm" />
@@ -141,10 +168,10 @@ export function Header({
           data-testid="header-logout-button"
           variant="ghost"
           size="icon"
-          aria-label="Sair da aplicação"
+          aria-label={tHeader('logoutLabel')}
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="hidden md:flex h-11 w-11"
+          className="flex h-11 w-11"
         >
           <LogOut className="h-4 w-4 text-muted-foreground" />
         </Button>

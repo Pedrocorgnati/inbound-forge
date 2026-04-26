@@ -12,11 +12,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ApprovalGate } from '@/components/blog-admin/ApprovalGate'
 import type { BlogArticle } from '@/types/blog'
+import { BLOG_STATUS } from '@/constants/status'
+import { useFormatters } from '@/lib/i18n/formatters'
 
 export default function BlogReviewPage() {
   const params = useParams()
   const router = useRouter()
   const id = params?.slug as string
+  const fmt = useFormatters()
   const locale = (params?.locale as string) ?? 'pt-BR'
 
   const [article, setArticle] = React.useState<BlogArticle | null>(null)
@@ -28,7 +31,7 @@ export default function BlogReviewPage() {
     async function load() {
       try {
         const res = await fetch(`/api/blog-articles/${id}`)
-        if (!res.ok) throw new Error('Artigo nao encontrado')
+        if (!res.ok) throw new Error('Artigo não encontrado')
         const data: BlogArticle = await res.json()
         setArticle(data)
       } catch {
@@ -137,11 +140,11 @@ export default function BlogReviewPage() {
                   <p className="text-sm text-green-700 font-medium">
                     Artigo aprovado por {article.approvedBy ?? 'Admin'} em{' '}
                     {article.approvedAt
-                      ? new Date(article.approvedAt).toLocaleDateString('pt-BR')
+                      ? fmt.date(article.approvedAt)
                       : ''}
                   </p>
 
-                  {article.status !== 'PUBLISHED' && (
+                  {article.status !== BLOG_STATUS.PUBLISHED && (
                     <Button
                       onClick={handlePublish}
                       disabled={isPublishing}
@@ -154,11 +157,11 @@ export default function BlogReviewPage() {
                     </Button>
                   )}
 
-                  {article.status === 'PUBLISHED' && (
+                  {article.status === BLOG_STATUS.PUBLISHED && (
                     <p className="text-sm text-muted-foreground">
                       Artigo ja publicado em{' '}
                       {article.publishedAt
-                        ? new Date(article.publishedAt).toLocaleDateString('pt-BR')
+                        ? fmt.date(article.publishedAt)
                         : ''}
                     </p>
                   )}
@@ -180,13 +183,13 @@ export default function BlogReviewPage() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div>
-                <span className="font-medium">Meta Titulo:</span>{' '}
-                <span className="text-muted-foreground">{article.metaTitle || 'Nao definido'}</span>
+                <span className="font-medium">Meta Título:</span>{' '}
+                <span className="text-muted-foreground">{article.metaTitle || 'Não definido'}</span>
               </div>
               <div>
-                <span className="font-medium">Meta Descricao:</span>{' '}
+                <span className="font-medium">Meta Descrição:</span>{' '}
                 <span className="text-muted-foreground">
-                  {article.metaDescription || 'Nao definida'}
+                  {article.metaDescription || 'Não definida'}
                   {article.metaDescription && ` (${article.metaDescription.length} chars)`}
                 </span>
               </div>

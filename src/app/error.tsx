@@ -4,6 +4,8 @@
 // Captura erros fora do scope de [locale] (ex: middleware, root layout)
 
 import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
+import { captureException } from '@/lib/sentry'
 
 interface ErrorProps {
   error: Error & { digest?: string }
@@ -11,9 +13,11 @@ interface ErrorProps {
 }
 
 export default function RootError({ error, reset }: ErrorProps) {
+  const pathname = usePathname()
+
   useEffect(() => {
-    console.error(error)
-  }, [error])
+    captureException(error, { digest: error.digest, route: pathname, boundary: 'root-error' })
+  }, [error, pathname])
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center">

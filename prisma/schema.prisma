@@ -43,19 +43,25 @@ enum ContentStatus {
   PUBLISHED
   FAILED
   PENDING_ART
+  ROLLED_BACK
+  CANCELLED
 }
 
 enum QueueStatus {
   PENDING
   PROCESSING
+  PAUSED
   DONE
   FAILED
+  CANCELLED
 }
 
 enum Channel {
   BLOG
   LINKEDIN
   INSTAGRAM
+  TIKTOK        // post-MVP — CL-064
+  YOUTUBE_SHORTS // post-MVP — CL-065
 }
 
 enum WorkerStatus {
@@ -64,16 +70,34 @@ enum WorkerStatus {
   ERROR
 }
 
+// TASK-1 ST003: Status do audit log de coleta (LGPD CL-147)
+enum ScrapingAuditStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
 enum WorkerType {
   SCRAPING
   IMAGE
+  VIDEO
   PUBLISHING
+}
+
+// TASK-4 ST001 (CL-TH-010): status de jobs individuais na fila.
+enum WorkerJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  DEAD_LETTER
 }
 
 enum ConversionType {
   CONVERSATION
   MEETING
   PROPOSAL
+  CALENDAR_BOOKING
 }
 
 enum AttributionType {
@@ -83,15 +107,36 @@ enum AttributionType {
 
 enum ArticleStatus {
   DRAFT
+  SCHEDULED
   REVIEW
   PUBLISHED
   ARCHIVED
+  DELETED
 }
 
 enum FunnelStage {
   AWARENESS
   CONSIDERATION
   DECISION
+}
+
+enum LeadStatus {
+  NEW
+  MQL
+  SQL
+  OPPORTUNITY
+  CUSTOMER
+  LOST
+  LEGAL_HOLD
+}
+
+enum LeadLossReason {
+  BUDGET
+  TIMING
+  FIT
+  NO_RESPONSE
+  COMPETITOR
+  OTHER
 }
 
 enum ImageType {
@@ -104,6 +149,11 @@ enum ImageType {
   ERROR_CARD
   SOLUTION_CARD
   BACKSTAGE_CARD
+}
+
+enum VideoOrientation {
+  PORTRAIT   // 1080x1920 (Reels, TikTok, Shorts)
+  LANDSCAPE  // 1920x1080 (YouTube, LinkedIn)
 }
 
 enum CTADestination {
@@ -126,14 +176,52 @@ model Operator {
   id                   String   @id @default(uuid())
   email                String   @unique
   onboardingCompleted  Boolean  @default(false) @map("onboarding_completed")
+  preferences          Json?
   createdAt            DateTime @default(now()) @map("created_at")
   updatedAt            DateTime @updatedAt @map("updated_at")
 
   // Relations — module-6
-  sources       Source[]
-  scrapedTexts  ScrapedText[]
+  sources          Source[]
+  scrapedTexts     ScrapedText[]
+  activationEvents ActivationEvent[]
 
   @@map("operators")
+}
+
+// TASK-1 ST001 (CL-031): evento de ativacao disparado uma vez por operator quando
+// threshold 5+5 (cases+pains) e atingido no onboarding. Unique(operatorId) garante
+// idempotencia mesmo com retries.
+model ActivationEvent {
+  id           String   @id @default(uuid())
+  operatorId   String   @unique @map("operator_id")
+  triggeredAt  DateTime @default(now()) @map("triggered_at")
+  casesCount   Int      @map("cases_count")
+  painsCount   Int      @map("pains_count")
+  meta         Json?
+
+  operator Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+
+  @@index([triggeredAt], name: "IDX_activation_events_triggered_at")
+  @@map("activation_events")
+}
+
+// TASK-4 ST001 (CL-TH-010): jobs individuais da fila (distinto de WorkerHealth
+// que registra estado agregado do worker). Popula `/health/jobs`.
+model WorkerJob {
+  id          String          @id @default(uuid())
+  type        String          @db.VarChar(64)
+  status      WorkerJobStatus @default(PENDING)
+  retryCount  Int             @default(0) @map("retry_count")
+  payload     Json?
+  error       String?         @db.Text
+  createdAt   DateTime        @default(now()) @map("created_at")
+  startedAt   DateTime?       @map("started_at")
+  completedAt DateTime?       @map("completed_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  @@index([status, createdAt], name: "IDX_worker_jobs_status_created")
+  @@index([type, status], name: "IDX_worker_jobs_type_status")
+  @@map("worker_jobs")
 }
 
 model WorkerHealth {
@@ -161,6 +249,7 @@ model CaseLibraryEntry {
   isDraft               Boolean     @default(true) @map("is_draft")
   lastAutosave          DateTime?   @map("last_autosave")
   status                EntryStatus @default(DRAFT)
+  sortOrder             Int         @default(0) @map("sort_order")
   createdAt             DateTime    @default(now()) @map("created_at")
   updatedAt             DateTime    @updatedAt @map("updated_at")
 
@@ -174,20 +263,26 @@ model CaseLibraryEntry {
 }
 
 model PainLibraryEntry {
-  id          String      @id @default(uuid())
-  title       String      @db.VarChar(255)
-  description String      @db.Text
-  sectors     String[]
-  status      EntryStatus @default(DRAFT)
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  id              String      @id @default(uuid())
+  title           String      @db.VarChar(255)
+  description     String      @db.Text
+  sectors         String[]
+  relevanceScore  Float?      @default(50) @map("relevance_score")
+  status          EntryStatus @default(DRAFT)
+  sortOrder       Int         @default(0) @map("sort_order")
+  // Intake Review TASK-2 (CL-029, CL-034): entradas MVP pre-configuradas.
+  isDefault       Boolean     @default(false) @map("is_default")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
 
   // Relations
   solutionPatterns SolutionPattern[]
   themes           Theme[]
   casePains        CasePain[]
 
+  @@unique([title], name: "UQ_pain_library_title")
   @@index([status], name: "IDX_pain_library_status")
+  @@index([isDefault], name: "IDX_pain_library_is_default")
   @@map("pain_library_entries")
 }
 
@@ -207,6 +302,7 @@ model SolutionPattern {
   description String   @db.Text
   painId      String   @map("pain_id")
   caseId      String   @map("case_id")
+  sortOrder   Int      @default(0) @map("sort_order")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -225,10 +321,26 @@ model Objection {
   content   String        @db.Text
   type      ObjectionType
   status    EntryStatus   @default(DRAFT)
+  sortOrder Int           @default(0) @map("sort_order")
   createdAt DateTime      @default(now()) @map("created_at")
   updatedAt DateTime      @updatedAt @map("updated_at")
 
   @@map("objections")
+}
+
+model KnowledgeEntryVersion {
+  id            String   @id @default(uuid())
+  entryType     String   @map("entry_type") @db.VarChar(20) // case | pain | pattern | objection
+  entryId       String   @map("entry_id")
+  version       Int
+  snapshot      Json
+  createdBy     String?  @map("created_by") @db.VarChar(255)
+  createdAt     DateTime @default(now()) @map("created_at")
+  changeSummary String?  @map("change_summary") @db.VarChar(500)
+
+  @@unique([entryType, entryId, version], name: "UQ_kb_versions_entry_version")
+  @@index([entryType, entryId], name: "IDX_kb_versions_entry")
+  @@map("knowledge_entry_versions")
 }
 
 model NicheOpportunity {
@@ -237,16 +349,41 @@ model NicheOpportunity {
   painCategory   String   @map("pain_category") @db.VarChar(255)
   potentialScore Float    @map("potential_score")
   isGeoReady     Boolean  @default(false) @map("is_geo_ready")
+  // TASK-11 (CL-249): estado do pool: NEW | APPROVED | DISCARDED.
+  status         String   @default("NEW") @db.VarChar(20)
+  reviewNote     String?  @map("review_note") @db.VarChar(500)
+  reviewedAt     DateTime? @map("reviewed_at")
+  reviewedBy     String?  @map("reviewed_by") @db.VarChar(255)
+  themeId        String?  @map("theme_id")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   // Relations
   themes Theme[]
 
+  @@index([status, createdAt], name: "IDX_niche_opps_status")
   @@map("niche_opportunities")
 }
 
 // ─── Scraping Worker (module-6) ──────────────────────────────────────────────
+
+// TASK-13 ST002 (CL-105): fontes customizadas para Satori (image-pipeline)
+model CustomFont {
+  id          String   @id @default(cuid())
+  operatorId  String   @map("operator_id")
+  family      String   @db.VarChar(120)
+  weight      Int      @default(400)
+  style       String   @default("normal") @db.VarChar(20)
+  storagePath String   @map("storage_path") @db.VarChar(512)
+  publicUrl   String?  @map("public_url") @db.VarChar(1024)
+  fileSize    Int      @map("file_size")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([operatorId, isActive], name: "IDX_custom_fonts_operator_active")
+  @@map("custom_fonts")
+}
 
 model Source {
   id             String   @id @default(cuid())
@@ -257,17 +394,46 @@ model Source {
   isProtected    Boolean  @default(false) @map("is_protected")
   selector       String?  @db.VarChar(512)
   crawlFrequency String   @default("daily") @map("crawl_frequency") @db.VarChar(50)
+  rateLimitPerMinute Int  @default(60) @map("rate_limit_per_minute")
   lastCrawledAt  DateTime? @map("last_crawled_at")
+  // TASK-3 CL-030: marcacao anti-bot em runtime (distinto de isProtected/INT-093)
+  antiBotBlocked      Boolean   @default(false) @map("anti_bot_blocked")
+  antiBotReason       String?   @map("anti_bot_reason") @db.VarChar(255)
+  antiBotBlockedAt    DateTime? @map("anti_bot_blocked_at")
+  consecutiveFailures Int       @default(0) @map("consecutive_failures")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   // Relations
-  operator     Operator      @relation(fields: [operatorId], references: [id])
-  scrapedTexts ScrapedText[]
+  operator          Operator            @relation(fields: [operatorId], references: [id])
+  scrapedTexts      ScrapedText[]
+  scrapingAuditLogs ScrapingAuditLog[]  // TASK-1 ST003
 
   @@unique([operatorId, url])
   @@index([operatorId, isActive], name: "IDX_sources_operator_active")
+  @@index([isActive, antiBotBlocked], name: "IDX_sources_active_antibot")
   @@map("sources")
+}
+
+// TASK-1 ST003: Log dedicado de cada evento de coleta (LGPD CL-147)
+model ScrapingAuditLog {
+  id               String              @id @default(uuid())
+  sourceId         String              @map("source_id")
+  sourceUrl        String              @map("source_url") @db.VarChar(1024)
+  textsCollected   Int                 @map("texts_collected")
+  textsClassified  Int                 @map("texts_classified")
+  errorsCount      Int                 @default(0) @map("errors_count")
+  durationMs       Int                 @map("duration_ms")
+  status           ScrapingAuditStatus
+  errorMessage     String?             @map("error_message") @db.Text
+  createdAt        DateTime            @default(now()) @map("created_at")
+
+  // Relations
+  source Source @relation(fields: [sourceId], references: [id])
+
+  @@index([sourceId, createdAt], name: "IDX_scraping_audit_source_created")
+  @@index([status, createdAt], name: "IDX_scraping_audit_status_created")
+  @@map("scraping_audit_logs")
 }
 
 model ScrapedText {
@@ -318,6 +484,14 @@ model Theme {
   geoMultiplier      Float @default(1.0) @map("geo_multiplier") // 1.0 ou 1.2
   recencyBonus       Float @default(1.0) @map("recency_bonus") // 0.0, 0.5 ou 1.0
   rejectionCount     Int   @default(0) @map("rejection_count") // RN-006: acumula rejeições de ContentPieces
+  regenerationCount  Int   @default(0) @map("regeneration_count") // TASK-6 CL-190: quota de regeneracoes por tema
+  scoreBreakdown     Json? @map("score_breakdown") // TASK-5 CL-051: breakdown por sinal
+
+  // Intake-Review TASK-7 ST001 (CL-TH-003, CL-TH-016): autoria + soft-delete dedicado.
+  // archivedAt eh a unica fonte de verdade para "arquivado"; status mantem workflow.
+  createdBy        String?   @map("created_by") @db.VarChar(64)
+  archivedAt       DateTime? @map("archived_at")
+  lastPublishedAt  DateTime? @map("last_published_at")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -329,10 +503,12 @@ model Theme {
   nicheOpportunity NicheOpportunity? @relation(fields: [nicheOpportunityId], references: [id])
   contentPieces    ContentPiece[]
   firstTouchLeads  Lead[]            @relation("firstTouchTheme")
+  asovSnapshots    AsovSnapshot[]
 
   @@index([status, opportunityScore(sort: Desc)], name: "IDX_themes_status_score")
   @@index([conversionScore(sort: Desc)], name: "IDX_themes_conversion_score")
   @@index([isNew], name: "IDX_themes_is_new")
+  @@index([archivedAt], name: "IDX_themes_archived_at")
   @@map("themes")
 }
 
@@ -352,20 +528,40 @@ model ContentPiece {
   editedText         String?        @map("edited_text") @db.Text
   generatedImageUrl  String?        @map("generated_image_url") @db.VarChar(512)
   imageJobId         String?        @unique @map("image_job_id")
+  videoJobId         String?        @unique @map("video_job_id")
+  generatedVideoUrl  String?        @map("generated_video_url") @db.VarChar(512)
   createdAt          DateTime       @default(now()) @map("created_at")
   updatedAt          DateTime       @updatedAt @map("updated_at")
 
   // Relations
   theme         Theme                 @relation(fields: [themeId], references: [id])
   imageJob      ImageJob?             @relation(fields: [imageJobId], references: [id])
+  videoJob      VideoJob?             @relation(fields: [videoJobId], references: [id])
   angles        ContentAngleVariant[]
   rejections    ContentRejection[]
   scheduledPost Post?
   blogArticle   BlogArticle?
+  versions      ContentPieceVersion[]
 
   @@index([themeId], name: "IDX_content_pieces_theme")
   @@index([status], name: "IDX_content_pieces_status")
   @@map("content_pieces")
+}
+
+// TASK-12 ST001 (CL-076): versioning de copy de ContentPiece + variants
+model ContentPieceVersion {
+  id               String       @id @default(uuid())
+  pieceId          String       @map("piece_id")
+  copy             Json         // snapshot campos textuais (editedText, baseTitle, angles editedBody)
+  variantSnapshot  Json         @map("variant_snapshot")
+  changeSummary    String?      @map("change_summary") @db.VarChar(500)
+  createdBy        String?      @map("created_by")
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  piece            ContentPiece @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+
+  @@index([pieceId, createdAt(sort: Desc)], name: "IDX_content_piece_versions_piece_created")
+  @@map("content_piece_versions")
 }
 
 model ContentAngleVariant {
@@ -412,6 +608,8 @@ model ImageJob {
   templateType   ImageType @default(CAROUSEL) @map("template_type")
   templateId     String?   @map("template_id")
   provider       String?   @db.VarChar(20)
+  backgroundProvider String? @map("background_provider") @db.VarChar(20)
+  backgroundNeedsText Boolean @default(false) @map("background_needs_text")
   status         String    @default("PENDING") @db.VarChar(20)
   prompt         String?   @db.Text
   imageUrl       String?   @map("image_url") @db.VarChar(512)
@@ -434,6 +632,36 @@ model ImageJob {
   @@map("image_jobs")
 }
 
+// ─── Video Generation (Short Video Maker MCP) ────────────────────────────────
+
+model VideoJob {
+  id              String           @id @default(uuid())
+  orientation     VideoOrientation @default(PORTRAIT)
+  provider        String           @default("short-video-maker") @db.VarChar(30)
+  status          String           @default("PENDING") @db.VarChar(20)
+  externalVideoId String?          @map("external_video_id") @db.VarChar(100)
+  scenes          Json             // Array de { text, searchTerms }
+  config          Json?            // { paddingBack, music, captionPosition, voice, musicVolume }
+  prompt          String?          @db.Text
+  outputUrl       String?          @map("output_url") @db.VarChar(512)
+  thumbnailUrl    String?          @map("thumbnail_url") @db.VarChar(512)
+  durationMs      Int?             @map("duration_ms")
+  fileSizeBytes   Int?             @map("file_size_bytes")
+  processingMs    Int?             @map("processing_ms")
+  retryCount      Int              @default(0) @map("retry_count")
+  metadata        Json?
+  errorMessage    String?          @map("error_message") @db.Text
+  completedAt     DateTime?        @map("completed_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  // Relations — FK is on ContentPiece.videoJobId (same pattern as ImageJob)
+  contentPiece ContentPiece?
+
+  @@index([status], name: "IDX_video_jobs_status")
+  @@map("video_jobs")
+}
+
 model VisualAsset {
   id            String   @id @default(uuid())
   fileName      String   @map("file_name") @db.VarChar(255)
@@ -448,10 +676,14 @@ model VisualAsset {
   tags          String[] @default([])
   usedInJobs    String[] @default([]) @map("used_in_jobs")
   isActive      Boolean  @default(true) @map("is_active")
+  // Intake-Review TASK-2 ST002 (CL-CG-012): owner do asset para RLS per-user
+  // (auth.uid() do Supabase Auth). Nullable para nao quebrar legacy rows.
+  uploadedBy    String?  @map("uploaded_by") @db.Uuid
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  @@index([fileType], name: "IDX_visual_assets_file_type")
+  @@index([fileType],   name: "IDX_visual_assets_file_type")
+  @@index([uploadedBy], name: "IDX_visual_assets_uploaded_by")
   @@map("visual_assets")
 }
 
@@ -465,6 +697,7 @@ model ImageTemplate {
   channel      String    @default("instagram") @db.VarChar(50)
   configJson   Json?     @map("config_json")
   description  String?   @db.Text
+  backgroundNeedsText Boolean @default(false) @map("background_needs_text")
   isActive     Boolean   @default(true) @map("is_active")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at")
@@ -482,6 +715,7 @@ model Post {
   scheduledAt    DateTime?     @map("scheduled_at")
   publishedAt    DateTime?     @map("published_at")
   imageUrl       String?       @map("image_url") @db.VarChar(512)
+  videoUrl       String?       @map("video_url") @db.VarChar(512)
   caption        String        @db.Text
   hashtags       String[]      @default([])
   cta            String        @default("") @db.Text
@@ -492,7 +726,17 @@ model Post {
   approvedAt     DateTime?     @map("approved_at")
   platform       String?       @db.VarChar(50) // 'instagram_graph_api' | 'linkedin_assisted'
   platformPostId String?       @map("platform_post_id") @db.VarChar(255)
+  publishedUrl   String?       @map("published_url") @db.VarChar(1024)
   errorMessage   String?       @map("error_message") @db.Text
+  rolledBackAt   DateTime?     @map("rolled_back_at")
+  rollbackReason String?       @map("rollback_reason") @db.VarChar(500)
+  rollbackByOperatorId String?  @map("rollback_by_operator_id") @db.VarChar(255)
+  cancelledAt    DateTime?     @map("cancelled_at")
+  cancelledByOperatorId String? @map("cancelled_by_operator_id") @db.VarChar(255)
+  sourcePostId   String?       @map("source_post_id")
+  themeId        String?       @map("theme_id")
+  recurrenceRule     String?   @map("recurrence_rule") @db.VarChar(255)
+  recurrenceParentId String?   @map("recurrence_parent_id")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
@@ -538,8 +782,10 @@ model PublishingQueue {
 model PublishAuditLog {
   id             String   @id @default(uuid())
   postId         String   @map("post_id")
-  action         String   @db.VarChar(50) // 'publish_attempt' | 'publish_success' | 'publish_failure' | 'queue_retry' | 'permanent_fail'
-  result         String   @db.VarChar(20) // 'success' | 'failure'
+  action         String   @db.VarChar(50) // 'publish_attempt' | 'publish_success' | 'publish_failure' | 'queue_retry' | 'permanent_fail' | 'cancel' | 'edit' | 'duplicate'
+  result         String   @default("success") @db.VarChar(20) // 'success' | 'failure'
+  operatorId     String?  @map("operator_id") @db.VarChar(255)
+  delta          Json?
   platformPostId String?  @map("platform_post_id") @db.VarChar(255)
   errorMessage   String?  @map("error_message") @db.Text
   attempts       Int      @default(1)
@@ -569,6 +815,9 @@ model BlogArticle {
   tags             String[]      @default([])
   status           ArticleStatus @default(DRAFT)
   authorName       String        @default("Pedro Corgnati") @map("author_name") @db.VarChar(255)
+  authorCredentials Json?        @map("author_credentials")
+  contentType      String        @default("STANDARD") @map("content_type") @db.VarChar(20)
+  howToSteps       Json?         @map("how_to_steps")
   jsonLd           String?       @map("json_ld") @db.Text
   ctaType          CTADestination? @map("cta_type")
   ctaUrl           String?       @map("cta_url") @db.VarChar(512)
@@ -577,16 +826,53 @@ model BlogArticle {
   approvedAt       DateTime?     @map("approved_at")
   approvedBy       String?       @map("approved_by") @db.VarChar(255)
   publishedAt      DateTime?     @map("published_at")
+  scheduledFor     DateTime?     @map("scheduled_for")
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt @map("updated_at")
 
+  // Intake Review TASK-8 ST002 (CL-159)
+  clusterId        String?       @map("cluster_id")
+
   // Relations
-  contentPiece ContentPiece?        @relation(fields: [contentPieceId], references: [id])
-  versions     BlogArticleVersion[]
+  contentPiece  ContentPiece?        @relation(fields: [contentPieceId], references: [id])
+  cluster       ArticleCluster?      @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+  versions      BlogArticleVersion[]
+  slugRedirects BlogSlugRedirect[]
 
   @@index([status, publishedAt], name: "IDX_blog_articles_status")
+  @@index([status, scheduledFor], name: "IDX_blog_articles_scheduled")
   @@index([slug], name: "IDX_blog_articles_slug")
+  @@index([clusterId], name: "IDX_blog_articles_cluster")
   @@map("blog_articles")
+}
+
+// Intake Review TASK-8 ST002 (CL-159) — agrupamento editorial topico/cluster.
+model ArticleCluster {
+  id          String        @id @default(uuid())
+  slug        String        @unique @db.VarChar(100)
+  name        String        @db.VarChar(200)
+  description String?       @db.Text
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  articles    BlogArticle[]
+
+  @@map("article_clusters")
+}
+
+// Intake-Review TASK-2 (CL-298): redirect 301 para slugs antigos de artigos
+// publicados. Criado automaticamente no PATCH quando o slug muda.
+model BlogSlugRedirect {
+  id        String   @id @default(cuid())
+  oldSlug   String   @unique @map("old_slug") @db.VarChar(255)
+  newSlug   String   @map("new_slug") @db.VarChar(255)
+  articleId String   @map("article_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  article BlogArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@index([newSlug], name: "IDX_blog_slug_redirects_new")
+  @@map("blog_slug_redirects")
 }
 
 model BlogArticleVersion {
@@ -605,17 +891,59 @@ model BlogArticleVersion {
   @@map("blog_article_versions")
 }
 
+enum TranslationStatus {
+  DRAFT
+  APPROVED
+  REJECTED
+}
+
+enum TranslationSource {
+  MACHINE
+  HUMAN
+}
+
+model BlogArticleTranslation {
+  id           String            @id @default(uuid())
+  articleId    String            @map("article_id")
+  locale       String            @db.VarChar(10)
+  title        String            @db.VarChar(500)
+  slug         String            @db.VarChar(255)
+  metaTitle    String?           @map("meta_title") @db.VarChar(70)
+  metaDescription String?        @map("meta_description") @db.VarChar(160)
+  excerpt      String?           @db.VarChar(500)
+  contentMd    String            @map("content_md") @db.Text
+  status       TranslationStatus @default(DRAFT)
+  translatedBy TranslationSource @default(MACHINE) @map("translated_by")
+  costUsd      Decimal?          @map("cost_usd") @db.Decimal(10, 4)
+  tokensUsed   Int?              @map("tokens_used")
+  rejectionReason String?        @map("rejection_reason") @db.VarChar(500)
+  createdAt    DateTime          @default(now()) @map("created_at")
+  approvedAt   DateTime?         @map("approved_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  @@unique([articleId, locale], name: "UQ_blog_article_translations_article_locale")
+  @@index([locale, status], name: "IDX_blog_article_translations_locale_status")
+  @@map("blog_article_translations")
+}
+
 model Lead {
   id                String       @id @default(uuid())
   name              String?      @db.VarChar(255)
   company           String?      @db.VarChar(255)
   contactInfo       String?      @map("contact_info") @db.Text // AES-256 encrypted — COMP-002
+  // TASK-3 ST002 (CL-TA-042): hash deterministico de email+phone para anti-duplicata.
+  // Nullable durante backfill; unique index evita duplicatas apos backfill.
+  contactHash       String?      @unique @map("contact_hash") @db.VarChar(64)
   firstTouchPostId  String       @map("first_touch_post_id")
   firstTouchThemeId String       @map("first_touch_theme_id")
   notes             String?      @db.Text
   // M013: leads-conversions additions
   channel           Channel?
   funnelStage       FunnelStage? @map("funnel_stage")
+  status            LeadStatus       @default(NEW)
+  lossReason        LeadLossReason?  @map("loss_reason")
+  lossReasonDetail  String?          @map("loss_reason_detail") @db.VarChar(500)
+  statusUpdatedAt   DateTime?        @map("status_updated_at")
   lgpdConsent       Boolean      @default(false) @map("lgpd_consent")
   lgpdConsentAt     DateTime?    @map("lgpd_consent_at")
   firstTouchAt      DateTime?    @map("first_touch_at")
@@ -634,22 +962,36 @@ model Lead {
   @@index([firstTouchThemeId], name: "IDX_leads_first_touch_theme")
   @@index([channel], name: "IDX_leads_channel")
   @@index([funnelStage], name: "IDX_leads_funnel_stage")
+  @@index([status], name: "IDX_leads_status")
   @@map("leads")
 }
 
 model ConversionEvent {
-  id          String          @id @default(uuid())
-  leadId      String          @map("lead_id")
-  type        ConversionType
-  attribution AttributionType @default(FIRST_TOUCH)
-  occurredAt  DateTime        @map("occurred_at")
-  notes       String?         @db.Text
-  createdAt   DateTime        @default(now()) @map("created_at")
+  id                 String          @id @default(uuid())
+  leadId             String          @map("lead_id")
+  type               ConversionType
+  attribution        AttributionType @default(FIRST_TOUCH)
+  occurredAt         DateTime        @map("occurred_at")
+  notes              String?         @db.Text
+  // Cal.com integration (TASK-1 / CL-105, CL-106)
+  externalBookingId  String?         @map("external_booking_id") @db.VarChar(255)
+  bookingStatus      String?         @map("booking_status") @db.VarChar(32)
+  utmCampaign        String?         @map("utm_campaign") @db.VarChar(255)
+  // Intake Review TASK-5 ST002 (CL-094) — validacao manual first-touch
+  manuallyValidated  Boolean         @default(false) @map("manually_validated")
+  validatedAt        DateTime?       @map("validated_at")
+  validatedBy        String?         @map("validated_by") @db.VarChar(255)
+  // Intake Review TASK-5 ST001 (CL-238) — campos editaveis opcionais
+  amountBrl          Decimal?        @map("amount_brl") @db.Decimal(14, 2)
+  channel            String?         @db.VarChar(50)
+  createdAt          DateTime        @default(now()) @map("created_at")
 
   // Relations
   lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
+  @@unique([externalBookingId], name: "UQ_conversion_events_external_booking")
   @@index([leadId], name: "IDX_conversion_events_lead")
+  @@index([type], name: "IDX_conversion_events_type")
   @@map("conversion_events")
 }
 
@@ -733,6 +1075,20 @@ model AlertLog {
   @@map("alert_logs")
 }
 
+// ─── Cost Tracking (CL-128, TASK-7 ST002) ────────────────────────────────────
+
+model CostLog {
+  id         String   @id @default(uuid())
+  provider   String   @db.VarChar(50)
+  amount     Float
+  operation  String   @db.VarChar(100)
+  metadata   String?  @db.Text
+  recordedAt DateTime @default(now()) @map("recorded_at")
+
+  @@index([provider, recordedAt], name: "IDX_cost_logs_provider")
+  @@map("cost_logs")
+}
+
 // ─── M010: Seed Metadata Control (module-1/TASK-2) ───────────────────────────
 
 model SeedMetadata {
@@ -742,4 +1098,110 @@ model SeedMetadata {
   version    String   @default("1.0") @db.VarChar(20)
 
   @@map("seed_metadata")
+}
+
+// ─── ASoV — AI Share of Voice (TASK-2 ST001) ─────────────────────────────────
+
+model AsovSnapshot {
+  id           String   @id @default(uuid())
+  themeId      String   @map("theme_id")
+  probeDate    DateTime @map("probe_date")
+  llm          String   @db.VarChar(50)
+  query        String   @db.Text
+  mentioned    Boolean  @default(false)
+  rank         Int?
+  rawResponse  String?  @map("raw_response") @db.Text
+  status       String   @default("ok") @db.VarChar(20)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  theme Theme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+
+  @@unique([themeId, llm, probeDate], name: "UQ_asov_theme_llm_date")
+  @@index([probeDate], name: "IDX_asov_probe_date")
+  @@index([themeId, probeDate], name: "IDX_asov_theme_date")
+  @@map("asov_snapshots")
+}
+
+// ─── Worker Alerts (TASK-3 ST001) ────────────────────────────────────────────
+
+model WorkerAlert {
+  id          String   @id @default(uuid())
+  workerType  String   @map("worker_type") @db.VarChar(50)
+  reason      String   @db.VarChar(100)
+  detectedAt  DateTime @default(now()) @map("detected_at")
+  resolvedAt  DateTime? @map("resolved_at")
+  emailSent   Boolean  @default(false) @map("email_sent")
+  metadata    Json?
+
+  @@index([workerType, detectedAt], name: "IDX_worker_alerts_type_date")
+  @@index([resolvedAt], name: "IDX_worker_alerts_resolved")
+  @@map("worker_alerts")
+}
+
+// TASK-8 ST001 (CL-292, CL-293): configuracao sistemica key-value editavel
+// via UI. Valores tipo "monthlyBudgetBRL" (number) e "alertsEmail" (string).
+model SystemSetting {
+  key       String   @id @db.VarChar(80)
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by") @db.VarChar(255)
+
+  @@map("system_settings")
+}
+
+// Intake-Review TASK-1 (CL-275): shortlink rastreavel para CTAs externos
+// (WhatsApp, afiliados). Rota publica GET /go/{shortId} redireciona 302 e
+// incrementa clickCount atomicamente.
+model Shortlink {
+  id         String   @id @default(uuid())
+  shortId    String   @unique @db.VarChar(12) @map("short_id")
+  targetUrl  String   @map("target_url") @db.VarChar(2048)
+  channel    String   @db.VarChar(32) // whatsapp | blog | affiliate | ...
+  utmSource   String?  @map("utm_source") @db.VarChar(50)
+  utmMedium   String?  @map("utm_medium") @db.VarChar(50)
+  utmCampaign String?  @map("utm_campaign") @db.VarChar(255)
+  utmContent  String?  @map("utm_content") @db.VarChar(255)
+  utmTerm     String?  @map("utm_term") @db.VarChar(255)
+  postId     String?  @map("post_id")
+  clickCount Int      @default(0) @map("click_count")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([postId], name: "IDX_shortlinks_post")
+  @@index([channel, createdAt], name: "IDX_shortlinks_channel_date")
+  @@map("shortlinks")
+}
+
+// Intake-Review TASK-5 (CL-198): historico auditavel de falhas de publicacao
+// para que o operador inspecione payload/status/mensagem antes de retentar.
+model PostPublishError {
+  id              String   @id @default(uuid())
+  postId          String   @map("post_id")
+  channel         String   @db.VarChar(50)
+  statusCode      Int?     @map("status_code")
+  apiMessage      String?  @map("api_message") @db.Text
+  requestPayload  Json?    @map("request_payload")
+  responseBody    Json?    @map("response_body")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([postId, createdAt], name: "IDX_post_publish_errors_post")
+  @@map("post_publish_errors")
+}
+
+// ─── Notification Center (Intake Review TASK-11, CL-245..247) ────────────────
+
+model Notification {
+  id          String    @id @default(uuid())
+  type        String    @db.VarChar(50)
+  title       String    @db.VarChar(200)
+  body        String?   @db.Text
+  link        String?   @db.VarChar(500)
+  readAt      DateTime? @map("read_at")
+  sourceId    String?   @map("source_id") @db.VarChar(100)
+  sourceType  String?   @map("source_type") @db.VarChar(50)
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@index([readAt, createdAt], name: "IDX_notifications_read_created")
+  @@index([type, createdAt], name: "IDX_notifications_type_created")
+  @@map("notifications")
 }

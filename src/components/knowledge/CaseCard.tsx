@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Pencil, Trash2, Link2 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -25,7 +25,6 @@ function snippetOutcome(text: string, maxLen = 80): string {
 }
 
 export function CaseCard({ caseData, onDelete, locale }: CaseCardProps) {
-  const router = useRouter()
   const statusInfo = STATUS_MAP[caseData.status] ?? { label: caseData.status, variant: 'warning' as const }
   const painCount = caseData._count?.casePains ?? 0
 
@@ -56,14 +55,11 @@ export function CaseCard({ caseData, onDelete, locale }: CaseCardProps) {
       </CardContent>
 
       <CardFooter className="gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push(`/${locale}/knowledge/cases/${caseData.id}/edit`)}
-          data-testid={`case-edit-${caseData.id}`}
-        >
-          <Pencil className="h-3.5 w-3.5" aria-hidden />
-          Editar
+        <Button asChild variant="outline" size="sm" data-testid={`case-edit-${caseData.id}`}>
+          <Link href={`/${locale}/knowledge/cases/${caseData.id}/edit`}>
+            <Pencil className="h-3.5 w-3.5" aria-hidden />
+            Editar
+          </Link>
         </Button>
         <Button
           variant="ghost"

@@ -44,22 +44,46 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 }
 
-interface ParamsWithCase {
-  params: Promise<{ id: string; caseId: string }>
+/**
+ * GET /api/knowledge/pains/:id/cases
+ * Retorna IDs dos cases vinculados a esta dor.
+ */
+export async function GET(_req: NextRequest, { params }: Params) {
+  const { response } = await requireSession()
+  if (response) return response
+
+  const { id: painId } = await params
+
+  try {
+    const links = await PainLibraryService.getLinkedCaseIds(painId)
+    return ok(links)
+  } catch {
+    return internalError('Erro ao buscar cases vinculados.')
+  }
 }
 
 /**
- * DELETE /api/knowledge/pains/:id/cases/:caseId
- * Remove vínculo case↔dor em transação.
+ * DELETE /api/knowledge/pains/:id/cases
+ * Remove vínculo case↔dor em transação. Recebe caseId no body.
  */
-export async function DELETE(_req: NextRequest, { params }: ParamsWithCase) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   const { user, response } = await requireSession()
   if (response) return response
 
-  const { id: painId, caseId } = await params
+  const { id: painId } = await params
+
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return validationError('Body inválido ou ausente')
+  }
+
+  const parsed = LinkCaseDto.safeParse(body)
+  if (!parsed.success) return validationError(parsed.error.flatten())
 
   try {
-    const result = await PainLibraryService.unlinkCase(painId, caseId, user!.id)
+    const result = await PainLibraryService.unlinkCase(painId, parsed.data.caseId, user!.id)
     if (result.notFound) {
       return NextResponse.json(
         { success: false, error: 'KNOWLEDGE_010', message: 'Vínculo não encontrado' },

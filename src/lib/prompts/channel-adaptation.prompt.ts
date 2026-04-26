@@ -27,6 +27,22 @@ SEO: incluir palavra-chave nos primeiros 100 chars
 CTA: link para WhatsApp ou formulário de contato
 Comprimento: mínimo 800 palavras para SEO — use Markdown com # ## ###
 Hashtags: NÃO incluir hashtags em artigos de blog`,
+
+  // post-MVP CL-064
+  TIKTOK: `
+Tom: dinâmico, rápido, entretenimento com valor
+Estrutura: gancho (primeiros 3s) + desenvolvimento ágil + CTA
+Emojis: uso frequente, linguagem jovem e direta
+CTA: "Segue para mais dicas" / "Comenta X se você já passou por isso"
+Hashtags: 5-10 hashtags de nicho`,
+
+  // post-MVP CL-065
+  YOUTUBE_SHORTS: `
+Tom: educativo e direto, voltado para conversão
+Estrutura: pergunta/gancho + resposta rápida + CTA para conteúdo longo
+Emojis: moderado
+CTA: "Assiste o vídeo completo no canal" / "Inscreve-se para mais"
+Hashtags: 3-5 hashtags relevantes`,
 }
 
 const FUNNEL_STAGE_ADJUSTMENTS: Record<FunnelStage, string> = {

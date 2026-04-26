@@ -3,6 +3,7 @@
 // Responsabilidades: upload, listagem paginada, atualização de metadados, deleção
 // NÃO expõe lógica de autenticação — isso é responsabilidade da API Route
 
+import { randomUUID } from 'crypto'
 import { createClient } from '@supabase/supabase-js'
 import sharp             from 'sharp'
 import { prisma }        from '@/lib/prisma'
@@ -10,6 +11,7 @@ import { thumbnailService } from './thumbnail.service'
 import type { VisualAsset as PrismaVisualAsset } from '@prisma/client'
 import { ASSET_UPLOAD_CONFIG } from '@/lib/constants/asset-library'
 import type { UpdateAssetInput, ListAssetsInput } from '@/lib/validators/visual-asset'
+import { captureException, captureMessage } from '@/lib/sentry'
 
 // ─── Supabase Storage Client (service role) ───────────────────────────────────
 
@@ -28,9 +30,9 @@ function getStorageClient() {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function generateFileName(originalName: string): string {
-  const ext  = originalName.split('.').pop()?.toLowerCase() ?? 'bin'
-  const base = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
-  return `${base}.${ext}`
+  const ext = originalName.split('.').pop()?.toLowerCase() ?? 'bin'
+  // SEC: usar crypto.randomUUID() em vez de Math.random() para nomes não previsíveis (A02)
+  return `${randomUUID()}.${ext}`
 }
 
 // ─── Service ──────────────────────────────────────────────────────────────────
@@ -115,8 +117,8 @@ export const visualAssetService = {
         client,
         bucket
       )
-    } catch (err) {
-      console.error('[visual-asset.service] Falha ao gerar thumbnail (não crítico):', err)
+    } catch (_err) {
+      captureMessage('[visual-asset.service] Falha ao gerar thumbnail (não crítico)', 'warning')
     }
 
     // Extrair dimensões reais via Sharp (exceto SVG — Sharp não retorna dims confiáveis)
@@ -200,11 +202,11 @@ export const visualAssetService = {
       if (toDelete.length > 0) {
         const { error } = await client.storage.from(bucket).remove(toDelete)
         if (error) {
-          console.error('[visual-asset.service] Falha ao remover do Storage (asset já inativo no banco):', error)
+          captureMessage('[visual-asset.service] Falha ao remover do Storage (asset já inativo no banco)', 'warning')
         }
       }
     } catch (err) {
-      console.error('[visual-asset.service] Erro ao acessar Storage para deleção:', err)
+      captureException(err, { service: 'visual-asset', step: 'delete-storage' })
     }
   },
 

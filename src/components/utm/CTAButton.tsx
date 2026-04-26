@@ -1,10 +1,10 @@
 'use client'
 
-import { ExternalLink, MessageCircle } from 'lucide-react'
+import { Calendar, ExternalLink, MessageCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface CTAButtonProps {
-  variant: 'whatsapp' | 'blog'
+  variant: 'whatsapp' | 'blog' | 'calendar'
   url: string
   label?: string
   className?: string
@@ -22,6 +22,12 @@ const VARIANT_CONFIG = {
     defaultLabel: 'Ver no Blog',
     className: 'bg-muted text-foreground hover:bg-muted/80 focus-visible:ring-ring',
     ariaPrefix: 'Abrir link no blog',
+  },
+  calendar: {
+    icon: Calendar,
+    defaultLabel: 'Agendar reunião',
+    className: 'bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary',
+    ariaPrefix: 'Abrir agenda Cal.com',
   },
 } as const
 

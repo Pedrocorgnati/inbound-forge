@@ -70,7 +70,7 @@ export function SessionExpiredBanner({
       role="alert"
       aria-live="assertive"
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-50 flex flex-col sm:flex-row items-center gap-3 px-4 py-3 text-sm shadow-lg',
+        'fixed bottom-0 left-0 right-0 z-50 flex flex-col sm:flex-row items-center gap-3 px-4 py-3 pb-[env(safe-area-inset-bottom)] text-sm shadow-lg', // RESOLVED: FE-013 — safe-area-inset-bottom para iPhone home bar
         isExpiring && 'bg-yellow-50 border-t border-yellow-200 text-yellow-900 dark:bg-yellow-950 dark:border-yellow-800 dark:text-yellow-100',
         isExpired && 'bg-red-50 border-t border-red-200 text-red-900 dark:bg-red-950 dark:border-red-800 dark:text-red-100'
       )}

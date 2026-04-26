@@ -12,13 +12,18 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const resolvedParam = searchParams.get('resolved')
+    const typeParam = searchParams.get('type')?.trim() || undefined
+    const severityParam = searchParams.get('severity')?.trim() || undefined
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') ?? '20')))
 
     // Default: apenas alertas não resolvidos
     const resolved = resolvedParam === 'true' ? true : resolvedParam === 'false' ? false : false
 
-    const where = { resolved }
+    // Intake-Review TASK-21 ST004 (CL-DX-027): filtros type/severity.
+    const where: Record<string, unknown> = { resolved }
+    if (typeParam) where.type = typeParam
+    if (severityParam) where.severity = severityParam
 
     const [items, total] = await Promise.all([
       prisma.alertLog.findMany({

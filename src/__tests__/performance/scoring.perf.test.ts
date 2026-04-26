@@ -8,7 +8,7 @@
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { prisma } from '@/lib/prisma'
-import { ThemeScoringService } from '@/services/theme-scoring.service'
+import { ThemeScoringService } from '@/lib/services/theme-scoring.service'
 import { seedPerformanceThemes } from '../../../prisma/seeds/themes.test.seed'
 
 describe('ThemeScoringService — Performance Budget', () => {

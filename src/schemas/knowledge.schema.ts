@@ -25,6 +25,9 @@ export const CreateSolutionPatternSchema = z.object({
   caseId: z.string().uuid(),
 })
 
+// TASK-3 ST001 (CL-245): schema para PUT /patterns/[id] — todos campos opcionais.
+export const UpdateSolutionPatternSchema = CreateSolutionPatternSchema.partial()
+
 export const CreateObjectionSchema = z.object({
   content: z.string().min(5),
   type: z.enum(['PRICE', 'TRUST', 'TIMING', 'NEED', 'AUTHORITY']),

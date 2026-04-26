@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react'
 import { CookieConsentProvider } from '@/components/consent/CookieConsentProvider'
 import { CookieConsentBanner } from '@/components/consent/CookieConsentBanner'
 import { GA4Script } from '@/components/analytics/GA4Script'
+import { BlogSearchInput } from '@/components/blog/BlogSearchInput'
 
 interface BlogLayoutProps {
   children: ReactNode
@@ -37,6 +38,10 @@ export default async function BlogLayout({ children, params }: BlogLayoutProps) 
             </li>
           </ol>
         </nav>
+
+        <div className="mb-6 flex justify-end">
+          <BlogSearchInput locale={locale} />
+        </div>
 
         {children}
       </div>

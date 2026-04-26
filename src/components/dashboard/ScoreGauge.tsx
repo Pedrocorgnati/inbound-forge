@@ -1,6 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
+import { usePreviewActivation } from '@/contexts/PreviewActivationContext'
 
 const RADIUS = 40
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS
@@ -24,6 +25,11 @@ interface ScoreGaugeProps {
 }
 
 export function ScoreGauge({ score, size = 'sm', className }: ScoreGaugeProps) {
+  const { isActivated } = usePreviewActivation()
+
+  // CL-009: ocultar score antes do threshold de ativacao
+  if (!isActivated) return null
+
   const strokeDasharray = (score / 100) * CIRCUMFERENCE
   const color = getScoreColor(score)
   const bgColor = getScoreBgColor(score)
@@ -37,6 +43,7 @@ export function ScoreGauge({ score, size = 'sm', className }: ScoreGaugeProps) {
       aria-valuemax={100}
       aria-valuenow={score}
       aria-label={`Score: ${score} de 100`}
+      data-testid="score-gauge"
       className={cn(sizeClass, 'shrink-0', className)}
     >
       <circle

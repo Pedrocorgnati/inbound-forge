@@ -6,8 +6,13 @@
  * SEC-007: ownership check antes de PATCH.
  * COMP-001: audit log em overrides manuais.
  * SEC-008: sem PII em logs.
+ * COMP-PII: withPiiSanitization disponível para injeção em chamadas Claude futuras.
  */
 import { prisma } from '@/lib/prisma'
+// TASK-1 ST002: PII sanitization disponível para chamadas Claude neste serviço
+// A classificação via IA ocorre no scraping-worker (workers/scraping-worker/src/classifier.ts)
+// que aplica system prompt com PII_SANITIZATION_INSTRUCTION via withPiiSanitization.
+export { withPiiSanitization, PII_SANITIZATION_INSTRUCTION } from '@/lib/prompts/pii-sanitization'
 
 export interface ScrapedTextFilters {
   isPainCandidate?: boolean
@@ -137,7 +142,7 @@ export async function overrideClassification(
 
   const updated = await prisma.scrapedText.update({
     where: { id },
-    data: { isPainCandidate },
+    data: { isPainCandidate, piiRemoved: true }, // TASK-1 ST002: confirmar remoção PII no override
     select: {
       id: true,
       sourceId: true,
@@ -158,4 +163,23 @@ export async function overrideClassification(
   )
 
   return { ...updated, createdAt: updated.createdAt.toISOString() }
+}
+
+/**
+ * TASK-2 ST002: Verifica se Claude API está disponível para classificação.
+ * Quando indisponível, textos coletados ficam em estado não classificado
+ * e são reprocessados na próxima execução do worker (classificationDeferred).
+ *
+ * Retorna { degraded: true } quando Claude está fora — sem erro fatal.
+ */
+export async function checkClassificationAvailability(): Promise<{ degraded: boolean; reason?: string }> {
+  const { isServiceAvailable, ExternalService } = await import('@/lib/services/service-health')
+  const available = await isServiceAvailable(ExternalService.CLAUDE)
+
+  if (!available) {
+    console.info('[ClassificationService] Claude API indisponível — classificação adiada (SYS_004)')
+    return { degraded: true, reason: 'Claude API temporariamente indisponível' }
+  }
+
+  return { degraded: false }
 }

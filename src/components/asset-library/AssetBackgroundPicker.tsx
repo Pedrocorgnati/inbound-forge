@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/shared/empty-state'
 import type { VisualAsset } from '@/types/visual-asset'
 import type { TemplateType } from '@/types/image-template'
 import { useAssetPicker } from '@/hooks/useAssetPicker'
+import { ROUTES } from '@/constants/routes'
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
 
@@ -62,7 +63,7 @@ function MiniAssetCard({
       onKeyDown={handleKeyDown}
       className={cn(
         'relative aspect-square rounded-lg border border-border bg-muted overflow-hidden',
-        'cursor-pointer transition-all duration-200',
+        'cursor-pointer transition-[border-color,box-shadow] duration-200',
         'min-h-[44px] min-w-[44px]',
         'hover:border-foreground/20',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
@@ -127,7 +128,7 @@ export function AssetBackgroundPicker({
         title="Nenhum asset compatível"
         description="Não há assets com proporção compatível com este template."
         ctaLabel="Ir para Biblioteca"
-        onCtaClick={() => window.open('/assets', '_blank')}
+        onCtaClick={() => window.open('/assets', '_blank', 'noopener,noreferrer')}
       />
     )
   }
@@ -147,7 +148,7 @@ export function AssetBackgroundPicker({
 
       {assets.length > MINI_GALLERY_COUNT && (
         <Link
-          href="/assets"
+          href={ROUTES.ASSETS}
           target="_blank"
           rel="noopener noreferrer"
           className={cn(

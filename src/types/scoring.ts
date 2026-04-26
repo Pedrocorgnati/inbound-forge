@@ -14,6 +14,7 @@ export interface ScoreBreakdown {
   recencyBonus: number    // 0.0, 0.5 ou 1.0
   geoMultiplier: number   // 1.0 ou 1.2
   finalScore: number      // 0-100 (resultado final clampado)
+  asovBonus?: number      // 0.0–0.15 (TASK-2 ST005)
 }
 
 export interface BatchScoringResult {
@@ -26,4 +27,11 @@ export interface ThemeGenerationResult {
   updated: number
   skipped: number
   durationMs: number
+  throttled?: boolean
+  /**
+   * TASK-2/ST001 (gap CL-031): indica que o scraping esta unhealthy e o motor
+   * operou apenas com pain_library + case_library internas.
+   */
+  degradedMode?: boolean
+  mode?: 'full' | 'internal-only'
 }

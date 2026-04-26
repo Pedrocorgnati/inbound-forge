@@ -1,9 +1,14 @@
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import { KnowledgeTabs } from '@/components/knowledge/knowledge-tabs'
+import { getTranslations } from 'next-intl/server'
+import { KnowledgePageClient } from '@/components/knowledge/KnowledgePageClient'
 import { ProgressGateWrapper } from '@/components/knowledge/ProgressGateWrapper'
 
-export const metadata: Metadata = { title: 'Base de Conhecimento' }
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'knowledge' })
+  return { title: t('title') }
+}
 
 const VALID_TABS = ['cases', 'pains', 'patterns', 'objections'] as const
 
@@ -15,6 +20,7 @@ interface KnowledgePageProps {
 export default async function KnowledgePage({ params, searchParams }: KnowledgePageProps) {
   const { locale } = await params
   const { tab } = await searchParams
+  const t = await getTranslations({ locale, namespace: 'knowledge' })
 
   // Redirect to default tab if missing or invalid
   if (!tab || !VALID_TABS.includes(tab as typeof VALID_TABS[number])) {
@@ -26,18 +32,18 @@ export default async function KnowledgePage({ params, searchParams }: KnowledgeP
       {/* Page header */}
       <div data-testid="knowledge-header">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Base de Conhecimento
+          {t('title')}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Gerencie seus cases, dores e padrões de solução
+          {t('description')}
         </p>
       </div>
 
       {/* ProgressGate — progresso da base de conhecimento */}
       <ProgressGateWrapper locale={locale} />
 
-      {/* Tabs */}
-      <KnowledgeTabs activeTab={tab} locale={locale} />
+      {/* Search + Tabs */}
+      <KnowledgePageClient activeTab={tab} locale={locale} />
     </div>
   )
 }

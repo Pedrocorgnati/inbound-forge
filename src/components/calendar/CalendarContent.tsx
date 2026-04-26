@@ -12,16 +12,20 @@ import {
   addMonths,
   subMonths,
 } from 'date-fns'
+import { LayoutList, LayoutGrid } from 'lucide-react'
 import { useCalendarPosts } from '@/hooks/useCalendarPosts'
 import { useDragReschedule } from '@/hooks/useDragReschedule'
 import { CalendarGrid } from './CalendarGrid'
+import { CalendarListView } from './CalendarListView'
 import { CalendarFilters } from './CalendarFilters'
 import { PostRescheduleModal } from './PostRescheduleModal'
+import { CalendarDragProvider } from './CalendarDragContext'
 import type { PublishingPost } from '@/types/publishing'
+import { STORAGE_KEYS } from '@/constants/storage-keys'
 
 type CalendarViewType = 'week' | 'month'
 
-const ALL_CHANNELS = ['INSTAGRAM', 'LINKEDIN']
+const ALL_CHANNELS = ['INSTAGRAM', 'LINKEDIN', 'BLOG']
 const ALL_STATUSES = ['DRAFT', 'APPROVED', 'SCHEDULED', 'PUBLISHED', 'FAILED']
 
 export function CalendarContent() {
@@ -48,23 +52,53 @@ export function CalendarContent() {
   // Mobile detection — default to week view on small screens
   const [isMobile, setIsMobile] = useState(false)
 
-  useEffect(() => {
-    function check() {
-      setIsMobile(window.innerWidth < 768)
-    }
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
+  // ST003: list-view toggle (default on, persisted to localStorage)
+  const [showListView, setShowListView] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const saved = localStorage.getItem(STORAGE_KEYS.CALENDAR_LIST_VIEW)
+    return saved !== null ? saved === 'true' : true
+  })
+
+  const toggleListView = useCallback(() => {
+    setShowListView(prev => {
+      const next = !prev
+      localStorage.setItem(STORAGE_KEYS.CALENDAR_LIST_VIEW, String(next))
+      return next
+    })
   }, [])
 
   useEffect(() => {
-    if (isMobile && view === 'month') {
+    let timer: ReturnType<typeof setTimeout>
+    function check() {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        setIsMobile(window.innerWidth < 768)
+      }, 150)
+    }
+    // Run immediately on mount (without debounce)
+    setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', check)
+    return () => {
+      window.removeEventListener('resize', check)
+      clearTimeout(timer)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Only force week view when in grid mode on mobile
+    if (isMobile && !showListView && view === 'month') {
       setView('week')
     }
-  }, [isMobile, view])
+  }, [isMobile, showListView, view])
 
   // Compute date range
   const { startDate, endDate } = useMemo(() => {
+    if (isMobile && showListView) {
+      return {
+        startDate: startOfMonth(currentDate),
+        endDate: endOfMonth(currentDate),
+      }
+    }
     if (view === 'week') {
       return {
         startDate: startOfWeek(currentDate, { weekStartsOn: 0 }),
@@ -75,7 +109,7 @@ export function CalendarContent() {
       startDate: startOfMonth(currentDate),
       endDate: endOfMonth(currentDate),
     }
-  }, [view, currentDate])
+  }, [view, currentDate, isMobile, showListView])
 
   // Fetch posts
   const {
@@ -110,12 +144,12 @@ export function CalendarContent() {
     [router, pathname],
   )
 
-  function handleViewChange(newView: CalendarViewType) {
+  const handleViewChange = useCallback((newView: CalendarViewType) => {
     setView(newView)
     updateUrl(newView, currentDate)
-  }
+  }, [currentDate, updateUrl])
 
-  function handlePeriodChange(direction: 'prev' | 'next' | 'today') {
+  const handlePeriodChange = useCallback((direction: 'prev' | 'next' | 'today') => {
     let newDate: Date
 
     if (direction === 'today') {
@@ -128,9 +162,21 @@ export function CalendarContent() {
 
     setCurrentDate(newDate)
     updateUrl(view, newDate)
-  }
+  }, [view, currentDate, updateUrl])
 
-  function handleReschedule(postId: string, newDate: Date) {
+  // ST001: list-view navigates by month regardless of grid view state
+  const handleListPeriodChange = useCallback((direction: 'prev' | 'next' | 'today') => {
+    const newDate =
+      direction === 'today'
+        ? new Date()
+        : direction === 'prev'
+          ? subMonths(currentDate, 1)
+          : addMonths(currentDate, 1)
+    setCurrentDate(newDate)
+    updateUrl(view, newDate)
+  }, [currentDate, view, updateUrl])
+
+  const handleReschedule = useCallback((postId: string, newDate: Date) => {
     // Simulate via the drag handler event format
     const fakeEvent = {
       active: { id: postId },
@@ -138,38 +184,71 @@ export function CalendarContent() {
     }
     handleDragEnd(fakeEvent)
     setReschedulePost(null)
-  }
+  }, [handleDragEnd])
 
   return (
-    <div className="space-y-6">
+    <CalendarDragProvider onDragEnd={handleDragEnd}>
+    <div data-testid="calendar-content" className="space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Calendario Editorial</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Planejamento e agendamento de publicacoes
-        </p>
+      <div data-testid="calendar-header" className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Calendario Editorial</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Planejamento e agendamento de publicacoes
+          </p>
+        </div>
+
+        {/* ST003: toggle list/grid — mobile only */}
+        <button
+          data-testid="calendar-view-toggle-button"
+          type="button"
+          onClick={toggleListView}
+          className="lg:hidden mt-1 flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label={showListView ? 'Mudar para visualização em grade' : 'Mudar para lista cronológica'}
+          aria-pressed={showListView}
+        >
+          {showListView ? (
+            <><LayoutGrid className="h-4 w-4" /><span>Grade</span></>
+          ) : (
+            <><LayoutList className="h-4 w-4" /><span>Lista</span></>
+          )}
+        </button>
       </div>
 
       {/* Filters */}
-      <CalendarFilters filters={filters} onChange={setFilters} />
+      <div data-testid="calendar-filters">
+        <CalendarFilters filters={filters} onChange={setFilters} />
+      </div>
 
       {/* Error */}
       {error && (
-        <div className="rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
+        <div data-testid="calendar-error" className="rounded-md bg-red-50 p-3 text-sm text-red-700" role="alert">
           {error}
         </div>
       )}
 
-      {/* Calendar grid */}
-      <CalendarGrid
-        posts={localPosts}
-        startDate={startDate}
-        endDate={endDate}
-        view={view}
-        onViewChange={handleViewChange}
-        onPeriodChange={handlePeriodChange}
-        isLoading={isLoading}
-      />
+      {/* ST001: list view on mobile, grid on desktop */}
+      {isMobile && showListView ? (
+        <CalendarListView
+          data-testid="calendar-list-view"
+          posts={localPosts}
+          currentDate={currentDate}
+          onPeriodChange={handleListPeriodChange}
+          onReschedule={setReschedulePost}
+          isLoading={isLoading}
+        />
+      ) : (
+        <CalendarGrid
+          data-testid="calendar-grid"
+          posts={localPosts}
+          startDate={startDate}
+          endDate={endDate}
+          view={view}
+          onViewChange={handleViewChange}
+          onPeriodChange={handlePeriodChange}
+          isLoading={isLoading}
+        />
+      )}
 
       {/* Reschedule modal */}
       <PostRescheduleModal
@@ -179,5 +258,6 @@ export function CalendarContent() {
         onReschedule={handleReschedule}
       />
     </div>
+    </CalendarDragProvider>
   )
 }

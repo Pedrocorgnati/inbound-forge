@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { redis } from '@/lib/redis'
+import { sendWorkerAlert } from '@/lib/services/email-alert.service'
+import type { WorkerType } from '@/lib/services/email-alert.service'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -34,6 +36,24 @@ export async function GET() {
 
   const isHealthy = dbStatus === 'connected'
   const httpStatus = isHealthy ? 200 : 503
+
+  // TASK-4 ST006: disparar email de alerta para workers em ERROR (CL-131, debounce 1h)
+  const errorWorkers: Array<{ type: WorkerType; health: typeof workerScraping }> = [
+    { type: 'SCRAPING', health: workerScraping },
+    { type: 'IMAGE', health: workerImage },
+    { type: 'PUBLISHING', health: workerPublishing },
+  ]
+
+  for (const { type, health } of errorWorkers) {
+    if (health?.status === 'ERROR') {
+      sendWorkerAlert({
+        workerType: type,
+        status: 'ERROR',
+        errorMessage: health.errorMessage ?? 'Erro desconhecido',
+        timestamp: new Date(),
+      }).catch(() => {}) // fire-and-forget — não bloquear resposta
+    }
+  }
 
   // SEC: selecionar explicitamente apenas os campos públicos permitidos
   // Nunca spredar o objeto workerHealth completo (contém errorMessage, id interno)

@@ -39,6 +39,8 @@ export function FirstCaseStep({ onComplete, onBack }: FirstCaseStepProps) {
     formState: { errors },
   } = useForm<FirstCaseData>({
     resolver: zodResolver(firstCaseSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   })
 
   async function onSubmit(data: FirstCaseData) {
@@ -121,11 +123,13 @@ export function FirstCaseStep({ onComplete, onBack }: FirstCaseStepProps) {
           <textarea
             id="case-outcome"
             placeholder="Descreva o resultado alcancado (minimo 50 caracteres). Ex: Aumento de 40% nas vendas online em 3 meses com automacao de funil..."
+            aria-invalid={!!errors.outcome}
+            aria-describedby={errors.outcome ? 'case-outcome-error' : undefined}
             className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-[150ms] hover:border-foreground/30"
             {...register('outcome')}
           />
           {errors.outcome?.message && (
-            <p className="mt-1 text-xs text-danger" role="alert">
+            <p id="case-outcome-error" className="mt-1 text-xs text-danger" role="alert">
               {errors.outcome.message}
             </p>
           )}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { toast } from '@/components/ui/toast'
 import { AlertCircle } from 'lucide-react'
-import { useAutosave } from '@/hooks/useAutosave'
+import { useKnowledgeAutosave } from '@/hooks/useKnowledgeAutosave'
+import { useFormatters } from '@/lib/i18n/formatters'
 import type { PatternResponse } from '@/lib/dtos/solution-pattern.dto'
 import type { PainResponse } from '@/lib/dtos/pain-library.dto'
 import type { CaseResponse } from '@/lib/dtos/case-library.dto'
@@ -31,7 +32,7 @@ interface FormData {
 
 const MIN_DESC_CHARS = 10
 
-export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, _locale }: PatternFormProps) {
+export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, locale: _locale }: PatternFormProps) {
   const [form, setForm] = useState<FormData>({
     name: initialData?.name ?? '',
     description: initialData?.description ?? '',
@@ -48,37 +49,25 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, _lo
   const [isLoadingCases, setIsLoadingCases] = useState(false)
 
   // Autosave (edit mode only)
-  const formSerialized = useMemo(() => JSON.stringify(form), [form])
-
-  const autosaveFn = useCallback(
-    async (data: FormData) => {
-      if (!initialData?.id) return
+  const { autosaveStatus, lastSaved } = useKnowledgeAutosave({
+    form,
+    endpoint: `/api/knowledge/patterns/${initialData?.id}`,
+    getPayload: (data) => {
       const payload: Record<string, string> = {
         name: data.name.trim(),
         description: data.description.trim(),
         painId: data.painId,
       }
       if (data.caseId) payload.caseId = data.caseId
-      const res = await fetch(`/api/knowledge/patterns/${initialData.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) throw new Error('Falha ao salvar')
+      return payload
     },
-    [initialData?.id]
-  )
+    entityId: initialData?.id,
+    mode,
+    isOpen,
+  })
 
-  const { status: autosaveStatus, lastSaved } = useAutosave(
-    formSerialized,
-    async () => autosaveFn(form),
-    2000,
-    mode === 'edit' && !!initialData?.id && isOpen
-  )
-
-  function formatTime(date: Date): string {
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  }
+  // RESOLVED: G002 — useFormatters usa locale dinâmico
+  const fmt = useFormatters()
 
   const fetchPains = useCallback(async () => {
     setIsLoadingPains(true)
@@ -213,12 +202,17 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, _lo
       }
       size="lg"
     >
-      <div data-testid="pattern-form" className="space-y-4">
+      <form
+        data-testid="pattern-form"
+        className="space-y-4"
+        onSubmit={(e) => { e.preventDefault(); handleSubmit() }}
+        noValidate
+      >
         {/* Autosave indicator (edit mode) */}
         {mode === 'edit' && (
           <div aria-live="polite" className="text-xs text-muted-foreground text-right" data-testid="pattern-autosave-status">
             {autosaveStatus === 'saving' && 'Salvando...'}
-            {autosaveStatus === 'saved' && lastSaved && `Salvo às ${formatTime(lastSaved)}`}
+            {autosaveStatus === 'saved' && lastSaved && `Salvo às ${fmt.time(lastSaved)}`}
             {autosaveStatus === 'error' && (
               <span className="text-danger">Erro ao salvar automaticamente</span>
             )}
@@ -248,10 +242,11 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, _lo
             value={form.description}
             onChange={(e) => updateField('description', e.target.value)}
             aria-invalid={errors.description ? 'true' : undefined}
+            aria-describedby={errors.description ? 'pattern-description-error' : undefined}
             data-testid="pattern-field-description"
           />
           {errors.description && (
-            <p role="alert" className="flex items-center gap-1 text-xs text-danger">
+            <p id="pattern-description-error" role="alert" className="flex items-center gap-1 text-xs text-danger">
               <AlertCircle className="h-3 w-3 shrink-0" aria-hidden />
               {errors.description}
             </p>
@@ -281,11 +276,11 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, _lo
 
         {/* Actions */}
         <div className="flex justify-end gap-3 border-t border-border pt-4">
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>
           <Button
-            onClick={handleSubmit}
+            type="submit"
             isLoading={isSubmitting}
             loadingText="Salvando..."
             disabled={!form.painId}
@@ -294,7 +289,7 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, _lo
             {mode === 'create' ? 'Criar Padrão' : 'Salvar'}
           </Button>
         </div>
-      </div>
+      </form>
     </Modal>
   )
 }

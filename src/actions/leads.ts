@@ -1,13 +1,15 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@/lib/supabase-server'
 import { prisma } from '@/lib/prisma'
 import { encryptPII, decryptPII } from '@/lib/crypto'
 import { auditLog } from '@/lib/audit'
 import { CreateLeadSchema, ListLeadsSchema } from '@/schemas/lead.schema'
-import { updateThemeConversionScore } from '@/lib/conversion-score'
 import type { CreateLeadInput } from '@/schemas/lead.schema'
+import { captureException } from '@/lib/sentry'
+import { type ActionResult, actionSuccess, actionError } from '@/lib/action-utils'
+import { checkRateLimit } from '@/lib/utils/redis-rate-limiter'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -16,6 +18,12 @@ async function getOperatorId(): Promise<string> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Não autorizado')
   return user.id
+}
+
+async function checkSession(): Promise<boolean> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return !!user
 }
 
 // ─── Leads ────────────────────────────────────────────────────────────────────
@@ -28,6 +36,7 @@ export async function getLeads(params?: {
   themeId?: string
   includeContact?: boolean
 }) {
+  if (!(await checkSession())) return { data: [], total: 0, error: 'Não autorizado' }
   try {
     const parsed = ListLeadsSchema.parse({
       page: params?.page ?? 1,
@@ -68,12 +77,13 @@ export async function getLeads(params?: {
 
     return { data, total }
   } catch (err) {
-    console.error('[getLeads]', err)
+    captureException(err, { action: 'getLeads' })
     return { data: [], total: 0, error: 'Falha ao carregar leads' }
   }
 }
 
 export async function getLead(id: string) {
+  if (!(await checkSession())) return { error: 'Não autorizado' }
   try {
     const lead = await prisma.lead.findUnique({
       where: { id },
@@ -87,19 +97,26 @@ export async function getLead(id: string) {
 
     return { data: { ...lead, contactInfo: lead.contactInfo ? '●●●●●●' : null } }
   } catch (err) {
-    console.error('[getLead]', err)
+    captureException(err, { action: 'getLead' })
     return { error: 'Falha ao carregar lead' }
   }
 }
 
-export async function createLead(formData: CreateLeadInput) {
+export async function createLead(formData: CreateLeadInput): Promise<ActionResult<{ id: string }>> {
   try {
     const userId = await getOperatorId()
+
+    // Rate limit: 50 leads/dia por operador (evita abuso e poluição de dados)
+    const rl = await checkRateLimit(userId, 'createLead', 50)
+    if (!rl.allowed) {
+      return actionError('Limite diário de leads atingido. Tente novamente amanhã.')
+    }
+
     const parsed = CreateLeadSchema.parse(formData)
 
     // Verificar post de first-touch (SEC-007)
     const post = await prisma.post.findUnique({ where: { id: parsed.firstTouchPostId } })
-    if (!post) return { error: 'Post de first-touch não encontrado' }
+    if (!post) return actionError('Post de first-touch não encontrado')
 
     // Criptografar contactInfo (COMP-002)
     let encryptedContact: string | null = null
@@ -139,13 +156,14 @@ export async function createLead(formData: CreateLeadInput) {
     })
 
     revalidatePath('/[locale]/leads', 'page')
-    return { data: { ...lead, contactInfo: lead.contactInfo ? '●●●●●●' : null } }
+    revalidateTag('leads')
+    return actionSuccess({ id: lead.id }, 'Lead criado com sucesso')
   } catch (err) {
     if (err instanceof Error && err.message === 'Não autorizado') {
-      return { error: 'Não autorizado' }
+      return actionError('Não autorizado')
     }
-    console.error('[createLead]', err)
-    return { error: 'Falha ao criar lead' }
+    captureException(err, { action: 'createLead' })
+    return actionError('Falha ao criar lead')
   }
 }
 
@@ -156,9 +174,26 @@ export async function deleteLead(id: string) {
     const existing = await prisma.lead.findUnique({ where: { id } })
     if (!existing) return { error: 'Lead não encontrado' }
 
-    await prisma.lead.delete({ where: { id } })
+    // CX-01: delete + recalcular conversionScore atomicamente (SEC-TX-01)
+    await prisma.$transaction(async (tx) => {
+      await tx.lead.delete({ where: { id } })
 
-    // Audit log (COMP-001)
+      if (existing.firstTouchThemeId) {
+        const [leadsCount, conversionsCount] = await Promise.all([
+          tx.lead.count({ where: { firstTouchThemeId: existing.firstTouchThemeId! } }),
+          tx.conversionEvent.count({
+            where: { lead: { firstTouchThemeId: existing.firstTouchThemeId! } },
+          }),
+        ])
+        const score = leadsCount > 0 ? Math.round((conversionsCount / leadsCount) * 100) : 0
+        await tx.theme.update({
+          where: { id: existing.firstTouchThemeId! },
+          data: { conversionScore: score },
+        })
+      }
+    })
+
+    // Audit log fora da transação (COMP-001) — side effect externo
     await auditLog({
       action: 'lead.deleted',
       entityType: 'Lead',
@@ -167,23 +202,20 @@ export async function deleteLead(id: string) {
       metadata: { channel: existing.channel, funnelStage: existing.funnelStage },
     })
 
-    // CX-01: Recalcular conversionScore do tema
-    if (existing.firstTouchThemeId) {
-      await updateThemeConversionScore(existing.firstTouchThemeId)
-    }
-
     revalidatePath('/[locale]/leads', 'page')
-    return { success: true }
+    revalidateTag('leads')
+    return actionSuccess(undefined, 'Lead removido com sucesso')
   } catch (err) {
     if (err instanceof Error && err.message === 'Não autorizado') {
-      return { error: 'Não autorizado' }
+      return actionError('Não autorizado')
     }
-    console.error('[deleteLead]', err)
-    return { error: 'Falha ao remover lead' }
+    captureException(err, { action: 'deleteLead' })
+    return actionError('Falha ao remover lead')
   }
 }
 
 export async function getConversions() {
+  if (!(await checkSession())) return { data: [], total: 0, error: 'Não autorizado' }
   try {
     const conversions = await prisma.conversionEvent.findMany({
       orderBy: { occurredAt: 'desc' },
@@ -194,12 +226,13 @@ export async function getConversions() {
     })
     return { data: conversions, total: conversions.length }
   } catch (err) {
-    console.error('[getConversions]', err)
+    captureException(err, { action: 'getConversions' })
     return { data: [], total: 0, error: 'Falha ao carregar conversões' }
   }
 }
 
 export async function getAttribution() {
+  if (!(await checkSession())) return { data: [], error: 'Não autorizado' }
   try {
     const themes = await prisma.theme.findMany({
       select: {
@@ -212,7 +245,7 @@ export async function getAttribution() {
     })
     return { data: themes }
   } catch (err) {
-    console.error('[getAttribution]', err)
+    captureException(err, { action: 'getAttribution' })
     return { data: [], error: 'Falha ao carregar atribuição' }
   }
 }

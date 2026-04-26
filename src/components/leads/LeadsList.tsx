@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Plus, Users, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
@@ -12,18 +12,11 @@ import { Modal } from '@/components/ui/modal'
 import { toast } from '@/components/ui/toast'
 import { LeadCard } from './LeadCard'
 import type { Lead } from '@/types/leads'
+import type { PaginationData } from '@/lib/types/pagination'
 
 interface LeadsListProps {
   locale: string
   themeId?: string
-}
-
-interface PaginationData {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-  hasMore: boolean
 }
 
 const CHANNEL_OPTIONS = [
@@ -43,8 +36,6 @@ const FUNNEL_OPTIONS = [
 const PAGE_SIZE = 20
 
 export function LeadsList({ locale, themeId }: LeadsListProps) {
-  const router = useRouter()
-
   const [leads, setLeads] = useState<Lead[]>([])
   const [pagination, setPagination] = useState<PaginationData | null>(null)
   const [page, setPage] = useState(1)
@@ -149,12 +140,11 @@ export function LeadsList({ locale, themeId }: LeadsListProps) {
           />
         </div>
 
-        <Button
-          onClick={() => router.push(`/${locale}/leads/new`)}
-          data-testid="lead-new-button"
-        >
-          <Plus className="h-4 w-4" aria-hidden />
-          Novo Lead
+        <Button asChild data-testid="lead-new-button">
+          <Link href={`/${locale}/leads/new`}>
+            <Plus className="h-4 w-4" aria-hidden />
+            Novo Lead
+          </Link>
         </Button>
       </div>
 
@@ -196,11 +186,7 @@ export function LeadsList({ locale, themeId }: LeadsListProps) {
               : 'Adicione o primeiro lead para começar a rastrear conversões.'
           }
           ctaLabel={!channelFilter && !funnelFilter ? 'Registrar primeiro lead' : undefined}
-          onCtaClick={
-            !channelFilter && !funnelFilter
-              ? () => router.push(`/${locale}/leads/new`)
-              : undefined
-          }
+          ctaHref={!channelFilter && !funnelFilter ? `/${locale}/leads/new` : undefined}
         />
       )}
 
@@ -212,7 +198,7 @@ export function LeadsList({ locale, themeId }: LeadsListProps) {
               <LeadCard
                 key={lead.id}
                 lead={lead}
-                onEdit={() => router.push(`/${locale}/leads/${lead.id}/edit`)}
+                editHref={`/${locale}/leads/${lead.id}/edit`}
                 onDelete={() => setDeleteTarget(lead)}
               />
             ))}

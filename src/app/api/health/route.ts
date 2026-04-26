@@ -3,6 +3,7 @@
  *
  * Gerado por: /rollout-strategy-create setup
  * Atualizado por: auto-flow execute (module-1/TASK-3/ST003)
+ * Intake-Review TASK-9 ST002 (CL-OP-005): timeouts + bypass de audit para monitor externo.
  *
  * SEGURANÇA (THREAT-002): Retorna informações mínimas de saúde.
  * Não expõe stack traces, mensagens de erro internas ou topologia da infra.
@@ -15,36 +16,58 @@
  * - Canary deploy script (canary-deploy.sh)
  * - Railway healthcheck (worker containers)
  * - Vercel monitoring
+ * - BetterStack Uptime HTTP monitor (TASK-9)
  * - module-15: health panel (via /api/health/detailed — autenticado)
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { redis } from '@/lib/redis'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
-export async function GET() {
+const CHECK_TIMEOUT_MS = 5000
+
+async function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('timeout')), ms)
+  })
+  try {
+    return await Promise.race([p, timeout])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
+export async function GET(request: NextRequest) {
+  // Intake-Review TASK-9 ST002: detectar ping do monitor externo.
+  // Futuro: se AuditLog for adicionado neste endpoint, usar isMonitorPing
+  // para bypass. Hoje o endpoint nao audita, mas mantemos o marcador
+  // explicito para nao regredirmos.
+  const ua = request.headers.get('user-agent') ?? ''
+  const monitorHeader = request.headers.get('x-monitor') ?? ''
+  const isMonitorPing =
+    monitorHeader.toLowerCase() === 'betterstack' ||
+    /better\s*uptime/i.test(ua) ||
+    /betterstack/i.test(ua)
+
   let db = false
   let redisOk = false
 
-  // Verificar conectividade DB (SYS_001)
   try {
-    await prisma.$queryRaw`SELECT 1`
+    await withTimeout(prisma.$queryRaw`SELECT 1`, CHECK_TIMEOUT_MS)
     db = true
   } catch {
-    // Falha logada internamente — não exposta na resposta (SEC-001)
-    console.error('[SYS_001] Health check: database unreachable')
+    console.error('[SYS_001] Health check: database unreachable or timed out')
   }
 
-  // Verificar conectividade Redis (SYS_002)
   try {
-    const pong = await redis.ping()
+    const pong = await withTimeout(redis.ping(), CHECK_TIMEOUT_MS)
     redisOk = pong === 'PONG'
   } catch {
-    // Falha logada internamente — não exposta na resposta (SEC-001)
-    console.error('[SYS_002] Health check: Redis unreachable')
+    console.error('[SYS_002] Health check: Redis unreachable or timed out')
   }
 
   const status = db && redisOk ? 'ok' : 'degraded'
@@ -63,6 +86,7 @@ export async function GET() {
       status: httpStatus,
       headers: {
         'Cache-Control': 'no-store, max-age=0',
+        ...(isMonitorPing ? { 'X-Monitor-Ack': '1' } : {}),
       },
     }
   )

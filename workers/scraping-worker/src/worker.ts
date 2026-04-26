@@ -16,6 +16,7 @@ import { Redis } from '@upstash/redis'
 import type { ScrapingJob, ScrapingJobResult } from './types'
 import { getPrisma } from './db'
 import { crawlUrl } from './crawler'
+import { filterUnprotected, describeProtection } from './source-protection'
 import { MAX_CONCURRENT_PAGES, REDIS_KEYS, WORKER_ID } from './constants'
 
 const QUEUE_NAME = 'scraping'
@@ -60,10 +61,29 @@ async function processScrapingJob(
 
   // Buscar fontes
   const idsToProcess = sourceIds.length > 0 ? sourceIds : undefined
-  const sources = await prisma.source.findMany({
+  const fetchedSources = await prisma.source.findMany({
     where: idsToProcess ? { id: { in: idsToProcess }, isActive: true } : { isActive: true },
-    select: { id: true, url: true, selector: true, operatorId: true },
+    select: {
+      id: true,
+      url: true,
+      selector: true,
+      operatorId: true,
+      isProtected: true,
+      antiBotBlocked: true,
+    },
   })
+
+  // TASK-11 ST003 (CL-111): filtra fontes protegidas (curadas ou anti-bot blocked)
+  // antes do enqueue dos crawls. Non-retry explicito.
+  const protectedSources = fetchedSources.filter((s) => describeProtection(s).protected)
+  const sources = filterUnprotected(fetchedSources)
+  if (protectedSources.length > 0) {
+    console.info(
+      `[Worker] Skipping ${protectedSources.length} protected source(s) | batchId=${batchId} | reasons=${protectedSources
+        .map((s) => `${s.id}:${describeProtection(s).reasons.join(',')}`)
+        .join(';')}`
+    )
+  }
 
   console.info(`[Worker] Processing batch | batchId=${batchId} | sources=${sources.length} | jobId=${job.id}`)
 

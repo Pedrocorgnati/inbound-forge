@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
-import { requireSession, ok, badRequest } from '@/lib/api-auth'
+import { requireSession, ok, validationError } from '@/lib/api-auth'
 import { prisma } from '@/lib/prisma'
 import { redis } from '@/lib/redis'
 import { REDIS_KEYS } from '@/constants/redis-keys'
@@ -25,24 +25,24 @@ export async function POST(request: NextRequest) {
   const { user, response: authError } = await requireSession()
   if (authError) return authError
 
-  let body: z.infer<typeof TriggerSchema>
-  try {
-    const raw = await request.json()
-    body = TriggerSchema.parse(raw)
-  } catch (_err) {
-    return badRequest('Dados inválidos. Verifique sourceIds e batchSize.')
-  }
+  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para input inválido
+  let raw: unknown
+  try { raw = await request.json() } catch { return validationError(new Error('Body inválido')) }
+
+  const bodyParsed = TriggerSchema.safeParse(raw)
+  if (!bodyParsed.success) return validationError(bodyParsed.error)
 
   const batchId = randomUUID()
-  const { sourceIds } = body
+  const { sourceIds } = bodyParsed.data
 
   // Buscar fontes ativas
   let activeSources: { id: string }[]
   try {
+    // TASK-3 CL-030: bypass fontes marcadas como anti-bot blocked
     activeSources = await prisma.source.findMany({
       where: sourceIds.length > 0
-        ? { id: { in: sourceIds }, isActive: true }
-        : { isActive: true },
+        ? { id: { in: sourceIds }, isActive: true, antiBotBlocked: false }
+        : { isActive: true, antiBotBlocked: false },
       select: { id: true },
     })
   } catch (err) {

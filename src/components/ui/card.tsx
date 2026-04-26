@@ -8,7 +8,7 @@ const cardVariants = cva(
     variants: {
       variant: {
         default: 'border border-border',
-        elevated: 'border border-border hover:border-foreground/20 transition-colors',
+        elevated: 'border border-border hover:border-foreground/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         ghost: 'border-0 bg-transparent',
         surface: 'border border-border bg-surface',
       },

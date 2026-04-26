@@ -75,14 +75,14 @@ export function RollbackConfirmModal({
 
         <div className="max-h-[240px] overflow-y-auto rounded-md border border-border p-3">
           <p className="mb-2 text-xs font-medium text-muted-foreground">
-            Diferencas do conteudo
+            Diferenças do conteúdo
           </p>
           <DiffViewer before={currentBody} after={version.body} />
         </div>
 
         <p className="rounded-md bg-warning-bg p-3 text-sm text-[#92400E]">
-          Esta acao criara uma nova versao com o conteudo de v
-          {version.versionNumber}. O historico NAO sera perdido.
+          Esta ação criará uma nova versão com o conteúdo de v
+          {version.versionNumber}. O histórico NÃO será perdido.
         </p>
       </div>
     </Modal>

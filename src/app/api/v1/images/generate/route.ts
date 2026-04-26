@@ -4,6 +4,7 @@ import { redis, QUEUE_KEYS } from '@/lib/redis'
 import { requireSession, ok, notFound, validationError, internalError } from '@/lib/api-auth'
 import { GenerateImageSchema } from '@/schemas/image.schema'
 import { IMAGE_DAILY_LIMIT } from '@/lib/constants/image-worker'
+import { CONTENT_STATUS, IMAGE_JOB_STATUS } from '@/constants/status'
 
 // POST /api/v1/images/generate
 export async function POST(request: NextRequest) {
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
     const piece = await prisma.contentPiece.findUnique({ where: { id: parsed.data.contentPieceId } })
     if (!piece) return notFound('Peça de conteúdo não encontrada')
 
-    if (piece.status !== 'APPROVED') {
+    if (piece.status !== CONTENT_STATUS.APPROVED) {
       return NextResponse.json(
         { success: false, error: 'Peça de conteúdo não está aprovada para geração de imagem' },
         { status: 422 }
@@ -45,20 +46,20 @@ export async function POST(request: NextRequest) {
       data: {
         contentPieceId: parsed.data.contentPieceId,
         templateType: parsed.data.templateType,
-        status: 'PENDING',
+        status: IMAGE_JOB_STATUS.PENDING,
       },
     })
 
     // Atualizar ContentPiece com imageJobId e status PENDING_ART
     await prisma.contentPiece.update({
       where: { id: parsed.data.contentPieceId },
-      data: { imageJobId: job.id, status: 'PENDING_ART' },
+      data: { imageJobId: job.id, status: CONTENT_STATUS.PENDING_ART },
     })
 
     // Enfileirar no Redis (CX-06: usa queue key fixa do contrato)
     await redis.lpush(QUEUE_KEYS.image, JSON.stringify({ jobId: job.id, templateType: parsed.data.templateType }))
 
-    return ok({ jobId: job.id, status: 'PENDING' }, 202)
+    return ok({ jobId: job.id, status: IMAGE_JOB_STATUS.PENDING }, 202)
   } catch {
     return internalError()
   }

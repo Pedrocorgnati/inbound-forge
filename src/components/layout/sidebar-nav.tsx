@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   LayoutDashboard,
   BookOpen,
@@ -13,6 +14,7 @@ import {
   BarChart3,
   Link2,
   Activity,
+  Database,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +31,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   BarChart3,
   Link2,
   Activity,
+  Database,
 }
 
 interface SidebarNavProps {
@@ -40,9 +43,10 @@ interface SidebarNavProps {
 
 export function SidebarNav({ collapsed, badges = {}, locale, onItemClick }: SidebarNavProps) {
   const pathname = usePathname()
+  const t = useTranslations('nav')
 
   return (
-    <nav data-testid="sidebar-nav" aria-label="Navegação principal" className="flex flex-col gap-1 px-2 py-2">
+    <nav data-testid="sidebar-nav" aria-label="Navegação principal" className="flex flex-col gap-2 px-2 py-2"> {/* RESOLVED G10: gap-1→gap-2 (8px) para WCAG touch spacing */}
       {NAV_ITEMS.map((item) => {
         const isActive = pathname?.includes(item.href) ?? false
         const Icon = ICON_MAP[item.icon] ?? LayoutDashboard
@@ -54,7 +58,7 @@ export function SidebarNav({ collapsed, badges = {}, locale, onItemClick }: Side
             key={item.href}
             data-testid={`sidebar-nav-item-${item.href.replace('/', '')}`}
             href={href}
-            title={collapsed ? item.label : undefined}
+            title={collapsed ? t(item.labelKey) : undefined}
             aria-current={isActive ? 'page' : undefined}
             onClick={onItemClick}
             className={cn(
@@ -80,7 +84,7 @@ export function SidebarNav({ collapsed, badges = {}, locale, onItemClick }: Side
 
             {!collapsed && (
               <>
-                <span className="flex-1 text-sm truncate">{item.label}</span>
+                <span className="flex-1 text-sm truncate">{t(item.labelKey)}</span>
                 {count > 0 && (
                   <Badge
                     variant="warning"

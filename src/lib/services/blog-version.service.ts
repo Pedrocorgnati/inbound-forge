@@ -33,7 +33,7 @@ export async function createVersion(
       changeNote: input.changeNote ?? 'Atualização automática',
     },
   })
-  return version as unknown as BlogArticleVersion
+  return version
 }
 
 // ─── Listagem ────────────────────────────────────────────────────────────────
@@ -44,7 +44,7 @@ export async function listVersions(articleId: string): Promise<BlogArticleVersio
     where: { articleId },
     orderBy: { versionNumber: 'desc' },
   })
-  return versions as unknown as BlogArticleVersion[]
+  return versions
 }
 
 // ─── Leitura ────────────────────────────────────────────────────────────────
@@ -66,7 +66,7 @@ export async function getVersion(
     throw new Error('BLOG_081: Versão não encontrada ou não pertence a este artigo')
   }
 
-  return version as unknown as BlogArticleVersion
+  return version
 }
 
 // ─── Rollback ────────────────────────────────────────────────────────────────

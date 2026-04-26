@@ -1,10 +1,13 @@
-// module-9: STATIC_PORTRAIT Template — 1080x1350
+// module-9: STATIC_PORTRAIT Template — dimensao em ./dimensions.ts (INSTAGRAM_FEED)
 // Canal: Instagram Feed (portrait)
 // CONSTRAINTS: flexbox only, no hooks, no dynamic imports
 
 import React from 'react'
 import type { StaticPortraitTemplateProps } from './types'
 import { BRAND_COLOR_DEFAULT } from '../constants'
+import { TEMPLATE_TYPE_TO_DIMENSION } from './dimensions'
+
+const DIM = TEMPLATE_TYPE_TO_DIMENSION.STATIC_PORTRAIT
 
 export function StaticPortraitTemplate({ headline, subheadline, bodyText, brandColor = BRAND_COLOR_DEFAULT }: StaticPortraitTemplateProps) {
   return (
@@ -12,8 +15,8 @@ export function StaticPortraitTemplate({ headline, subheadline, bodyText, brandC
       style={{
         display:         'flex',
         flexDirection:   'column',
-        width:           1080,
-        height:          1350,
+        width:           DIM.w,
+        height:          DIM.h,
         backgroundColor: '#FFFFFF',
         padding:         80,
         justifyContent:  'center',

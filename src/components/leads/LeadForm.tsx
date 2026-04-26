@@ -209,16 +209,19 @@ export function LeadForm({ locale, onSuccess, defaultValues, themeId, postId }: 
       <div className="rounded-md border border-border bg-muted/30 p-4">
         <div className="flex items-start gap-3">
           <Checkbox
+            id="lgpd-consent"
             checked={form.lgpdConsent}
             onCheckedChange={(checked) => updateField('lgpdConsent', checked === true)}
+            aria-describedby={errors.lgpdConsent ? 'lgpd-consent-error' : undefined}
             data-testid="lead-field-lgpdConsent"
           />
           <div className="flex-1">
-            <p className="text-sm text-foreground leading-relaxed">
+            <label htmlFor="lgpd-consent" className="cursor-pointer text-sm text-foreground leading-relaxed">
               Confirmo que obtive consentimento explícito para armazenar estas informações de contato (LGPD)
-            </p>
+            </label>
             {errors.lgpdConsent && (
               <p
+                id="lgpd-consent-error"
                 role="alert"
                 className="mt-1 flex items-center gap-1 text-xs text-danger"
               >

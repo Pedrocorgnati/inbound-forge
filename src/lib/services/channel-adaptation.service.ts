@@ -13,6 +13,7 @@ import { ContentBusinessRuleError } from '@/lib/errors/content-errors'
 import { CLAUDE_MODELS, CLAUDE_TIMEOUTS, CHANNEL_CHAR_LIMITS } from '@/lib/constants/content.constants'
 import type { AdaptContentInput } from '@/lib/dtos/content-piece.dto'
 import type { ChannelAdaptationResult } from '@/lib/types/content-generation.types'
+import { captureException } from '@/lib/sentry'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -90,7 +91,7 @@ export class ChannelAdaptationService {
       adaptedBody = parsed.adaptedBody ?? ''
       hashtags = parsed.hashtags ?? []
     } catch {
-      console.error('[ChannelAdaptation] Parse error. Raw:', rawText.substring(0, 200))
+      captureException(new Error('[ChannelAdaptation] Parse error'), { raw: rawText.substring(0, 200) })
       throw new ContentBusinessRuleError('CONTENT_053', 'Resposta da IA em formato inválido — tente novamente')
     }
 

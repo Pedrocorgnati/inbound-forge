@@ -6,6 +6,9 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ContentRejectModal } from './ContentRejectModal'
+import { StickyActionBar } from '@/components/mobile/StickyActionBar' // RESOLVED: FE-008 — StickyActionBar integrado em mobile
+import { APPROVABLE_CONTENT_STATUSES, CONTENT_STATUS } from '@/constants/status'
+import { UI_TIMING } from '@/constants/timing'
 
 interface ApprovalPanelProps {
   status: string | null
@@ -16,7 +19,7 @@ interface ApprovalPanelProps {
   className?: string
 }
 
-const APPROVABLE_STATUSES = new Set(['DRAFT', 'REVIEW'])
+const APPROVABLE_STATUSES = new Set<string>(APPROVABLE_CONTENT_STATUSES)
 
 export function ApprovalPanel({
   status,
@@ -43,14 +46,14 @@ export function ApprovalPanel({
       const ok = await onApprove(selectedAngleId)
       if (ok) {
         setApprovedMessage(true)
-        setTimeout(() => setApprovedMessage(false), 4000)
+        setTimeout(() => setApprovedMessage(false), UI_TIMING.APPROVAL_SUCCESS_MS)
       }
     } finally {
       setIsApproving(false)
     }
   }
 
-  if (status === 'APPROVED' || approvedMessage) {
+  if (status === CONTENT_STATUS.APPROVED || approvedMessage) {
     return (
       <Card
         className={cn('flex items-center gap-3 p-4 border-success-bg bg-success-bg/10', className)}
@@ -62,21 +65,10 @@ export function ApprovalPanel({
     )
   }
 
-  if (status === 'REJECTED') {
-    return (
-      <Card
-        className={cn('flex items-center gap-3 p-4 border-danger-bg bg-danger-bg/10', className)}
-        data-testid="rejection-banner"
-      >
-        <XCircle className="h-5 w-5 text-[#991B1B]" />
-        <span className="text-sm font-medium text-[#991B1B]">Conteúdo rejeitado — gere novamente com as correções</span>
-      </Card>
-    )
-  }
-
   return (
     <>
-      <Card className={cn('flex items-center gap-3 p-4', className)} data-testid="approval-panel">
+      {/* Desktop: Card com botões (oculto em mobile) */}
+      <Card className={cn('hidden md:flex items-center gap-3 p-4', className)} data-testid="approval-panel">
         <Button
           onClick={handleApprove}
           disabled={!canApprove}
@@ -104,6 +96,32 @@ export function ApprovalPanel({
           </span>
         )}
       </Card>
+
+      {/* Mobile: StickyActionBar (oculto em md+, mobileOnly padrão) */}
+      <StickyActionBar data-testid="approval-panel-mobile">
+        <Button
+          onClick={handleApprove}
+          disabled={!canApprove}
+          isLoading={isApproving}
+          loadingText="Aprovando..."
+          className="flex-1"
+          data-testid="approve-btn-mobile"
+        >
+          <CheckCircle className="h-4 w-4" />
+          Aprovar
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={() => setRejectOpen(true)}
+          disabled={!canApprove}
+          className="flex-1"
+          data-testid="reject-btn-mobile"
+        >
+          <XCircle className="h-4 w-4" />
+          Rejeitar
+        </Button>
+      </StickyActionBar>
 
       <ContentRejectModal
         open={rejectOpen}

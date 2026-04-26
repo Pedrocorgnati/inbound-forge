@@ -1,13 +1,15 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { toast } from '@/components/ui/toast'
 import { AlertCircle } from 'lucide-react'
-import { useAutosave } from '@/hooks/useAutosave'
+import { useKnowledgeAutosave } from '@/hooks/useKnowledgeAutosave'
+import { useFormatters } from '@/lib/i18n/formatters'
+import { SECTOR_OPTIONS } from '@/constants/knowledge'
 import type { PainResponse } from '@/lib/dtos/pain-library.dto'
 
 interface PainFormProps {
@@ -25,22 +27,9 @@ interface FormData {
   sectors: string[]
 }
 
-const SECTOR_OPTIONS = [
-  { value: 'operational_time', label: 'Tempo Operacional' },
-  { value: 'spreadsheet_dependency', label: 'Dependência de Planilhas' },
-  { value: 'systems_integration', label: 'Integração de Sistemas' },
-  { value: 'manual_budgeting', label: 'Orçamento Manual' },
-  { value: 'visibility_dashboards', label: 'Visibilidade / Dashboards' },
-  { value: 'slow_customer_service', label: 'Atendimento Lento' },
-  { value: 'scaling_difficulty', label: 'Dificuldade de Escalar' },
-  { value: 'low_predictability', label: 'Baixa Previsibilidade' },
-  { value: 'human_errors', label: 'Erros Humanos' },
-  { value: 'ad_hoc_operation', label: 'Operação Ad-hoc' },
-]
-
 const MIN_DESC_CHARS = 10
 
-export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, _locale }: PainFormProps) {
+export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, locale: _locale }: PainFormProps) {
   const [form, setForm] = useState<FormData>({
     title: initialData?.title ?? '',
     description: initialData?.description ?? '',
@@ -50,35 +39,21 @@ export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, _local
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Autosave (edit mode only)
-  const formSerialized = useMemo(() => JSON.stringify(form), [form])
+  const { autosaveStatus, lastSaved } = useKnowledgeAutosave({
+    form,
+    endpoint: `/api/knowledge/pains/${initialData?.id}`,
+    getPayload: (data) => ({
+      title: data.title.trim(),
+      description: data.description.trim(),
+      sectors: data.sectors,
+    }),
+    entityId: initialData?.id,
+    mode,
+    isOpen,
+  })
 
-  const autosaveFn = useCallback(
-    async (data: FormData) => {
-      if (!initialData?.id) return
-      const res = await fetch(`/api/knowledge/pains/${initialData.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: data.title.trim(),
-          description: data.description.trim(),
-          sectors: data.sectors,
-        }),
-      })
-      if (!res.ok) throw new Error('Falha ao salvar')
-    },
-    [initialData?.id]
-  )
-
-  const { status: autosaveStatus, lastSaved } = useAutosave(
-    formSerialized,
-    async () => autosaveFn(form),
-    2000,
-    mode === 'edit' && !!initialData?.id && isOpen
-  )
-
-  function formatTime(date: Date): string {
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  }
+  // RESOLVED: G002 — useFormatters usa locale dinâmico
+  const fmt = useFormatters()
 
   function updateField<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -171,7 +146,7 @@ export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, _local
         {mode === 'edit' && (
           <div aria-live="polite" className="text-xs text-muted-foreground text-right" data-testid="pain-autosave-status">
             {autosaveStatus === 'saving' && 'Salvando...'}
-            {autosaveStatus === 'saved' && lastSaved && `Salvo às ${formatTime(lastSaved)}`}
+            {autosaveStatus === 'saved' && lastSaved && `Salvo às ${fmt.time(lastSaved)}`}
             {autosaveStatus === 'error' && (
               <span className="text-danger">Erro ao salvar automaticamente</span>
             )}

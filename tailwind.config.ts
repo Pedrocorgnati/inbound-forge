@@ -10,79 +10,83 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Primary — Indigo Stripe
+        // Theme-sensitive tokens — reference CSS variables so .dark {} overrides apply automatically
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        surface: {
+          DEFAULT: 'var(--color-surface)',
+          raised: 'var(--color-surface-raised)',
+        },
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
+        },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
         primary: {
-          DEFAULT: '#4F46E5',
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
           hover: '#4338CA',
           active: '#3730A3',
-          light: '#EEF2FF',
-          foreground: '#FFFFFF',
+          light: 'var(--color-primary-light)',
+          'light-hover': '#E0E7FF',
         },
         secondary: {
           DEFAULT: '#6366F1',
           foreground: '#FFFFFF',
         },
         accent: {
-          DEFAULT: '#C7D2FE',
-          foreground: '#312E81',
+          DEFAULT: 'hsl(var(--accent))',
+          foreground: 'hsl(var(--accent-foreground))',
         },
-        // Backgrounds
-        background: '#FFFFFF',
-        surface: {
-          DEFAULT: '#F9FAFB',
-          raised: '#F3F4F6',
-        },
-        // Text
-        foreground: '#111827',
-        // Muted
         muted: {
-          DEFAULT: '#F3F4F6',
-          foreground: '#9CA3AF',
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
         },
-        // Border
-        border: '#E5E7EB',
-        // Semantic
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        // Semantic colors — intentionally static (no dark mode variant)
         success: {
           DEFAULT: '#059669',
           foreground: '#FFFFFF',
           bg: '#D1FAE5',
+          text: '#065F46',
         },
         warning: {
           DEFAULT: '#D97706',
           foreground: '#FFFFFF',
           bg: '#FEF3C7',
+          text: '#92400E',
         },
         danger: {
           DEFAULT: '#DC2626',
           foreground: '#FFFFFF',
           bg: '#FEE2E2',
-        },
-        destructive: {
-          DEFAULT: '#DC2626',
-          foreground: '#FFFFFF',
+          text: '#991B1B',
+          hover: '#B91C1C',
         },
         info: {
           DEFAULT: '#0284C7',
           foreground: '#FFFFFF',
           bg: '#DBEAFE',
+          text: '#1E40AF',
         },
-        // Error alias
         error: {
           DEFAULT: '#DC2626',
           foreground: '#FFFFFF',
           bg: '#FEF2F2',
+          text: '#991B1B',
         },
-        // Input
-        input: '#E5E7EB',
-        ring: '#4F46E5',
-        // Card
-        card: {
-          DEFAULT: '#FFFFFF',
-          foreground: '#111827',
-        },
-        popover: {
-          DEFAULT: '#FFFFFF',
-          foreground: '#111827',
+        instagram: {
+          bg: '#FCE7F3',
+          text: '#9D174D',
         },
       },
       fontFamily: {

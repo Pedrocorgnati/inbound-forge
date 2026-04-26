@@ -10,6 +10,7 @@ import { CheckCircle, Trash2, AlertTriangle, ArrowUpRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { formatDate } from '@/lib/utils/date'
 
 export interface ReconciliationItemData {
   id: string
@@ -81,11 +82,8 @@ export function ReconciliationItem({ item, onResolved, onDeleted }: Reconciliati
     }
   }
 
-  const weekLabel = new Date(item.weekOf).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-  })
+  // RESOLVED: G002 — locale dinâmico via useParams em vez de 'pt-BR' hardcoded
+  const weekLabel = formatDate(item.weekOf, { day: '2-digit', month: '2-digit', year: '2-digit' }, locale)
 
   return (
     <div

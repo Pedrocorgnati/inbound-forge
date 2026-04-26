@@ -980,6 +980,309 @@ paths:
         "401":
           $ref: '#/components/responses/Unauthorized'
 
+  /api/v1/api-usage/log:
+    post:
+      tags: [Monitoring]
+      summary: "Log API usage event (module-15)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider:
+                  type: string
+                model:
+                  type: string
+                tokens:
+                  type: integer
+      responses:
+        "201":
+          description: Usage logged
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/api-usage/totals:
+    get:
+      tags: [Monitoring]
+      summary: "Get API usage totals (module-15)"
+      responses:
+        "200":
+          description: Usage totals
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Themes (extended) ──────────────────────────────────────────────────
+  /api/v1/themes/generate:
+    post:
+      tags: [Themes]
+      summary: "Generate new themes via AI scoring (module-7)"
+      responses:
+        "200":
+          description: Generated themes
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/themes/score-all:
+    post:
+      tags: [Themes]
+      summary: "Recalculate scores for all active themes (module-7)"
+      responses:
+        "200":
+          description: Scores updated
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/themes/{id}/reject:
+    post:
+      tags: [Themes]
+      summary: "Reject a theme suggestion (module-7)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Theme rejected
+        "404":
+          description: Theme not found
+
+  /api/v1/themes/{id}/restore:
+    post:
+      tags: [Themes]
+      summary: "Restore a previously rejected theme (module-7)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Theme restored
+        "404":
+          description: Theme not found
+
+  /api/v1/themes/{id}/niche-opportunity:
+    get:
+      tags: [Themes]
+      summary: "Get niche opportunity data for a theme (module-7)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Niche opportunity data
+        "404":
+          description: Theme not found
+    post:
+      tags: [Themes]
+      summary: "Calculate niche opportunity for a theme (module-7)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Niche opportunity calculated
+        "404":
+          description: Theme not found
+
+  # ─── Knowledge (extended) ───────────────────────────────────────────────
+  /api/v1/knowledge/threshold:
+    get:
+      tags: [Knowledge]
+      summary: "Get knowledge base readiness threshold (module-5)"
+      responses:
+        "200":
+          description: Threshold status with counts per category
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Attribution ────────────────────────────────────────────────────────
+  /api/v1/attribution:
+    get:
+      tags: [Analytics]
+      summary: "Get attribution data for all leads (module-13)"
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Attribution data
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Onboarding ─────────────────────────────────────────────────────────
+  /api/v1/onboarding/progress:
+    get:
+      tags: [Onboarding]
+      summary: "Get onboarding progress (module-15)"
+      responses:
+        "200":
+          description: Onboarding step progress
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [Onboarding]
+      summary: "Update onboarding step status (module-15)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                step:
+                  type: string
+                completed:
+                  type: boolean
+      responses:
+        "200":
+          description: Step updated
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Credentials ────────────────────────────────────────────────────────
+  /api/v1/credentials/test:
+    post:
+      tags: [Onboarding]
+      summary: "Test external service credentials (module-15)"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                service:
+                  type: string
+                  enum: [sentry, anthropic, instagram, browserless, redis, supabase]
+      responses:
+        "200":
+          description: Credential test result
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Health (extended) ──────────────────────────────────────────────────
+  /api/v1/health/heartbeat:
+    post:
+      tags: [Monitoring]
+      summary: "Worker heartbeat endpoint (module-16)"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                workerId:
+                  type: string
+                status:
+                  type: string
+                  enum: [alive, degraded]
+      responses:
+        "200":
+          description: Heartbeat accepted
+
+  /api/v1/health/alerts:
+    get:
+      tags: [Monitoring]
+      summary: "Get active health alerts (module-15)"
+      responses:
+        "200":
+          description: List of alerts
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Analytics (extended) ───────────────────────────────────────────────
+  /api/v1/analytics/themes-ranking:
+    get:
+      tags: [Analytics]
+      summary: "Get themes ranked by conversion rate (module-14)"
+      responses:
+        "200":
+          description: Themes ranking
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── Posts (extended) ───────────────────────────────────────────────────
+  /api/v1/posts/{id}/approve:
+    post:
+      tags: [Posts]
+      summary: "Approve a scheduled post for publication (module-12)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Post approved
+        "404":
+          description: Post not found
+
+  # ─── Leads (extended) ──────────────────────────────────────────────────
+  /api/v1/leads/{id}/conversions:
+    get:
+      tags: [Leads]
+      summary: "Get conversions for a specific lead (module-13)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Lead conversions
+        "404":
+          description: Lead not found
+    post:
+      tags: [Leads]
+      summary: "Register a conversion for a lead (module-13)"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [MEETING, PROPOSAL, CONTRACT]
+                notes:
+                  type: string
+      responses:
+        "201":
+          description: Conversion registered
+        "404":
+          description: Lead not found
+
 components:
   responses:
     Unauthorized:

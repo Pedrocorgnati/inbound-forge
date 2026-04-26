@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { X } from 'lucide-react'
+import { toast } from 'sonner'
 import { format } from 'date-fns'
 import type { PublishingPost } from '@/types/publishing'
 
@@ -37,20 +38,48 @@ export function PostRescheduleModal({
     setError(null)
   }, [post])
 
-  // Focus trap - focus first input when opened
+  // Focus trap: foca primeiro input ao abrir e cicla Tab/Shift+Tab dentro do modal
   useEffect(() => {
-    if (open) {
-      firstInputRef.current?.focus()
-    }
+    if (!open) return
+    firstInputRef.current?.focus()
   }, [open])
 
-  // Esc to close
-  const handleKeyDown = useCallback(
+  const handleTrapKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key !== 'Tab') return
+
+      const dialog = dialogRef.current
+      if (!dialog) return
+
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      )
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
     },
     [onClose],
   )
+
 
   function handleConfirm() {
     if (!post) return
@@ -68,12 +97,17 @@ export function PostRescheduleModal({
     }
 
     if (newDate < new Date()) {
-      setError('A data nao pode ser no passado')
+      setError('A data não pode ser no passado')
       return
     }
 
     setError(null)
-    onReschedule(post.id, newDate)
+    try {
+      onReschedule(post.id, newDate)
+      toast.success('Post reagendado com sucesso')
+    } catch {
+      toast.error('Erro ao reagendar post. Tente novamente.')
+    }
   }
 
   if (!open || !post) return null
@@ -84,22 +118,23 @@ export function PostRescheduleModal({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
-      onKeyDown={handleKeyDown}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Reagendar post"
+      role="presentation"
     >
       <div
         ref={dialogRef}
-        className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reschedule-title"
+        onKeyDown={handleTrapKeyDown}
+        className="mx-4 w-full max-w-md rounded-lg bg-card p-6 shadow-xl"
       >
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Reagendar Post</h2>
+          <h2 id="reschedule-title" className="text-lg font-semibold text-foreground">Reagendar Post</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label="Fechar"
           >
             <X className="h-5 w-5" />
@@ -107,11 +142,11 @@ export function PostRescheduleModal({
         </div>
 
         {/* Post info */}
-        <p className="mb-4 truncate text-sm text-gray-600">{post.caption}</p>
+        <p className="mb-4 truncate text-sm text-muted-foreground">{post.caption}</p>
 
         {/* Date input */}
         <div className="mb-3">
-          <label htmlFor="reschedule-date" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="reschedule-date" className="mb-1 block text-sm font-medium text-foreground">
             Data
           </label>
           <input
@@ -120,13 +155,13 @@ export function PostRescheduleModal({
             type="date"
             value={dateValue}
             onChange={(e) => setDateValue(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-base focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
           />
         </div>
 
         {/* Time input */}
         <div className="mb-4">
-          <label htmlFor="reschedule-time" className="mb-1 block text-sm font-medium text-gray-700">
+          <label htmlFor="reschedule-time" className="mb-1 block text-sm font-medium text-foreground">
             Hora
           </label>
           <input
@@ -134,13 +169,13 @@ export function PostRescheduleModal({
             type="time"
             value={timeValue}
             onChange={(e) => setTimeValue(e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-base focus-visible:border-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
           />
         </div>
 
         {/* Error */}
         {error && (
-          <p className="mb-3 text-sm text-red-600" role="alert">
+          <p className="mb-3 text-sm text-danger" role="alert">
             {error}
           </p>
         )}
@@ -150,14 +185,14 @@ export function PostRescheduleModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded-md border border-input px-4 py-2 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Cancelar
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           >
             Confirmar
           </button>

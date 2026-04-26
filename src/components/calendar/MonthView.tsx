@@ -9,7 +9,8 @@ import {
   format,
   isSameMonth,
 } from 'date-fns'
-import { PostMiniCard } from './PostMiniCard'
+import { DraggablePostCard } from './DraggablePostCard'
+import { DroppableSlot } from './DroppableSlot'
 import { cn } from '@/lib/utils'
 import type { PublishingPost } from '@/types/publishing'
 
@@ -49,7 +50,7 @@ export function MonthView({ posts, startDate }: MonthViewProps) {
         {DAY_HEADERS.map((name) => (
           <div
             key={name}
-            className="py-1 text-center text-xs font-semibold uppercase text-gray-500"
+            className="py-1 text-center text-xs font-semibold uppercase text-muted-foreground"
           >
             {name}
           </div>
@@ -70,19 +71,20 @@ export function MonthView({ posts, startDate }: MonthViewProps) {
               const isToday = key === today
 
               return (
-                <div
+                <DroppableSlot
                   key={key}
+                  slotId={key}
                   className={cn(
-                    'min-h-[80px] rounded-md border border-gray-200 p-1 transition-colors',
+                    'min-h-[80px] rounded-md border border-border p-1 transition-colors',
                     !isCurrentMonth && 'opacity-50',
-                    isToday && 'bg-indigo-50/50 border-indigo-300',
+                    isToday && 'bg-primary/5 border-primary/40',
                   )}
                 >
                   <div className="mb-0.5 flex items-center justify-end">
                     <span
                       className={cn(
                         'inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-medium',
-                        isToday ? 'bg-indigo-600 text-white' : 'text-gray-700',
+                        isToday ? 'bg-primary text-primary-foreground' : 'text-foreground',
                       )}
                     >
                       {dayNumber}
@@ -91,18 +93,18 @@ export function MonthView({ posts, startDate }: MonthViewProps) {
 
                   <div className="space-y-0.5">
                     {visiblePosts.map((post) => (
-                      <PostMiniCard key={post.id} post={post} compact />
+                      <DraggablePostCard key={post.id} post={post} compact />
                     ))}
                     {remaining > 0 && (
                       <button
                         type="button"
-                        className="w-full rounded bg-gray-100 px-1 py-0.5 text-center text-[10px] font-medium text-gray-600 hover:bg-gray-200"
+                        className="w-full rounded bg-muted px-1 py-0.5 text-center text-[10px] font-medium text-muted-foreground hover:bg-muted/80"
                       >
                         +{remaining} mais
                       </button>
                     )}
                   </div>
-                </div>
+                </DroppableSlot>
               )
             })}
           </div>

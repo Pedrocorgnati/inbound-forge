@@ -1,7 +1,10 @@
 'use client'
 
+import type * as React from 'react'
 import { cn } from '@/lib/utils'
-import { PostMiniCard } from './PostMiniCard'
+import { format } from 'date-fns'
+import { DraggablePostCard } from './DraggablePostCard'
+import { DroppableSlot } from './DroppableSlot'
 import type { PublishingPost } from '@/types/publishing'
 
 interface CalendarDayProps {
@@ -31,37 +34,42 @@ export function CalendarDay({
   const dayNumber = date.getDate()
   const monthName = MONTH_NAMES[date.getMonth()]
   const postCountLabel = posts.length > 0 ? `, ${posts.length} post${posts.length > 1 ? 's' : ''}` : ''
+  const slotId = format(date, 'yyyy-MM-dd')
 
   return (
-    <div
-      ref={droppableRef}
-      {...droppableProps}
-      aria-label={`dia ${dayNumber} de ${monthName}${postCountLabel}`}
+    <DroppableSlot
+      slotId={slotId}
       className={cn(
-        'min-h-[100px] rounded-md border border-gray-200 p-1.5 transition-colors',
+        'min-h-[100px] rounded-md border border-border p-1.5 transition-colors',
         !isCurrentMonth && 'opacity-50',
-        isToday && 'bg-indigo-50/50 border-indigo-300',
-        isDropTarget && 'border-2 border-indigo-600 bg-indigo-50',
+        isToday && 'bg-primary/5 border-primary/40',
+        isDropTarget && 'border-2 border-primary bg-primary/10',
       )}
     >
-      <div className="mb-1 flex items-center justify-end">
-        <span
-          className={cn(
-            'inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
-            isToday
-              ? 'bg-indigo-600 text-white'
-              : 'text-gray-700',
-          )}
-        >
-          {dayNumber}
-        </span>
-      </div>
+      <div
+        ref={droppableRef as React.LegacyRef<HTMLDivElement> | undefined}
+        {...droppableProps}
+        aria-label={`dia ${dayNumber} de ${monthName}${postCountLabel}`}
+      >
+        <div className="mb-1 flex items-center justify-end">
+          <span
+            className={cn(
+              'inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
+              isToday
+                ? 'bg-primary text-primary-foreground'
+                : 'text-foreground',
+            )}
+          >
+            {dayNumber}
+          </span>
+        </div>
 
-      <div className="space-y-1">
-        {posts.map((post) => (
-          <PostMiniCard key={post.id} post={post} compact />
-        ))}
+        <div className="space-y-1">
+          {posts.map((post) => (
+            <DraggablePostCard key={post.id} post={post} compact />
+          ))}
+        </div>
       </div>
-    </div>
+    </DroppableSlot>
   )
 }

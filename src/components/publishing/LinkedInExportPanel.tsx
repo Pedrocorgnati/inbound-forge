@@ -89,7 +89,7 @@ export function LinkedInExportPanel({ postId }: LinkedInExportPanelProps) {
   if (!data) {
     return (
       <div className="py-16 text-center text-sm text-muted-foreground">
-        Nao foi possivel carregar os dados do post.
+        Não foi possível carregar os dados do post.
       </div>
     )
   }

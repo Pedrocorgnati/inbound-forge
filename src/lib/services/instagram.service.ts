@@ -11,13 +11,19 @@ import { checkRateLimits, incrementPostCount } from '@/lib/instagram/rate-limite
 import { getValidToken, getTokenStatus } from '@/lib/instagram/token-manager'
 import { handlePublishFailure } from '@/lib/instagram/queue-manager'
 import { logPublishAttempt } from '@/lib/audit/publish-audit'
+import { withLock } from '@/lib/utils/distributed-lock'
 
 export class InstagramService {
   /**
    * Pipeline completo de publicação no Instagram.
    * Requer post aprovado (INT-070) e rate limits OK.
+   * Lock distribuído (120s TTL) previne publicação duplicada em reinícios de worker.
    */
   static async publishPost(postId: string) {
+    return withLock(`publish:post:${postId}`, 120, () => InstagramService._publishPostInner(postId))
+  }
+
+  static async _publishPostInner(postId: string) {
     const post = await prisma.post.findUnique({
       where: { id: postId },
       include: { publishingQueue: true },
@@ -152,6 +158,50 @@ export class InstagramService {
       rateLimitRemaining: Math.max(0, 200 - requestsThisHour),
       postsToday,
       warning: tokenStatus.warningMessage,
+    }
+  }
+
+  /**
+   * Delete media via Graph API (TASK-4 CL-124).
+   * Falhas conhecidas:
+   *   - (190) token invalid/expired
+   *   - (100) OAuth/media not found (ja deletado)
+   *   - (4/17) rate limit
+   * Retorno `{ ok, graphStatus, reason }` — chamador decide se prossegue com rollback local.
+   */
+  static async deleteMedia(mediaId: string): Promise<{ ok: boolean; graphStatus?: number; reason?: string }> {
+    if (!mediaId) return { ok: false, reason: 'mediaId_missing' }
+
+    let token: string
+    try {
+      token = await getValidToken()
+    } catch (err) {
+      return { ok: false, reason: err instanceof Error ? err.message : 'token_error' }
+    }
+
+    try {
+      await checkRateLimits()
+    } catch (err) {
+      return { ok: false, reason: err instanceof Error ? err.message : 'rate_limited' }
+    }
+
+    const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(mediaId)}?access_token=${encodeURIComponent(token)}`
+    const res = await fetch(url, { method: 'DELETE' })
+    const text = await res.text().catch(() => '')
+    if (res.ok) {
+      await incrementPostCount().catch(() => undefined)
+      return { ok: true, graphStatus: res.status }
+    }
+    let fbCode: number | undefined
+    try {
+      const body = JSON.parse(text) as { error?: { code?: number; message?: string } }
+      fbCode = body.error?.code
+      if (fbCode === 100) {
+        return { ok: true, graphStatus: res.status, reason: 'already_deleted' }
+      }
+      return { ok: false, graphStatus: res.status, reason: body.error?.message || 'graph_error' }
+    } catch {
+      return { ok: false, graphStatus: res.status, reason: text || 'graph_error' }
     }
   }
 }

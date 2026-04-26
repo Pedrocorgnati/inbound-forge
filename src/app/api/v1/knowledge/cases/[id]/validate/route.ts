@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession, ok, notFound, internalError } from '@/lib/api-auth'
+import { KNOWLEDGE_STATUS } from '@/constants/status'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -17,7 +18,7 @@ export async function PATCH(_request: NextRequest, { params }: Params) {
 
     const updated = await prisma.caseLibraryEntry.update({
       where: { id },
-      data: { status: 'VALIDATED' },
+      data: { status: KNOWLEDGE_STATUS.VALIDATED },
     })
     return ok(updated)
   } catch {

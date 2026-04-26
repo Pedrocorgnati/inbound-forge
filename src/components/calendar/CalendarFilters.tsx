@@ -60,7 +60,7 @@ export function CalendarFilters({ filters, onChange }: CalendarFiltersProps) {
     <div className="space-y-4">
       {/* Channels */}
       <div>
-        <p className="mb-2 text-xs font-semibold uppercase text-gray-500">Canais</p>
+        <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Canais</p>
         <div className="flex flex-wrap gap-2">
           {CHANNEL_OPTIONS.map((ch) => (
             <label key={ch.value} className="flex cursor-pointer items-center gap-1.5">
@@ -68,9 +68,9 @@ export function CalendarFilters({ filters, onChange }: CalendarFiltersProps) {
                 type="checkbox"
                 checked={filters.channels.includes(ch.value)}
                 onChange={() => handleChannelToggle(ch.value)}
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
               />
-              <span className="text-sm text-gray-700">{ch.label}</span>
+              <span className="text-sm text-foreground">{ch.label}</span>
             </label>
           ))}
         </div>
@@ -78,7 +78,7 @@ export function CalendarFilters({ filters, onChange }: CalendarFiltersProps) {
 
       {/* Statuses */}
       <div>
-        <p className="mb-2 text-xs font-semibold uppercase text-gray-500">Status</p>
+        <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">Status</p>
         <div className="flex flex-wrap gap-2">
           {STATUS_OPTIONS.map((st) => (
             <label key={st.value} className="flex cursor-pointer items-center gap-1.5">
@@ -86,9 +86,9 @@ export function CalendarFilters({ filters, onChange }: CalendarFiltersProps) {
                 type="checkbox"
                 checked={filters.statuses.includes(st.value)}
                 onChange={() => handleStatusToggle(st.value)}
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
               />
-              <span className="text-sm text-gray-700">{st.label}</span>
+              <span className="text-sm text-foreground">{st.label}</span>
             </label>
           ))}
         </div>
@@ -99,7 +99,7 @@ export function CalendarFilters({ filters, onChange }: CalendarFiltersProps) {
         <button
           type="button"
           onClick={handleClear}
-          className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+          className="text-sm font-medium text-primary hover:text-primary/80"
         >
           Limpar filtros
         </button>
@@ -117,20 +117,20 @@ export function CalendarFilters({ filters, onChange }: CalendarFiltersProps) {
         <button
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted"
         >
           <Filter className="h-4 w-4" />
           Filtros
         </button>
 
         {mobileOpen && (
-          <div className="mt-2 rounded-lg border border-gray-200 bg-white p-4 shadow-lg">
+          <div className="mt-2 rounded-lg border border-border bg-card p-4 shadow-lg">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-800">Filtros</span>
+              <span className="text-sm font-semibold text-foreground">Filtros</span>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="rounded p-1 text-gray-400 hover:bg-gray-100"
+                className="rounded p-1 text-muted-foreground hover:bg-muted"
                 aria-label="Fechar filtros"
               >
                 <X className="h-4 w-4" />

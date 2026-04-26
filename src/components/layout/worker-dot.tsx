@@ -11,6 +11,7 @@ import type { WorkerStatus, WorkerType } from '@/types'
 const WORKER_LABELS: Record<WorkerType, string> = {
   SCRAPING: 'Scraping',
   IMAGE: 'Imagens',
+  VIDEO: 'Vídeo',
   PUBLISHING: 'Publicação',
 }
 
@@ -82,7 +83,7 @@ export function WorkerDot({ type, status, lastSeen, locale }: WorkerDotProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div>{dot}</div>
+        <div className="flex items-center justify-center min-h-[44px] min-w-[44px]">{dot}</div>
       </TooltipTrigger>
       <TooltipContent side="bottom">{tooltipContent}</TooltipContent>
     </Tooltip>

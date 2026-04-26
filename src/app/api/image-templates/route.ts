@@ -7,10 +7,9 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
-import { requireSession }                 from '@/lib/api-auth'
+import { requireSession, validationError } from '@/lib/api-auth'
 import { imageTemplateService }           from '@/lib/services/image-template.service'
 import { createTemplateSchema }           from '@/lib/validators/image-template'
-import { ZodError }                       from 'zod'
 
 export async function GET(request: NextRequest) {
   const { response: authResponse } = await requireSession()
@@ -33,29 +32,15 @@ export async function POST(request: NextRequest) {
   const { response: authResponse } = await requireSession()
   if (authResponse) return authResponse
 
+  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para input inválido
   let body: unknown
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json({ error: 'Body JSON inválido' }, { status: 400 })
-  }
+  try { body = await request.json() } catch { return validationError(new Error('Body inválido')) }
 
-  let dto: ReturnType<typeof createTemplateSchema.parse>
-  try {
-    dto = createTemplateSchema.parse(body)
-  } catch (err) {
-    if (err instanceof ZodError) {
-      const message = err.errors[0]?.message ?? 'Dados inválidos'
-      return NextResponse.json(
-        { error: { code: 'IMAGE_061', message } },
-        { status: 400 }
-      )
-    }
-    throw err
-  }
+  const parsed = createTemplateSchema.safeParse(body)
+  if (!parsed.success) return validationError(parsed.error)
 
   try {
-    const template = await imageTemplateService.create(dto)
+    const template = await imageTemplateService.create(parsed.data)
     return NextResponse.json(template, { status: 201 })
   } catch (err) {
     console.error('[image-templates] POST error:', err)

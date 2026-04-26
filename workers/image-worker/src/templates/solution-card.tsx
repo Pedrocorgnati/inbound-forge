@@ -1,10 +1,13 @@
-// module-9: SOLUTION_CARD Template — 1200x630
+// module-9: SOLUTION_CARD Template — dimensao em ./dimensions.ts (OG_BLOG)
 // Canal: LinkedIn / Blog OG — solução apresentada
 // CONSTRAINTS: flexbox only, no hooks, no dynamic imports
 
 import React from 'react'
 import type { SolutionCardProps } from './types'
 import { BRAND_COLOR_DEFAULT } from '../constants'
+import { TEMPLATE_TYPE_TO_DIMENSION } from './dimensions'
+
+const DIM = TEMPLATE_TYPE_TO_DIMENSION.SOLUTION_CARD
 
 export function SolutionCardTemplate({ headline, subheadline, solutionPoints, ctaText, brandColor = BRAND_COLOR_DEFAULT }: SolutionCardProps) {
   // max 3 pontos conforme spec
@@ -15,8 +18,8 @@ export function SolutionCardTemplate({ headline, subheadline, solutionPoints, ct
       style={{
         display:         'flex',
         flexDirection:   'row',
-        width:           1200,
-        height:          630,
+        width:           DIM.w,
+        height:          DIM.h,
         backgroundColor: '#FFFFFF',
       }}
     >

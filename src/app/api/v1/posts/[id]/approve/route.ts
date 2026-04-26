@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession, ok, notFound, internalError } from '@/lib/api-auth'
+import { CONTENT_STATUS } from '@/constants/status'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -17,7 +18,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
 
     const updated = await prisma.post.update({
       where: { id },
-      data: { status: 'APPROVED' },
+      data: { status: CONTENT_STATUS.APPROVED },
     })
     return ok(updated)
   } catch {

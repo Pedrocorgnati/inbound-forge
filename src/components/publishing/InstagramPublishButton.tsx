@@ -6,6 +6,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { InstagramPreChecks } from '@/components/publishing/InstagramPreChecks'
+import { RetryPublishButton } from '@/components/publishing/RetryPublishButton'
+import { UI_TIMING } from '@/constants/timing'
 
 type ButtonState = 'idle' | 'pre-checks' | 'confirming' | 'publishing' | 'done' | 'error'
 
@@ -17,10 +19,12 @@ interface InstagramPublishButtonProps {
     caption: string
     channel: string
     status: string
+    errorMessage?: string | null
   }
+  onRetrySuccess?: () => void
 }
 
-export function InstagramPublishButton({ postId, post }: InstagramPublishButtonProps) {
+export function InstagramPublishButton({ postId, post, onRetrySuccess }: InstagramPublishButtonProps) {
   const [state, setState] = useState<ButtonState>('idle')
 
   const canOpen = !!post.approvedAt && post.channel === 'instagram'
@@ -60,7 +64,7 @@ export function InstagramPublishButton({ postId, post }: InstagramPublishButtonP
       const message = err instanceof Error ? err.message : 'Erro ao publicar'
       toast.error(message)
       // After error, go back to idle so user can retry
-      setTimeout(() => setState('idle'), 2000)
+      setTimeout(() => setState('idle'), UI_TIMING.PUBLISH_STATE_RESET_MS)
     }
   }, [postId])
 
@@ -73,6 +77,18 @@ export function InstagramPublishButton({ postId, post }: InstagramPublishButtonP
     imageUrl: post.imageUrl ?? undefined,
     caption: post.caption,
     channel: post.channel,
+  }
+
+  // TASK-4 ST003: exibir RetryPublishButton para posts FAILED (CL-129)
+  if (post.status === 'FAILED') {
+    return (
+      <RetryPublishButton
+        postId={postId}
+        status={post.status}
+        errorMessage={post.errorMessage}
+        onSuccess={onRetrySuccess}
+      />
+    )
   }
 
   return (
@@ -110,8 +126,8 @@ export function InstagramPublishButton({ postId, post }: InstagramPublishButtonP
       <Modal
         open={state === 'confirming'}
         onClose={() => setState('idle')}
-        title="Confirmar publicacao no Instagram"
-        description="Tem certeza que deseja publicar este post no Instagram? Esta acao nao pode ser desfeita."
+        title="Confirmar publicação no Instagram"
+        description="Tem certeza que deseja publicar este post no Instagram? Esta ação não pode ser desfeita."
         confirmLabel="Publicar"
         cancelLabel="Cancelar"
         onConfirm={handlePublish}

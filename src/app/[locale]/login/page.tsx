@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import Image from 'next/image'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import { LoginForm } from '@/components/auth/login-form'
 
@@ -29,7 +30,7 @@ export default async function LoginPage({ params }: LoginPageProps) {
   }
 
   return (
-    <main data-testid="login-page" className="flex min-h-screen items-center justify-center bg-background px-4 py-12">
+    <main data-testid="login-page" className="flex min-h-dvh items-center justify-center bg-background px-4 py-12"> {/* RESOLVED G07: min-h-screen→min-h-dvh */}
       <div className="w-full max-w-sm">
         {/* Logo + heading */}
         <div data-testid="login-logo" className="mb-8 text-center">
@@ -51,6 +52,15 @@ export default async function LoginPage({ params }: LoginPageProps) {
         {/* Login card */}
         <div data-testid="login-card" className="rounded-lg bg-surface-raised p-8 shadow-card">
           <LoginForm locale={locale} />
+          <div className="mt-4 text-center">
+            <Link
+              href={`/${locale}/forgot-password`}
+              className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+              data-testid="forgot-password-link"
+            >
+              Esqueceu sua senha?
+            </Link>
+          </div>
         </div>
       </div>
     </main>

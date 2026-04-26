@@ -8,19 +8,19 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
-import { requireSession }                 from '@/lib/api-auth'
+import { requireSession, validationError } from '@/lib/api-auth'
 import { imageTemplateService }           from '@/lib/services/image-template.service'
 import { updateTemplateSchema }           from '@/lib/validators/image-template'
-import { ZodError }                       from 'zod'
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const { response: authResponse } = await requireSession()
   if (authResponse) return authResponse
 
-  const template = await imageTemplateService.findById(params.id)
+  const template = await imageTemplateService.findById(id)
   if (!template) {
     return NextResponse.json({ error: 'Template não encontrado' }, { status: 404 })
   }
@@ -30,49 +30,41 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const { response: authResponse } = await requireSession()
   if (authResponse) return authResponse
 
-  const template = await imageTemplateService.findById(params.id)
+  const template = await imageTemplateService.findById(id)
   if (!template) {
     return NextResponse.json({ error: 'Template não encontrado' }, { status: 404 })
   }
 
+  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para input inválido
   let body: unknown
-  try {
-    body = await request.json()
-  } catch {
-    return NextResponse.json({ error: 'Body JSON inválido' }, { status: 400 })
-  }
+  try { body = await request.json() } catch { return validationError(new Error('Body inválido')) }
 
-  let dto: ReturnType<typeof updateTemplateSchema.parse>
-  try {
-    dto = updateTemplateSchema.parse(body)
-  } catch (err) {
-    if (err instanceof ZodError) {
-      return NextResponse.json({ error: err.errors[0]?.message ?? 'Dados inválidos' }, { status: 400 })
-    }
-    throw err
-  }
+  const parsed = updateTemplateSchema.safeParse(body)
+  if (!parsed.success) return validationError(parsed.error)
 
-  const updated = await imageTemplateService.update(params.id, dto)
+  const updated = await imageTemplateService.update(id, parsed.data)
   return NextResponse.json(updated)
 }
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const { response: authResponse } = await requireSession()
   if (authResponse) return authResponse
 
-  const template = await imageTemplateService.findById(params.id)
+  const template = await imageTemplateService.findById(id)
   if (!template) {
     return NextResponse.json({ error: 'Template não encontrado' }, { status: 404 })
   }
 
-  await imageTemplateService.softDelete(params.id)
+  await imageTemplateService.softDelete(id)
   return NextResponse.json({ success: true })
 }

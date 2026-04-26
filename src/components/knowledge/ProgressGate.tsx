@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ProgressCounter } from './ProgressCounter'
 import { useKnowledgeProgress } from '@/hooks/useKnowledgeProgress'
@@ -8,15 +9,16 @@ interface ProgressGateProps {
   locale: string
 }
 
-const COUNTER_CONFIG = [
-  { key: 'cases' as const, label: 'Cases' },
-  { key: 'pains' as const, label: 'Dores' },
-  { key: 'patterns' as const, label: 'Padrões' },
-  { key: 'objections' as const, label: 'Objeções' },
-]
-
-export function ProgressGate({ _locale }: ProgressGateProps) {
+export function ProgressGate({ locale: _locale }: ProgressGateProps) {
   const { data, isLoading, error } = useKnowledgeProgress()
+  const t = useTranslations('knowledge')
+
+  const COUNTER_CONFIG = [
+    { key: 'cases' as const, label: t('tabs.cases') },
+    { key: 'pains' as const, label: t('tabs.pains') },
+    { key: 'patterns' as const, label: t('tabs.patterns') },
+    { key: 'objections' as const, label: t('tabs.objections') },
+  ]
 
   // Loading state
   if (isLoading) {
@@ -24,7 +26,7 @@ export function ProgressGate({ _locale }: ProgressGateProps) {
       <div
         className="rounded-lg border border-border p-4"
         data-testid="progress-gate-loading"
-        aria-label="Carregando progresso"
+        aria-label={t('progress.loading')}
       >
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -47,7 +49,7 @@ export function ProgressGate({ _locale }: ProgressGateProps) {
         data-testid="progress-gate-error"
       >
         <p className="text-sm text-danger">
-          {error ?? 'Erro ao carregar progresso da base de conhecimento.'}
+          {error ?? t('progress.error')}
         </p>
       </div>
     )
@@ -67,9 +69,7 @@ export function ProgressGate({ _locale }: ProgressGateProps) {
       {/* Mobile: collapsible */}
       <details className="sm:hidden" open>
         <summary className="cursor-pointer text-sm font-medium text-foreground">
-          {isComplete
-            ? 'Base de conhecimento pronta'
-            : 'Progresso da base de conhecimento'}
+          {isComplete ? t('progress.ready') : t('progress.title')}
         </summary>
         <div className="mt-3 space-y-3">
           {COUNTER_CONFIG.map((cfg) => (
@@ -87,7 +87,7 @@ export function ProgressGate({ _locale }: ProgressGateProps) {
       <div className="hidden sm:block">
         {isComplete && (
           <p className="mb-3 text-sm font-medium text-success" data-testid="progress-gate-complete">
-            Base de conhecimento pronta
+            {t('progress.ready')}
           </p>
         )}
 

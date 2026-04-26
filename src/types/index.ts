@@ -11,7 +11,7 @@ export { BUSINESS_RULES, type BusinessRule } from './constants'
 
 // Navigation types (definidos apenas aqui)
 export interface NavItem {
-  label: string
+  labelKey: string
   href: string
   icon: string
   badgeKey?: 'pendingEntries' | 'pendingContent' | 'pendingPublish' | 'pendingReconciliation' | null

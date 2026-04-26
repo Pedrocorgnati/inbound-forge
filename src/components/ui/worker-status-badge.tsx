@@ -1,8 +1,10 @@
 'use client'
 
 import * as React from 'react'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { Badge } from './badge'
+import { useFormatters } from '@/lib/i18n/formatters'
 import { WorkerStatus, WorkerType } from '@/types/enums'
 
 const STATUS_CONFIG: Record<
@@ -17,6 +19,7 @@ const STATUS_CONFIG: Record<
 const WORKER_TYPE_LABELS: Record<WorkerType, string> = {
   [WorkerType.SCRAPING]: 'Scraping',
   [WorkerType.IMAGE]: 'Image',
+  [WorkerType.VIDEO]: 'Video',
   [WorkerType.PUBLISHING]: 'Publishing',
 }
 
@@ -28,11 +31,14 @@ export interface WorkerStatusBadgeProps {
 }
 
 export function WorkerStatusBadge({ type, status, lastPing, className }: WorkerStatusBadgeProps) {
+  const t = useTranslations('workers')
+  const fmt = useFormatters()
   const config = STATUS_CONFIG[status]
   const typeLabel = WORKER_TYPE_LABELS[type]
 
+  // RESOLVED: G001/G002 — locale-aware date + translated label
   const pingText = lastPing
-    ? `Ultimo ping: ${lastPing.toLocaleString('pt-BR')}`
+    ? t('lastPing', { time: fmt.dateTime(lastPing) })
     : undefined
 
   return (

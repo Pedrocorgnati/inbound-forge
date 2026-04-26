@@ -4,9 +4,11 @@ import { Sparkles, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ContentStatusBadge } from './ContentStatusBadge'
 import { ChannelSelector } from './ChannelSelector'
+import { CopyContextButton } from './CopyContextButton'
 import type { Channel } from '@prisma/client'
 
 interface ContentEditorHeaderProps {
+  themeId: string
   themeTitle: string
   status: string | null
   selectedChannel: Channel
@@ -17,6 +19,7 @@ interface ContentEditorHeaderProps {
 }
 
 export function ContentEditorHeader({
+  themeId,
   themeTitle,
   status,
   selectedChannel,
@@ -36,6 +39,8 @@ export function ContentEditorHeader({
       </div>
 
       <div className="flex items-center gap-3 flex-shrink-0">
+        <CopyContextButton themeId={themeId} disabled={isGenerating} />
+
         <ChannelSelector
           value={selectedChannel}
           onChange={onChangeChannel}

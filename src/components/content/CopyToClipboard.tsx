@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { UI_TIMING } from '@/constants/timing'
 
 interface CopyToClipboardProps {
   text: string
@@ -29,7 +30,7 @@ export function CopyToClipboard({ text, className }: CopyToClipboardProps) {
         document.body.removeChild(textarea)
       }
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setTimeout(() => setCopied(false), UI_TIMING.COPY_FEEDBACK_MS)
     } catch {
       // Clipboard API indisponivel
     }

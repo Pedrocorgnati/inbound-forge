@@ -9,15 +9,15 @@ const badgeVariants = cva(
       variant: {
         default: 'bg-muted text-foreground',
         primary: 'bg-primary-light text-primary',
-        success: 'bg-success-bg text-[#065F46]',
-        warning: 'bg-warning-bg text-[#92400E]',
-        danger: 'bg-danger-bg text-[#991B1B]',
-        error: 'bg-error-bg text-[#991B1B]',
-        info: 'bg-info-bg text-[#1E40AF]',
+        success: 'bg-success-bg text-success-text',
+        warning: 'bg-warning-bg text-warning-text',
+        danger: 'bg-danger-bg text-danger-text',
+        error: 'bg-error-bg text-error-text',
+        info: 'bg-info-bg text-info-text',
         // Channel badges
-        instagram: 'bg-[#FCE7F3] text-[#9D174D]',
-        linkedin: 'bg-[#DBEAFE] text-[#1E40AF]',
-        blog: 'bg-[#D1FAE5] text-[#065F46]',
+        instagram: 'bg-instagram-bg text-instagram-text',
+        linkedin: 'bg-info-bg text-info-text',
+        blog: 'bg-success-bg text-success-text',
       },
     },
     defaultVariants: {

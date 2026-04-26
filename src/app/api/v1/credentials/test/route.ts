@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireSession, badRequest } from '@/lib/api-auth'
-import { ZodError } from 'zod'
+import { requireSession, validationError } from '@/lib/api-auth'
 import { CredentialTestBodySchema } from '@/schemas/health.schema'
 import { testIdeogramConnection } from '@/lib/ai/ideogram'
 
@@ -15,27 +14,14 @@ export async function POST(req: NextRequest) {
   const { response } = await requireSession()
   if (response) return response
 
+  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para input inválido
   let body: unknown
-  try {
-    body = await req.json()
-  } catch {
-    return badRequest('Corpo da requisição inválido')
-  }
+  try { body = await req.json() } catch { return validationError(new Error('Body inválido')) }
 
-  let parsed: { service: ServiceKey; key: string }
-  try {
-    parsed = CredentialTestBodySchema.parse(body)
-  } catch (err) {
-    if (err instanceof ZodError) {
-      return NextResponse.json(
-        { error: 'Validação falhou', issues: err.errors },
-        { status: 422 }
-      )
-    }
-    return badRequest('Corpo da requisição inválido')
-  }
+  const parsedBody = CredentialTestBodySchema.safeParse(body)
+  if (!parsedBody.success) return validationError(parsedBody.error)
 
-  const { service, key } = parsed
+  const { service, key } = parsedBody.data
 
   // SEC-008: NUNCA incluir a key em qualquer log
   const start = Date.now()
@@ -57,6 +43,7 @@ export async function POST(req: NextRequest) {
             max_tokens: 1,
             messages: [{ role: 'user', content: 'ping' }],
           }),
+          signal: AbortSignal.timeout(30_000),
         })
         // 200/400 = chave válida; 401 = inválida
         ok = res.status !== 401
@@ -71,7 +58,8 @@ export async function POST(req: NextRequest) {
 
       case 'instagram': {
         const res = await fetch(
-          `https://graph.instagram.com/me?access_token=${encodeURIComponent(key)}`
+          `https://graph.instagram.com/me?access_token=${encodeURIComponent(key)}`,
+          { signal: AbortSignal.timeout(15_000) }
         )
         ok = res.status === 200
         break

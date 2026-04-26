@@ -27,6 +27,25 @@ export default function LinkedInExportPage() {
 
       <h1 className="text-2xl font-bold tracking-tight">Exportar para LinkedIn</h1>
 
+      {/* Navegação entre canais */}
+      <div className="flex gap-2 text-sm" role="navigation" aria-label="Canais">
+        <span className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground font-medium">
+          LinkedIn
+        </span>
+        <Link
+          href={`/${locale}/posts/${postId}/tiktok`}
+          className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-muted transition-colors"
+        >
+          TikTok
+        </Link>
+        <Link
+          href={`/${locale}/posts/${postId}/youtube`}
+          className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-muted transition-colors"
+        >
+          YouTube
+        </Link>
+      </div>
+
       <LinkedInExportPanel postId={postId} />
     </div>
   )

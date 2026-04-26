@@ -3,7 +3,7 @@
 import { NextRequest } from 'next/server'
 import { requireSession, ok, validationError, internalError } from '@/lib/api-auth'
 import { GenerateThemesSchema } from '@/schemas/theme.schema'
-import { themeGenerationService } from '@/services/theme-generation.service'
+import { themeGenerationService } from '@/lib/services/theme-generation.service'
 
 export async function POST(request: NextRequest) {
   const { response } = await requireSession()

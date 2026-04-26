@@ -3,7 +3,6 @@
  * Rastreabilidade: INT-091
  */
 import { PrismaClient } from '@prisma/client'
-import { ConversionType } from '@/types/enums'
 
 export const prisma = new PrismaClient({
   datasources: {
@@ -15,26 +14,19 @@ export const prisma = new PrismaClient({
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
-export async function createTestOperator(overrides?: Partial<{ email: string; name: string }>) {
+export async function createTestOperator(overrides?: Partial<{ email: string }>) {
   return prisma.operator.create({
     data: {
       email: overrides?.email ?? `test-${Date.now()}@example.com`,
-      name: overrides?.name ?? 'Test Operator',
-      passwordHash: 'hash-placeholder',
       onboardingCompleted: true,
     },
   })
 }
 
-export async function createTestTheme(overrides?: Partial<{ operatorId: string; name: string }>) {
-  const operator = overrides?.operatorId
-    ? { id: overrides.operatorId }
-    : await createTestOperator()
-
+export async function createTestTheme(overrides?: Partial<{ title: string }>) {
   return prisma.theme.create({
     data: {
-      operatorId: operator.id,
-      name: overrides?.name ?? `Theme-${Date.now()}`,
+      title: overrides?.title ?? `Theme-${Date.now()}`,
       conversionScore: 0,
     },
   })
@@ -48,29 +40,16 @@ export async function createTestContent(overrides?: Partial<{ themeId: string }>
   return prisma.contentPiece.create({
     data: {
       themeId: theme.id,
-      title: `Test Content ${Date.now()}`,
-      body: 'Test body',
-      channel: 'LINKEDIN',
-      angle: 'AUTHORIAL',
-      status: 'APPROVED',
-    },
-  })
-}
-
-export async function createTestLead(overrides?: Partial<{ themeId: string; operatorId: string }>) {
-  const theme = overrides?.themeId
-    ? { id: overrides.themeId }
-    : await createTestTheme()
-
-  return prisma.lead.create({
-    data: {
-      operatorId: theme.operatorId ?? (await createTestOperator()).id,
-      themeId: theme.id,
-      contactInfoEncrypted: Buffer.from('test-contact-info').toString('base64'),
-      contactInfoIv: Buffer.from('test-iv-12345678').toString('base64'),
-      lgpdConsent: true,   // COMP-002: obrigatório
-      lgpdConsentAt: new Date(),
+      baseTitle: `Test Content ${Date.now()}`,
+      painCategory: 'test-pain',
+      targetNiche: 'test-niche',
+      relatedService: 'test-service',
       funnelStage: 'AWARENESS',
+      idealFormat: 'article',
+      recommendedChannel: 'LINKEDIN',
+      ctaDestination: 'BLOG',
+      status: 'APPROVED',
+      selectedAngle: 'AUTHORIAL',
     },
   })
 }
@@ -85,6 +64,25 @@ export async function createTestPost(overrides?: Partial<{ contentPieceId: strin
       contentPieceId: content.id,
       channel: 'LINKEDIN',
       status: 'DRAFT',
+      caption: 'Test caption',
+    },
+  })
+}
+
+export async function createTestLead(overrides?: Partial<{ themeId: string }>) {
+  const theme = overrides?.themeId
+    ? { id: overrides.themeId }
+    : await createTestTheme()
+
+  const post = await createTestPost()
+
+  return prisma.lead.create({
+    data: {
+      firstTouchPostId: post.id,
+      firstTouchThemeId: theme.id,
+      lgpdConsent: true,
+      lgpdConsentAt: new Date(),
+      funnelStage: 'AWARENESS',
     },
   })
 }
@@ -105,11 +103,13 @@ export async function completeImageJob(jobId: string, imageUrl: string) {
     where: { id: jobId },
     data: { status: 'DONE', imageUrl },
   })
-  // Update ContentPiece.imageUrl and imageJobId (CX-02)
-  await prisma.contentPiece.update({
-    where: { id: job.contentPieceId },
-    data: { imageJobId: job.id, imageUrl },
-  })
+  // Update ContentPiece.generatedImageUrl and imageJobId (CX-02)
+  if (job.contentPieceId) {
+    await prisma.contentPiece.update({
+      where: { id: job.contentPieceId },
+      data: { imageJobId: job.id, generatedImageUrl: imageUrl },
+    })
+  }
   return job
 }
 
@@ -118,27 +118,19 @@ export async function failImageJob(jobId: string, reason: string) {
     where: { id: jobId },
     data: { status: 'FAILED', errorMessage: reason },
   })
-  // On failure: do NOT update imageUrl — keep null
   return job
 }
 
 export async function createConversionEvent(args: {
   leadId: string
-  themeId: string
-  conversionType: ConversionType | string
+  type?: string
 }) {
   const result = await prisma.conversionEvent.create({
     data: {
       leadId: args.leadId,
-      themeId: args.themeId,
-      conversionType: args.conversionType as ConversionType,
+      type: (args.type as 'CONVERSATION' | 'MEETING' | 'PROPOSAL') ?? 'CONVERSATION',
+      occurredAt: new Date(),
     },
-  })
-  // CX-01: update Theme.conversionScore
-  const conversions = await prisma.conversionEvent.count({ where: { themeId: args.themeId } })
-  await prisma.theme.update({
-    where: { id: args.themeId },
-    data: { conversionScore: conversions },
   })
   return result
 }
@@ -148,20 +140,16 @@ export async function createUTMLink(args: {
   source: string
   medium: string
 }) {
-  const trackingUrl = `https://inbound-forge.app?utm_source=${args.source}&utm_medium=${args.medium}&utm_campaign=inbound-forge&postId=${args.postId}`
+  const fullUrl = `https://inbound-forge.app?utm_source=${args.source}&utm_medium=${args.medium}&utm_campaign=inbound-forge&postId=${args.postId}`
   const utmLink = await prisma.uTMLink.create({
     data: {
       postId: args.postId,
       source: args.source,
       medium: args.medium,
       campaign: 'inbound-forge',
-      trackingUrl,
+      content: '',
+      fullUrl,
     },
-  })
-  // CX-04: update Post.trackingUrl
-  await prisma.post.update({
-    where: { id: args.postId },
-    data: { trackingUrl },
   })
   return utmLink
 }
@@ -171,13 +159,13 @@ export async function createUTMLink(args: {
 export async function cleanupTestData() {
   await prisma.$executeRawUnsafe(`
     DELETE FROM conversion_events WHERE lead_id IN (
-      SELECT id FROM leads WHERE contact_info_encrypted LIKE '%test-%'
+      SELECT id FROM leads WHERE lgpd_consent = true
     )
   `).catch(() => {})
   await prisma.$executeRawUnsafe(
-    `DELETE FROM leads WHERE contact_info_encrypted LIKE '%test-%' OR lgpd_consent_at IS NOT NULL`
+    `DELETE FROM leads WHERE lgpd_consent_at IS NOT NULL`
   ).catch(() => {})
   await prisma.$executeRawUnsafe(
-    `DELETE FROM utm_links WHERE campaign = 'inbound-forge' AND tracking_url LIKE '%postId=%'`
+    `DELETE FROM utm_links WHERE campaign = 'inbound-forge'`
   ).catch(() => {})
 }

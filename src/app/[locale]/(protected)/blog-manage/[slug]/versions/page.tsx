@@ -24,7 +24,7 @@ export default function BlogVersionsPage() {
     async function load() {
       try {
         const res = await fetch(`/api/blog-articles/${id}`)
-        if (!res.ok) throw new Error('Artigo nao encontrado')
+        if (!res.ok) throw new Error('Artigo não encontrado')
         const data: BlogArticle = await res.json()
         setArticle(data)
       } catch {

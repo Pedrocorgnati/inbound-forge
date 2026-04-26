@@ -8,6 +8,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { prisma } from '@/lib/prisma'
 import { ContentAngle, Channel, FunnelStage } from '@/types/enums'
+import { THEME_STATUS } from '@/constants/status'
 import { KnowledgeContextService } from './knowledge-context.service'
 import { PromptFeedbackService } from './prompt-feedback.service'
 import { buildAngleGenerationPrompt, ANGLE_NAME_MAP } from '@/lib/prompts/angle-generation.prompt'
@@ -15,6 +16,8 @@ import { ContentBusinessRuleError } from '@/lib/errors/content-errors'
 import { CLAUDE_MODELS, CLAUDE_TIMEOUTS } from '@/lib/constants/content.constants'
 import type { GenerateAnglesInput } from '@/lib/dtos/content-piece.dto'
 import type { GeneratedAngle } from '@/lib/types/content-generation.types'
+import { captureException } from '@/lib/sentry'
+import { isServiceAvailable, ExternalService } from '@/lib/services/service-health'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -50,8 +53,32 @@ export class AngleGenerationService {
       throw new ContentBusinessRuleError('CONTENT_002', 'Tema não encontrado')
     }
 
-    if (theme.status !== 'ACTIVE') {
+    if (theme.status !== THEME_STATUS.ACTIVE) {
       throw new ContentBusinessRuleError('CONTENT_050', 'Tema inativo. Ative o tema antes de gerar conteúdo.')
+    }
+
+    const effectiveFunnelStage = funnelStage ?? (piece?.funnelStage as FunnelStage) ?? FunnelStage.AWARENESS
+    const effectiveChannel = targetChannel ?? (piece?.recommendedChannel as Channel) ?? Channel.LINKEDIN
+
+    // Manual mode: create ContentPiece in DRAFT without generating angles via API
+    if (process.env.CONTENT_GENERATION_MODE === 'manual') {
+      if (!piece) {
+        piece = await prisma.contentPiece.create({
+          data: {
+            themeId,
+            baseTitle: theme.title,
+            painCategory: 'Geral',
+            targetNiche: 'PMEs Brasileiras',
+            relatedService: 'Software sob medida',
+            funnelStage: effectiveFunnelStage,
+            idealFormat: 'post',
+            recommendedChannel: effectiveChannel,
+            ctaDestination: 'WHATSAPP',
+          },
+          include: { angles: true },
+        })
+      }
+      return piece
     }
 
     // Build knowledge context
@@ -69,8 +96,11 @@ export class AngleGenerationService {
       // Non-blocking — feedback analysis failure doesn't break generation
     }
 
-    const effectiveFunnelStage = funnelStage ?? (piece?.funnelStage as FunnelStage) ?? FunnelStage.AWARENESS
-    const effectiveChannel = targetChannel ?? (piece?.recommendedChannel as Channel) ?? Channel.LINKEDIN
+    // TASK-2 ST003: verificar disponibilidade do Claude antes de gerar
+    const claudeAvailable = await isServiceAvailable(ExternalService.CLAUDE)
+    if (!claudeAvailable) {
+      throw new ContentBusinessRuleError('SYS_001', 'Geração temporariamente indisponível — Claude API fora do ar')
+    }
 
     // Build prompt
     const prompt = buildAngleGenerationPrompt(context, effectiveFunnelStage, effectiveChannel, feedbackHints)
@@ -112,7 +142,7 @@ export class AngleGenerationService {
         throw new Error('Expected exactly 3 angles')
       }
     } catch {
-      console.error('[AngleGeneration] Parse error. Raw:', rawText.substring(0, 200))
+      captureException(new Error('[AngleGeneration] Parse error'), { raw: rawText.substring(0, 200) })
       throw new ContentBusinessRuleError('CONTENT_053', 'Resposta da IA em formato inválido — tente novamente')
     }
 

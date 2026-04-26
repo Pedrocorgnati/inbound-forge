@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { prisma } from '@/lib/prisma'
-import { ThemeScoringService } from '@/services/theme-scoring.service'
+import { ThemeScoringService } from '@/lib/services/theme-scoring.service'
 
 async function cleanup() {
   await prisma.contentPiece.deleteMany({ where: { theme: { title: { startsWith: 'Formula Test' } } } })

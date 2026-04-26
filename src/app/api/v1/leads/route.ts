@@ -13,6 +13,9 @@ import { requireSession, ok, okPaginated, validationError, internalError } from 
 import { CreateLeadSchema, ListLeadsSchema } from '@/schemas/lead.schema'
 import { encryptPII, decryptPII } from '@/lib/crypto'
 import { auditLog } from '@/lib/audit'
+import { hashContactInfo, parseContactInfo } from '@/lib/leads/contact-hash'
+import { buildSearchWhere } from '@/lib/search/text-search'
+import { NextResponse } from 'next/server'
 
 // GET /api/v1/leads
 export async function GET(request: NextRequest) {
@@ -20,21 +23,29 @@ export async function GET(request: NextRequest) {
   if (response) return response
 
   const { searchParams } = new URL(request.url)
-  const parsed = ListLeadsSchema.parse({
-    page: searchParams.get('page'),
-    limit: searchParams.get('limit'),
-    channel: searchParams.get('channel'),
-    funnelStage: searchParams.get('funnelStage'),
-    themeId: searchParams.get('themeId'),
-    includeContact: searchParams.get('includeContact'),
+  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para parâmetros inválidos
+  const listResult = ListLeadsSchema.safeParse({
+    page: searchParams.get('page') ?? undefined,
+    limit: searchParams.get('limit') ?? undefined,
+    channel: searchParams.get('channel') ?? undefined,
+    funnelStage: searchParams.get('funnelStage') ?? undefined,
+    themeId: searchParams.get('themeId') ?? undefined,
+    includeContact: searchParams.get('includeContact') ?? undefined,
+    search: searchParams.get('search') ?? undefined,
   })
+  if (!listResult.success) return validationError(listResult.error)
+  const parsed = listResult.data
 
   try {
-    const where = {
+    const searchWhere = buildSearchWhere(parsed.search ?? null, ['name', 'company'])
+    const filters: Record<string, unknown> = {
       ...(parsed.channel ? { channel: parsed.channel } : {}),
       ...(parsed.funnelStage ? { funnelStage: parsed.funnelStage } : {}),
       ...(parsed.themeId ? { firstTouchThemeId: parsed.themeId } : {}),
     }
+    const where = searchWhere
+      ? { AND: [filters, searchWhere] }
+      : filters
 
     const [leads, total] = await Promise.all([
       prisma.lead.findMany({
@@ -93,11 +104,25 @@ export async function POST(request: NextRequest) {
   try {
     // Criptografar contactInfo antes de persistir (COMP-002)
     let encryptedContact: string | null = null
+    let contactHash: string | null = null
     if (parsed.data.contactInfo) {
       try {
         encryptedContact = encryptPII(parsed.data.contactInfo)
       } catch {
         return internalError('Erro ao criptografar dados do lead')
+      }
+      // TASK-3 ST003 (CL-TA-042): anti-duplicata via hash deterministico
+      const contactParts = parseContactInfo(parsed.data.contactInfo)
+      contactHash = hashContactInfo(contactParts)
+      const existing = await prisma.lead.findUnique({
+        where: { contactHash },
+        select: { id: true },
+      })
+      if (existing) {
+        return NextResponse.json(
+          { error: 'DUPLICATE', existingLeadId: existing.id },
+          { status: 409 },
+        )
       }
     }
 
@@ -108,6 +133,7 @@ export async function POST(request: NextRequest) {
         name: parsed.data.name,
         company: parsed.data.company ?? null,
         contactInfo: encryptedContact,  // AES-256 encrypted — COMP-002
+        contactHash,                    // TASK-3 ST003
         channel: parsed.data.channel ?? null,
         funnelStage: parsed.data.funnelStage ?? null,
         lgpdConsent: parsed.data.lgpdConsent,

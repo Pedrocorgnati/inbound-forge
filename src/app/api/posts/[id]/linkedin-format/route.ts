@@ -9,15 +9,16 @@ import { PostService } from '@/lib/services/post.service'
 import { formatForLinkedIn } from '@/lib/formatters/linkedin-formatter'
 
 interface RouteParams {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
   const { response } = await requireSession()
   if (response) return response
 
   try {
-    const post = await PostService.findById(params.id)
+    const post = await PostService.findById(id)
     if (!post) return notFound('Post não encontrado')
 
     const formatted = formatForLinkedIn(post)

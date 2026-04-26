@@ -55,6 +55,8 @@ export const listArticlesSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(10),
   status: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED']).optional(),
+  // Intake-Review TASK-22 ST003 (CL-PB-053): busca em title/slug/body.
+  search: z.string().trim().min(1).max(100).optional(),
 })
 
 export type ListArticlesInput = z.infer<typeof listArticlesSchema>

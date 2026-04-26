@@ -1,8 +1,9 @@
 /**
  * GET /api/compliance/scraping-audit
- * TASK-3 ST004 / module-6-scraping-worker
+ * TASK-1 ST004 + TASK-3 ST004 / module-6-scraping-worker
  *
- * Relatório de conformidade LGPD de scraping com métricas agregadas.
+ * Modo 1 (padrão): relatório agregado LGPD (startDate/endDate)
+ * Modo 2 (?mode=logs): lista paginada de ScrapingAuditLog dedicado (CL-147)
  * AUTH_001: JWT obrigatório.
  * DEGRADED: cache Redis 5min para queries pesadas.
  */
@@ -10,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireSession, ok, internalError } from '@/lib/api-auth'
 import { redis } from '@/lib/redis'
 import { getScrapingAuditReport } from '@/lib/services/lgpd-compliance.service'
+import { listScrapingAuditLogs } from '@/lib/compliance/scraping-audit-log'
 
 const CACHE_TTL = 5 * 60 // 5 minutos
 const CACHE_KEY = 'cache:compliance:scraping-audit'
@@ -20,6 +22,24 @@ export async function GET(request: NextRequest) {
   if (authError) return authError
 
   const searchParams = request.nextUrl.searchParams
+  const mode = searchParams.get('mode') // 'logs' = lista paginada de ScrapingAuditLog
+
+  // Modo 2: lista paginada do ScrapingAuditLog dedicado (CL-147)
+  if (mode === 'logs') {
+    const page = parseInt(searchParams.get('page') ?? '1', 10)
+    const limit = parseInt(searchParams.get('limit') ?? '20', 10)
+    const sourceId = searchParams.get('sourceId') ?? undefined
+
+    try {
+      const result = await listScrapingAuditLogs({ page, limit, sourceId })
+      return ok(result)
+    } catch (err) {
+      console.error('[ScrapingAudit] Logs query error', err instanceof Error ? err.message : 'unknown')
+      return internalError()
+    }
+  }
+
+  // Modo 1 (padrão): relatório agregado com cache Redis
   const startDateStr = searchParams.get('startDate')
   const endDateStr = searchParams.get('endDate')
 

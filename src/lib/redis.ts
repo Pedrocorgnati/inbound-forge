@@ -10,6 +10,7 @@ export const redis = new Redis({
 export const QUEUE_KEYS = {
   scraping: REDIS_KEYS.SCRAPING_QUEUE,
   image: REDIS_KEYS.IMAGE_QUEUE,
+  video: REDIS_KEYS.VIDEO_QUEUE,
   publishing: REDIS_KEYS.PUBLISH_QUEUE,
   workerHealth: REDIS_KEYS.WORKER_HEALTH,
 } as const

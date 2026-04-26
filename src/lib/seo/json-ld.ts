@@ -33,7 +33,7 @@ export function buildBlogPostingSchema(article: BlogArticle): JsonLd {
     publisher: {
       '@type': 'Organization',
       name: siteName,
-      logo: { '@type': 'ImageObject', url: `${siteUrl}/logo.png` },
+      logo: { '@type': 'ImageObject', url: `${siteUrl}/images/logo-symbol.svg` },
     },
     datePublished: article.publishedAt?.toISOString(),
     dateModified: article.updatedAt.toISOString(),

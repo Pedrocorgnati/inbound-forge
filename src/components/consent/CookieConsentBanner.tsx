@@ -6,6 +6,7 @@ import { Settings, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useCookieConsent } from './CookieConsentProvider'
+import { ROUTES } from '@/constants/routes'
 
 function ConsentSwitch({
   label,
@@ -61,8 +62,9 @@ export function CookieConsentBanner() {
       aria-label="Preferências de cookies"
       data-testid="cookie-consent-banner"
       className={cn(
-        'fixed bottom-0 inset-x-0 z-50 bg-white dark:bg-gray-900 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] border-t border-border',
-        'transition-all duration-300 ease-out',
+        'fixed bottom-0 inset-x-0 z-50 bg-card shadow-[0_-4px_20px_rgba(0,0,0,0.1)] border-t border-border',
+        'pb-[env(safe-area-inset-bottom)]',
+        'transition-[transform,opacity] duration-300 ease-out',
         'translate-y-0 opacity-100'
       )}
     >
@@ -75,7 +77,7 @@ export function CookieConsentBanner() {
             personalizar conteúdo. Ao clicar em &quot;Aceitar todos&quot;, você concorda com o uso
             de cookies conforme nossa{' '}
             <Link
-              href="/privacy"
+              href={ROUTES.PRIVACY}
               className="text-primary underline underline-offset-2 hover:text-primary-hover transition-colors"
             >
               Política de Privacidade

@@ -34,6 +34,7 @@ export interface ImageTemplate {
   widthPx: number
   heightPx: number
   configJson?: TemplateConfig | null
+  backgroundNeedsText?: boolean
   isActive: boolean
   createdAt: Date
   updatedAt?: Date | null

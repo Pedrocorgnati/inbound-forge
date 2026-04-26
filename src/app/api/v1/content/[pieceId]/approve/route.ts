@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession, ok, notFound, validationError, internalError } from '@/lib/api-auth'
 import { ApproveContentSchema } from '@/schemas/content.schema'
+import { CONTENT_STATUS } from '@/constants/status'
 
 type Params = { params: Promise<{ pieceId: string }> }
 
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     const updated = await prisma.contentPiece.update({
       where: { id: pieceId },
       data: {
-        status: 'APPROVED',
+        status: CONTENT_STATUS.APPROVED,
         selectedAngle: angle.angle,
         editedText: parsed.data.editedText ?? piece.editedText,
       },

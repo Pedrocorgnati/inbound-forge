@@ -2,28 +2,22 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { Plus, FolderOpen, AlertTriangle, Pencil, Trash2, Link2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { Pagination } from '@/components/ui/pagination'
 import { EmptyState } from '@/components/shared/empty-state'
-import { toast } from '@/components/ui/toast'
+import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { PatternForm } from './PatternForm'
 import { PatternDeleteModal } from './PatternDeleteModal'
+import { useKnowledgeList } from '@/hooks/useKnowledgeList'
 import type { PatternResponse } from '@/lib/dtos/solution-pattern.dto'
 import type { PainResponse } from '@/lib/dtos/pain-library.dto'
 
 interface PatternListProps {
   locale: string
-}
-
-interface PaginationData {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-  hasMore: boolean
 }
 
 const PAGE_SIZE = 20
@@ -34,11 +28,24 @@ function snippet(text: string, maxLen = 80): string {
 }
 
 export function PatternList({ locale }: PatternListProps) {
-  const [patterns, setPatterns] = useState<PatternResponse[]>([])
-  const [pagination, setPagination] = useState<PaginationData | null>(null)
-  const [page, setPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const t = useTranslations()
+
+  const {
+    items: patterns,
+    pagination,
+    page,
+    isLoading,
+    error,
+    deleteTarget,
+    isDeleting,
+    setPage,
+    setDeleteTarget,
+    refresh,
+    handleDelete,
+  } = useKnowledgeList<PatternResponse>({
+    endpoint: '/api/knowledge/patterns',
+    pageSize: PAGE_SIZE,
+  })
 
   // Pain name cache for display
   const [painMap, setPainMap] = useState<Record<string, string>>({})
@@ -48,34 +55,6 @@ export function PatternList({ locale }: PatternListProps) {
   const [formTarget, setFormTarget] = useState<PatternResponse | undefined>(undefined)
   const [isFormOpen, setIsFormOpen] = useState(false)
 
-  // Delete modal state
-  const [deleteTarget, setDeleteTarget] = useState<PatternResponse | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-
-  const fetchPatterns = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(PAGE_SIZE),
-    })
-
-    try {
-      const res = await fetch(`/api/knowledge/patterns?${params}`)
-      if (!res.ok) throw new Error('Falha ao carregar padrões')
-
-      const json = await res.json()
-      setPatterns(json.data ?? [])
-      setPagination(json.pagination ?? null)
-    } catch {
-      setError('Não foi possível carregar os padrões. Tente novamente.')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [page])
-
-  // Fetch pain names for display
   const fetchPainNames = useCallback(async () => {
     try {
       const res = await fetch('/api/knowledge/pains?limit=100')
@@ -92,9 +71,8 @@ export function PatternList({ locale }: PatternListProps) {
   }, [])
 
   useEffect(() => {
-    fetchPatterns()
     fetchPainNames()
-  }, [fetchPatterns, fetchPainNames])
+  }, [fetchPainNames])
 
   function openCreateForm() {
     setFormMode('create')
@@ -108,40 +86,6 @@ export function PatternList({ locale }: PatternListProps) {
     setIsFormOpen(true)
   }
 
-  async function handleDelete() {
-    if (!deleteTarget) return
-
-    const removedPattern = deleteTarget
-    const previousPatterns = [...patterns]
-
-    // Optimistic removal
-    setPatterns((prev) => prev.filter((p) => p.id !== removedPattern.id))
-    setDeleteTarget(null)
-    setIsDeleting(true)
-
-    try {
-      const res = await fetch(`/api/knowledge/patterns/${removedPattern.id}`, {
-        method: 'DELETE',
-      })
-
-      if (!res.ok) throw new Error('Falha ao deletar')
-
-      toast.success(`Padrão "${removedPattern.name}" deletado`)
-
-      if (pagination) {
-        setPagination((prev) =>
-          prev ? { ...prev, total: prev.total - 1 } : prev
-        )
-      }
-    } catch {
-      // Rollback
-      setPatterns(previousPatterns)
-      toast.error('Erro ao deletar padrão. Tente novamente.')
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
   return (
     <div data-testid="pattern-list" className="space-y-4">
       {/* Header bar */}
@@ -151,7 +95,7 @@ export function PatternList({ locale }: PatternListProps) {
           data-testid="pattern-new-button"
         >
           <Plus className="h-4 w-4" aria-hidden />
-          Novo Padrão
+          {t('knowledge.patternList.new')}
         </Button>
       </div>
 
@@ -164,8 +108,8 @@ export function PatternList({ locale }: PatternListProps) {
         >
           <AlertTriangle className="h-4 w-4 shrink-0 text-danger" aria-hidden />
           <p className="text-sm text-danger">{error}</p>
-          <Button variant="ghost" size="sm" onClick={fetchPatterns} className="ml-auto">
-            Tentar novamente
+          <Button variant="ghost" size="sm" onClick={refresh} className="ml-auto">
+            {t('common.retry')}
           </Button>
         </div>
       )}
@@ -186,9 +130,9 @@ export function PatternList({ locale }: PatternListProps) {
       {!isLoading && !error && patterns.length === 0 && (
         <EmptyState
           icon={<FolderOpen className="h-12 w-12" />}
-          title="Nenhum padrão encontrado"
-          description="Comece adicionando seu primeiro padrão de solução para alimentar a base de conhecimento."
-          ctaLabel="Criar primeiro padrão"
+          title={t('knowledge.patternList.empty')}
+          description={t('knowledge.patternList.emptyFirst')}
+          ctaLabel={t('knowledge.patternList.createFirst')}
           onCtaClick={openCreateForm}
         />
       )}
@@ -198,9 +142,18 @@ export function PatternList({ locale }: PatternListProps) {
         <>
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {patterns.map((p) => (
-              <Card key={p.id} variant="elevated" data-testid={`pattern-card-${p.id}`}>
+              <div key={p.id} className="[content-visibility:auto] [contain-intrinsic-size:0_260px]">
+              <Card variant="elevated" data-testid={`pattern-card-${p.id}`}>
                 <CardHeader>
-                  <CardTitle className="text-base leading-snug">{p.name}</CardTitle>
+                  {/* Intake Review TASK-8 ST006 (CL-224): title vira link para detalhe */}
+                  <CardTitle className="text-base leading-snug">
+                    <Link
+                      href={`/${locale}/knowledge/patterns/${p.id}`}
+                      className="hover:underline"
+                    >
+                      {p.name}
+                    </Link>
+                  </CardTitle>
                 </CardHeader>
 
                 <CardContent>
@@ -212,11 +165,11 @@ export function PatternList({ locale }: PatternListProps) {
                     {p.painId && (
                       <Badge variant="warning">
                         <Link2 className="h-3 w-3" aria-hidden />
-                        {painMap[p.painId] ?? 'Dor vinculada'}
+                        {painMap[p.painId] ?? t('knowledge.patternList.linkedPain')}
                       </Badge>
                     )}
                     {p.caseId && (
-                      <Badge variant="info">Case vinculado</Badge>
+                      <Badge variant="info">{t('knowledge.patternList.linkedCase')}</Badge>
                     )}
                   </div>
                 </CardContent>
@@ -229,7 +182,7 @@ export function PatternList({ locale }: PatternListProps) {
                     data-testid={`pattern-edit-${p.id}`}
                   >
                     <Pencil className="h-3.5 w-3.5" aria-hidden />
-                    Editar
+                    {t('common.edit')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -239,10 +192,11 @@ export function PatternList({ locale }: PatternListProps) {
                     data-testid={`pattern-delete-${p.id}`}
                   >
                     <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                    Deletar
+                    {t('common.delete')}
                   </Button>
                 </CardFooter>
               </Card>
+              </div>
             ))}
           </div>
 
@@ -266,7 +220,7 @@ export function PatternList({ locale }: PatternListProps) {
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         onSuccess={() => {
-          fetchPatterns()
+          refresh()
           fetchPainNames()
         }}
         locale={locale}
@@ -276,7 +230,14 @@ export function PatternList({ locale }: PatternListProps) {
       <PatternDeleteModal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
+        onConfirm={() =>
+          handleDelete({
+            itemId: deleteTarget!.id,
+            getLabel: (p) => p.name,
+            successMessage: (label) => t('knowledge.patternList.deleteSuccess', { name: label }),
+            errorMessage: t('knowledge.patternList.deleteError'),
+          })
+        }
         patternName={deleteTarget?.name ?? ''}
         isDeleting={isDeleting}
       />

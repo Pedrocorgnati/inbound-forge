@@ -4,6 +4,7 @@ const CONVERSION_MAP: Record<ConversionType, { label: string; className: string 
   CONVERSATION: { label: 'Conversa', className: 'bg-blue-100 text-blue-800' },
   MEETING: { label: 'Reuniao', className: 'bg-yellow-100 text-yellow-800' },
   PROPOSAL: { label: 'Proposta', className: 'bg-green-100 text-green-800' },
+  CALENDAR_BOOKING: { label: 'Agendamento', className: 'bg-purple-100 text-purple-800' },
 }
 
 interface ConversionBadgeProps {

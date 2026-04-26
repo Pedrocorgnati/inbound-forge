@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { RotateCcw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { useFormatters } from '@/lib/i18n/formatters'
 import type { AngleVersion } from '@/hooks/useAngleHistory'
 
 interface VersionItemProps {
@@ -12,6 +13,7 @@ interface VersionItemProps {
 }
 
 export function VersionItem({ version, onRestore }: VersionItemProps) {
+  const fmt = useFormatters()
   const [isRestoring, setIsRestoring] = useState(false)
   const [confirmRestore, setConfirmRestore] = useState(false)
 
@@ -44,7 +46,7 @@ export function VersionItem({ version, onRestore }: VersionItemProps) {
           <Badge variant="success" data-testid="current-version-badge">Atual</Badge>
         )}
         <span className="text-xs text-muted-foreground ml-auto">
-          {new Date(version.createdAt).toLocaleString('pt-BR')}
+          {fmt.dateTime(version.createdAt)}
         </span>
       </div>
 

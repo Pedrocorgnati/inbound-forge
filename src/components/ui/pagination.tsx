@@ -60,7 +60,7 @@ export function Pagination({ total, page, pageSize, onPageChange, className }: P
         size="icon"
         onClick={() => onPageChange(page - 1)}
         disabled={isFirst}
-        aria-label="Pagina anterior"
+        aria-label="Página anterior"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -77,7 +77,7 @@ export function Pagination({ total, page, pageSize, onPageChange, className }: P
               variant={p === page ? 'default' : 'outline'}
               size="icon"
               onClick={() => onPageChange(p)}
-              aria-label={`Pagina ${p}`}
+              aria-label={`Página ${p}`}
               aria-current={p === page ? 'page' : undefined}
             >
               {p}

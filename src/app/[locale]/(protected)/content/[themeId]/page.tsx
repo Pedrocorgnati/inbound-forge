@@ -16,8 +16,9 @@ import { FunnelStageSelector } from '@/components/content/FunnelStageSelector'
 import { ChannelPreview } from '@/components/content/ChannelPreview'
 import { AngleHistoryDrawer } from '@/components/content/AngleHistoryDrawer'
 import { ImagePreviewPanel } from '@/components/content/ImagePreviewPanel'
-import { TemplateSelector } from '@/components/content/TemplateSelector'
-import type { ImageTemplate } from '@/types/image-template'
+import { ArtPreview } from '@/components/content/ArtPreview'
+import { ArtControls } from '@/components/content/ArtControls'
+import type { ImageTemplate, TemplateChannel } from '@/types/image-template'
 
 export default function ContentThemePage() {
   const { themeId } = useParams<{ themeId: string }>()
@@ -36,6 +37,10 @@ function ContentEditorInner({ themeId }: { themeId: string }) {
   const [localHashtags, setLocalHashtags] = useState<string[]>([])
   const [themeTitle, setThemeTitle] = useState('Conteúdo do Tema')
   const [selectedTemplate, setSelectedTemplate] = useState<ImageTemplate | null>(null)
+  const [artHeadline, setArtHeadline] = useState('')
+  const [artBackgroundUrl, setArtBackgroundUrl] = useState<string | undefined>()
+  const [artDimension, setArtDimension] = useState<'og' | 'instagram'>('og')
+  const [isRegeneratingBg, setIsRegeneratingBg] = useState(false)
 
   // Fetch theme title
   useEffect(() => {
@@ -53,12 +58,15 @@ function ContentEditorInner({ themeId }: { themeId: string }) {
     loadTheme()
   }, [themeId])
 
-  // Sync hashtags from selected angle
+  // Sync hashtags and headline from selected angle
   useEffect(() => {
     if (editor.piece && editor.selectedAngleId) {
       const angle = editor.piece.angles.find((a) => a.id === editor.selectedAngleId)
       if (angle) {
         setLocalHashtags(angle.hashtags)
+        // CL-082: auto-atualizar headline do preview ao selecionar ângulo
+        const headlineText = (angle.editedBody ?? angle.text).split('\n')[0]?.slice(0, 80) ?? ''
+        setArtHeadline(headlineText)
       }
     }
   }, [editor.piece, editor.selectedAngleId])
@@ -80,15 +88,38 @@ function ContentEditorInner({ themeId }: { themeId: string }) {
 
   return (
     <div data-testid="content-theme-page" className="space-y-6">
-      {/* Error banner */}
+      {/* Error banner — TASK-2 ST006: card informativo para degradação */}
       {editor.error && (
-        <div className="rounded-md border border-danger-bg bg-danger-bg/10 p-4" data-testid="editor-error">
-          <p className="text-sm text-[#991B1B]">{editor.error}</p>
+        <div
+          className={`rounded-md border p-4 ${
+            editor.error.includes('temporariamente indisponível') || editor.error.includes('indisponível')
+              ? 'border-yellow-200 bg-yellow-50'
+              : 'border-danger-bg bg-danger-bg/10'
+          }`}
+          data-testid="editor-error"
+        >
+          <p className={`text-sm ${
+            editor.error.includes('temporariamente indisponível') || editor.error.includes('indisponível')
+              ? 'text-yellow-800'
+              : 'text-[#991B1B]'
+          }`}>
+            {editor.error}
+          </p>
+          {(editor.error.includes('temporariamente indisponível') || editor.error.includes('indisponível')) && (
+            <button
+              onClick={() => editor.generate(false)}
+              disabled={editor.isGenerating}
+              className="mt-2 text-xs font-medium text-yellow-700 underline hover:text-yellow-900 disabled:opacity-50"
+            >
+              Tentar novamente
+            </button>
+          )}
         </div>
       )}
 
       {/* Header */}
       <ContentEditorHeader
+        themeId={themeId}
         themeTitle={themeTitle}
         status={editor.piece?.status ?? null}
         selectedChannel={editor.selectedChannel}
@@ -161,14 +192,57 @@ function ContentEditorInner({ themeId }: { themeId: string }) {
         </div>
       )}
 
-      {/* Image Generation + Template Selection */}
+      {/* Image Generation: ArtPreview + ArtControls (CL-082, CL-083) */}
       {hasAngles && editor.piece?.id && (
-        <div className="grid gap-4 md:grid-cols-2" data-testid="image-generation-area">
-          <ImagePreviewPanel contentPieceId={editor.piece.id} />
-          <TemplateSelector
+        <div className="grid gap-6 md:grid-cols-[1fr_280px]" data-testid="image-generation-area">
+          {/* Preview em tempo real */}
+          <div className="space-y-3">
+            <ArtPreview
+              template={selectedTemplate?.templateType}
+              headline={artHeadline}
+              backgroundUrl={artBackgroundUrl}
+              dimensions={artDimension === 'og' ? { width: 1200, height: 630 } : { width: 1080, height: 1350 }}
+            />
+            {/* Fallback: job-based generation */}
+            <ImagePreviewPanel contentPieceId={editor.piece.id} />
+          </div>
+
+          {/* Controles de arte */}
+          <ArtControls
+            headline={artHeadline}
             selectedTemplateId={selectedTemplate?.id}
-            channel={editor.selectedChannel === 'LINKEDIN' ? 'linkedin' : editor.selectedChannel === 'INSTAGRAM' ? 'instagram' : 'blog'}
-            onSelect={setSelectedTemplate}
+            channel={
+              editor.selectedChannel === 'LINKEDIN' ? 'linkedin'
+              : editor.selectedChannel === 'INSTAGRAM' ? 'instagram'
+              : 'blog' as TemplateChannel
+            }
+            dimensions={artDimension}
+            isRegenerating={isRegeneratingBg}
+            onTemplateChange={setSelectedTemplate}
+            onHeadlineChange={setArtHeadline}
+            onDimensionChange={setArtDimension}
+            onRegenerateBackground={async (dims) => {
+              setIsRegeneratingBg(true)
+              try {
+                const res = await fetch('/api/v1/images/preview', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    template: selectedTemplate?.templateType,
+                    headline: artHeadline,
+                    ...dims,
+                  }),
+                })
+                if (res.ok) {
+                  const json = await res.json()
+                  if (json.imageUrl) setArtBackgroundUrl(json.imageUrl)
+                }
+              } catch {
+                // silent — preview continua com background anterior
+              } finally {
+                setIsRegeneratingBg(false)
+              }
+            }}
             disabled={editor.isGenerating}
           />
         </div>

@@ -8,13 +8,15 @@ import { ContentStatus } from '@/types/enums'
 //                FAILED (estado de erro — permite nova tentativa via DRAFT)
 
 const CONTENT_STATUS_TRANSITIONS: Record<ContentStatus, ContentStatus[]> = {
-  [ContentStatus.DRAFT]: [ContentStatus.REVIEW, ContentStatus.FAILED],
-  [ContentStatus.REVIEW]: [ContentStatus.APPROVED, ContentStatus.DRAFT, ContentStatus.FAILED],
-  [ContentStatus.APPROVED]: [ContentStatus.PENDING_ART, ContentStatus.SCHEDULED, ContentStatus.PUBLISHED, ContentStatus.DRAFT],
-  [ContentStatus.PENDING_ART]: [ContentStatus.APPROVED, ContentStatus.FAILED],
-  [ContentStatus.SCHEDULED]: [ContentStatus.APPROVED, ContentStatus.PUBLISHED, ContentStatus.FAILED],
-  [ContentStatus.PUBLISHED]: [], // estado terminal
-  [ContentStatus.FAILED]: [ContentStatus.DRAFT], // pode ser revisitado
+  [ContentStatus.DRAFT]: [ContentStatus.REVIEW, ContentStatus.FAILED, ContentStatus.CANCELLED],
+  [ContentStatus.REVIEW]: [ContentStatus.APPROVED, ContentStatus.DRAFT, ContentStatus.FAILED, ContentStatus.CANCELLED],
+  [ContentStatus.APPROVED]: [ContentStatus.PENDING_ART, ContentStatus.SCHEDULED, ContentStatus.PUBLISHED, ContentStatus.DRAFT, ContentStatus.CANCELLED],
+  [ContentStatus.PENDING_ART]: [ContentStatus.APPROVED, ContentStatus.FAILED, ContentStatus.CANCELLED],
+  [ContentStatus.SCHEDULED]: [ContentStatus.APPROVED, ContentStatus.PUBLISHED, ContentStatus.FAILED, ContentStatus.CANCELLED],
+  [ContentStatus.PUBLISHED]: [ContentStatus.ROLLED_BACK],
+  [ContentStatus.FAILED]: [ContentStatus.DRAFT],
+  [ContentStatus.ROLLED_BACK]: [],
+  [ContentStatus.CANCELLED]: [],
 }
 
 export function canTransition(from: ContentStatus, to: ContentStatus): boolean {

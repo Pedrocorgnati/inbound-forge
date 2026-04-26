@@ -33,12 +33,12 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
 
     try {
       const res = await fetch(`/api/v1/attribution/${leadId}`)
-      if (!res.ok) throw new Error('Falha ao carregar atribuicao')
+      if (!res.ok) throw new Error('Falha ao carregar atribuição')
 
       const json = await res.json()
       setData(json.data)
     } catch {
-      setError('Nao foi possivel carregar a atribuicao.')
+      setError('Não foi possível carregar a atribuição.')
     } finally {
       setIsLoading(false)
     }
@@ -60,10 +60,10 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
 
       if (!res.ok) throw new Error('Falha ao recalcular')
 
-      toast.success('Atribuicao recalculada')
+      toast.success('Atribuição recalculada')
       await fetchAttribution()
     } catch {
-      toast.error('Erro ao recalcular atribuicao')
+      toast.error('Erro ao recalcular atribuição')
     } finally {
       setIsRecalculating(false)
     }
@@ -74,7 +74,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
     return (
       <Card variant="elevated" data-testid="attribution-card-loading">
         <CardHeader>
-          <CardTitle className="text-base">Atribuicao</CardTitle>
+          <CardTitle className="text-base">Atribuição</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <Skeleton variant="text" className="h-4 w-32" />
@@ -90,7 +90,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
     return (
       <Card variant="elevated" data-testid="attribution-card-error">
         <CardHeader>
-          <CardTitle className="text-base">Atribuicao</CardTitle>
+          <CardTitle className="text-base">Atribuição</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">{error}</p>
@@ -108,7 +108,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
     return (
       <Card variant="elevated" data-testid="attribution-card-empty">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Atribuicao</CardTitle>
+          <CardTitle className="text-base">Atribuição</CardTitle>
           <RecalculateButton
             isRecalculating={isRecalculating}
             onClick={handleRecalculate}
@@ -116,7 +116,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Atribuicao nao determinada — sem UTM link
+            Atribuição não determinada — sem UTM link
           </p>
         </CardContent>
       </Card>
@@ -128,7 +128,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
   return (
     <Card variant="elevated" data-testid="attribution-card">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Atribuicao</CardTitle>
+        <CardTitle className="text-base">Atribuição</CardTitle>
         <RecalculateButton
           isRecalculating={isRecalculating}
           onClick={handleRecalculate}
@@ -142,7 +142,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
             {firstTouch.inferred && (
               <span
                 className="text-xs text-muted-foreground italic"
-                title="Atribuicao estimada por correlacao de canal e periodo"
+                title="Atribuição estimada por correlacao de canal e periodo"
                 data-testid="attribution-inferred-hint"
               >
                 (estimada)
@@ -184,7 +184,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
                 aria-label={`${confidencePercent}% de confianca`}
               >
                 <div
-                  className="h-full rounded-full bg-blue-600 transition-all duration-300"
+                  className="h-full rounded-full bg-blue-600 transition-[width] duration-300"
                   style={{ width: `${confidencePercent}%` }}
                 />
               </div>

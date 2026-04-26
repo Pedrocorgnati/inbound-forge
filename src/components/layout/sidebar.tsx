@@ -1,11 +1,14 @@
 'use client'
 
-import React, { useEffect } from 'react'
-import { PanelLeft, X } from 'lucide-react'
+import React, { useEffect, useRef } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { PanelLeft, X, Shield } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SidebarNav } from './sidebar-nav'
 import { ProgressWidget } from './progress-widget'
 import { Separator } from '@/components/ui/separator'
+import { ROUTES } from '@/constants/routes'
 import type { SidebarBadges, ProgressWidgetData } from '@/types'
 
 interface SidebarProps {
@@ -27,10 +30,48 @@ export function Sidebar({
   onToggleCollapsed,
   onCloseMobile,
 }: SidebarProps) {
-  // Escape key closes mobile drawer
+  const sidebarRef = useRef<HTMLElement>(null)
+  const touchStartX = useRef<number | null>(null)
+  const [swipeOffset, setSwipeOffset] = React.useState(0)
+
+  // Swipe-to-dismiss: swipe left 80px fecha o drawer mobile (F-028)
+  function handleTouchStart(e: React.TouchEvent) {
+    if (!mobileOpen) return
+    touchStartX.current = e.touches[0].clientX
+  }
+  function handleTouchMove(e: React.TouchEvent) {
+    if (!mobileOpen || touchStartX.current === null) return
+    const delta = e.touches[0].clientX - touchStartX.current
+    if (delta < 0) setSwipeOffset(Math.max(delta, -240))
+  }
+  function handleTouchEnd() {
+    if (swipeOffset < -80) {
+      onCloseMobile()
+    }
+    setSwipeOffset(0)
+    touchStartX.current = null
+  }
+
+  // Escape key closes mobile drawer + focus trap (FE-007)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && mobileOpen) onCloseMobile()
+      if (e.key === 'Escape' && mobileOpen) {
+        onCloseMobile()
+        return
+      }
+      // Focus trap: keep Tab/Shift+Tab inside sidebar when mobile drawer is open
+      if (e.key === 'Tab' && mobileOpen && sidebarRef.current) {
+        const focusable = sidebarRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus() }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus() }
+        }
+      }
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
@@ -52,9 +93,14 @@ export function Sidebar({
 
       {/* Sidebar */}
       <aside
+        ref={sidebarRef}
         data-testid="sidebar"
         role={mobileOpen ? 'dialog' : undefined}
         aria-modal={mobileOpen ? 'true' : undefined}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={swipeOffset !== 0 ? { transform: `translateX(${swipeOffset}px)`, transition: 'none' } : undefined}
         className={cn(
           'flex flex-col bg-surface border-r border-border h-full z-50 transition-[width,transform] duration-150 ease-in-out', // RESOLVED: transition-all → transition-[width,transform] (G011)
           // Desktop
@@ -69,10 +115,11 @@ export function Sidebar({
       >
         {/* Header */}
         <div data-testid="sidebar-header" className="flex items-center h-16 px-3 border-b border-border shrink-0">
-          {!collapsed && (
-            <span className="flex-1 text-base font-bold text-foreground truncate">
-              Inbound Forge
-            </span>
+          {/* Logo: símbolo (collapsed) ou full (expandido) — G19 */}
+          {collapsed ? (
+            <Image src="/images/logo-symbol.svg" alt="Inbound Forge" width={28} height={28} className="shrink-0" />
+          ) : (
+            <Image src="/images/logo-full.svg" alt="Inbound Forge" width={120} height={28} className="flex-1 object-contain object-left" />
           )}
 
           {/* Mobile close button */}
@@ -130,6 +177,33 @@ export function Sidebar({
           target={progressData.target}
           collapsed={collapsed}
         />
+
+        {/* Footer: Privacy + Terms links — G10 / TASK-5 CL-245 */}
+        <Separator />
+        <div className="px-3 py-2 flex flex-col gap-0.5">
+          <Link
+            href={`/${locale}${ROUTES.PRIVACY}`}
+            data-testid="sidebar-privacy-link"
+            className={cn(
+              'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors',
+              collapsed && 'justify-center'
+            )}
+          >
+            <Shield className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            {!collapsed && <span>Privacidade</span>}
+          </Link>
+          <Link
+            href={`/${locale}${ROUTES.TERMS}`}
+            data-testid="sidebar-terms-link"
+            className={cn(
+              'flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors',
+              collapsed && 'justify-center'
+            )}
+          >
+            <Shield className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            {!collapsed && <span>Termos de Uso</span>}
+          </Link>
+        </div>
       </aside>
     </>
   )

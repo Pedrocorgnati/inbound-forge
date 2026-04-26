@@ -21,7 +21,49 @@
     "of": "di",
     "items": "elementi",
     "next": "Avanti",
-    "previous": "Precedente"
+    "previous": "Precedente",
+    "retry": "Riprova",
+    "publish": "Pubblica",
+    "saveDraft": "Salva Bozza",
+    "emptyState": {
+      "noDataTitle": "Ancora niente qui",
+      "noDataDescription": "Appena ci saranno dati, appariranno in questo elenco.",
+      "noResultsTitle": "Nessun risultato trovato",
+      "noResultsDescription": "Regola i filtri o prova altri criteri.",
+      "errorTitle": "Impossibile caricare",
+      "errorDescription": "Riprova tra qualche istante.",
+      "primaryAction": "Aggiungi",
+      "clearFilters": "Cancella filtri"
+    },
+    "confirmDialog": {
+      "defaultTitle": "Confermare azione",
+      "defaultDescription": "Vuoi procedere con questa operazione?",
+      "destructiveTitle": "Sei sicuro?",
+      "destructiveDescription": "Questa azione non puo essere annullata.",
+      "confirmLabel": "Conferma",
+      "cancelLabel": "Annulla",
+      "deleteLabel": "Elimina"
+    },
+    "delete_dialog": {
+      "confirm_keyword": "ELIMINA",
+      "confirm_button": "Elimina definitivamente",
+      "cancel": "Annulla",
+      "success": "Eliminato con successo",
+      "description_default": "Questa azione e irreversibile.",
+      "description_with_label": "\"{label}\" sara rimosso definitivamente. Questa azione e irreversibile.",
+      "case_title": "Eliminare case definitivamente?",
+      "pain_title": "Eliminare pain definitivamente?",
+      "pattern_title": "Eliminare solution pattern definitivamente?",
+      "asset_title": "Eliminare visual asset definitivamente?",
+      "case_warning": "Rimuove dal DB e puo invalidare SolutionPattern collegati. Nessun undo.",
+      "pain_warning": "Rimuove dal DB e puo invalidare case/themes collegati. Nessun undo.",
+      "pattern_warning": "Rimuove dal DB e invalida i case che referenziano questo pattern. Nessun undo.",
+      "asset_warning": "File storage e thumbnail saranno rimossi immediatamente. I post pubblicati che referenziano questo asset potrebbero rompersi.",
+      "archive_keyword": "ARCHIVIA",
+      "archive_button": "Archivia piece",
+      "content_piece_title": "Archiviare questa piece?",
+      "content_piece_warning": "La piece esce dalla dashboard attiva ma lo storico rimane preservato per audit (soft-delete via status). Puoi ripristinare in qualsiasi momento."
+    }
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -31,8 +73,40 @@
     "blog": "Blog",
     "leads": "Lead",
     "analytics": "Analytics",
+    "utm": "Link UTM",
+    "health": "Salute",
     "settings": "Impostazioni",
-    "signOut": "Esci"
+    "signOut": "Esci",
+    "sources": "Fonti"
+  },
+  "breadcrumbs": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "analytics": "Analytics",
+    "assets": "Asset",
+    "blogManage": "Blog (admin)",
+    "blogArticle": "Articolo",
+    "blogPreview": "Anteprima",
+    "calendar": "Calendario",
+    "compliance": "Compliance",
+    "content": "Contenuto",
+    "fila": "Coda",
+    "health": "Salute",
+    "knowledge": "Base di Conoscenza",
+    "leads": "Lead",
+    "lead": "Lead",
+    "nicheOpportunities": "Opportunità di Nicchia",
+    "rejectedThemes": "Temi Rifiutati",
+    "posts": "Post",
+    "profile": "Profilo",
+    "settings": "Impostazioni",
+    "settingsApi": "Credenziali & API",
+    "settingsSchedule": "Pianificazione",
+    "settingsPreferences": "Preferenze",
+    "settingsCosts": "Costi",
+    "sources": "Fonti",
+    "utm": "Link UTM",
+    "blog": "Blog"
   },
   "auth": {
     "login": "Accedi",
@@ -45,7 +119,15 @@
     "loginError": "Email o password non corretti",
     "sessionExpired": "Sessione scaduta. Effettua nuovamente l'accesso.",
     "accountLocked": "Account bloccato per {minutes} minuti dopo {attempts} tentativi.",
-    "logoutSuccess": "Disconnessione avvenuta con successo"
+    "logoutSuccess": "Disconnessione avvenuta con successo",
+    "logoutError": "Errore durante la disconnessione. Riprova.",
+    "emailInvalid": "Email non valida",
+    "passwordMin": "La password deve avere almeno 8 caratteri",
+    "formLabel": "Modulo di accesso",
+    "submitting": "Invio del modulo...",
+    "emailPlaceholder": "tuo@email.com",
+    "showPassword": "Mostra password",
+    "hidePassword": "Nascondi password"
   },
   "workers": {
     "idle": "Inattivo",
@@ -130,15 +212,109 @@
   },
   "knowledge": {
     "title": "Base di Conoscenza",
+    "description": "Gestisci case study, punti dolenti e modelli di soluzione",
     "pains": "Punti dolenti",
     "cases": "Case study",
     "solutions": "Modelli di soluzione",
     "objections": "Obiezioni",
-    "niches": "Opportunità di nicchia"
+    "niches": "Opportunità di nicchia",
+    "progress": {
+      "loading": "Caricamento progresso",
+      "ready": "Base di conoscenza pronta",
+      "title": "Progresso base di conoscenza",
+      "error": "Errore nel caricamento del progresso della base di conoscenza."
+    },
+    "tabs": {
+      "cases": "Case study",
+      "pains": "Punti dolenti",
+      "patterns": "Modelli",
+      "objections": "Obiezioni"
+    },
+    "casePage": {
+      "title": "Casi di Successo",
+      "description": "Gestisci i tuoi case study per alimentare la generazione di contenuti",
+      "new": "Nuovo Case",
+      "newDescription": "Aggiungi un nuovo caso di successo alla base di conoscenza",
+      "edit": "Modifica Case",
+      "notFound": "Case non trovato",
+      "loadError": "Impossibile caricare il case",
+      "backToCases": "Torna ai case"
+    },
+    "caseList": {
+      "all": "Tutti",
+      "draft": "Bozza",
+      "published": "Pubblicato",
+      "new": "Nuovo Case",
+      "empty": "Nessun case trovato",
+      "emptyFilter": "Nessun case trovato con questo filtro.",
+      "emptyFirst": "Inizia aggiungendo il tuo primo caso di successo.",
+      "createFirst": "Crea primo case",
+      "deleteSuccess": "Case \"{name}\" eliminato",
+      "deleteError": "Errore nell'eliminazione del case. Riprova."
+    },
+    "caseForm": {
+      "nameMin": "Il nome deve avere almeno 3 caratteri",
+      "sectorRequired": "Il settore è obbligatorio",
+      "systemTypeRequired": "Il tipo di sistema è obbligatorio",
+      "resultMin": "Il risultato deve avere almeno {min} caratteri per pubblicare",
+      "draftNote": "Bozza — non visibile nelle analisi",
+      "saving": "Salvataggio...",
+      "savedAt": "Salvato alle {time}",
+      "autoSaveError": "Errore nel salvataggio automatico",
+      "nameLabel": "Nome del case",
+      "sectorLabel": "Settore",
+      "systemTypeLabel": "Tipo di sistema",
+      "resultLabel": "Risultato ottenuto",
+      "autoSaveHint": "Le modifiche vengono salvate automaticamente. Puoi anche salvare ora.",
+      "minChars": "{count} caratteri minimi",
+      "quantifiableResult": "Risultato quantificabile"
+    },
+    "painList": {
+      "filterByCategory": "Filtra per categoria",
+      "new": "Nuovo Punto Dolente",
+      "empty": "Nessun punto dolente trovato",
+      "emptyFilter": "Nessun punto dolente trovato con questo filtro. Prova un'altra categoria.",
+      "emptyFirst": "Inizia aggiungendo il tuo primo punto dolente per alimentare la base di conoscenza.",
+      "createFirst": "Crea primo punto dolente",
+      "deleteSuccess": "Punto dolente \"{name}\" eliminato",
+      "deleteError": "Errore nell'eliminazione del punto dolente. Riprova."
+    },
+    "patternList": {
+      "new": "Nuovo Modello",
+      "empty": "Nessun modello trovato",
+      "emptyFirst": "Inizia aggiungendo il tuo primo modello di soluzione per alimentare la base di conoscenza.",
+      "createFirst": "Crea primo modello",
+      "linkedPain": "Punto dolente collegato",
+      "linkedCase": "Case collegato",
+      "deleteSuccess": "Modello \"{name}\" eliminato",
+      "deleteError": "Errore nell'eliminazione del modello. Riprova."
+    },
+    "objectionList": {
+      "price": "Obiezioni di Prezzo",
+      "trust": "Obiezioni di Fiducia",
+      "timing": "Obiezioni di Tempistica",
+      "need": "Obiezioni di Necessità",
+      "authority": "Obiezioni di Autorità",
+      "new": "Nuova Obiezione",
+      "count": "{count} obiezione/i registrata/e",
+      "empty": "Nessuna obiezione trovata",
+      "emptyFirst": "Inizia aggiungendo le obiezioni comuni dei tuoi prospect per alimentare la base di conoscenza.",
+      "createFirst": "Crea prima obiezione",
+      "loadError": "Impossibile caricare le obiezioni",
+      "loadErrorDesc": "Non è stato possibile caricare le obiezioni. Riprova.",
+      "deleteFailure": "Eliminazione fallita",
+      "deleteSuccess": "Obiezione eliminata",
+      "deleteError": "Errore nell'eliminazione dell'obiezione. Riprova."
+    }
   },
   "leads": {
     "title": "Lead",
     "total": "{count} lead",
+    "contact": "Contatto",
+    "reveal": "Mostra",
+    "hide": "Nascondi",
+    "noCompany": "Nessuna azienda",
+    "revealError": "Errore nel rivelare le informazioni di contatto",
     "funnel": {
       "TOFU": "Cima del funnel",
       "MOFU": "Metà del funnel",
@@ -153,6 +329,39 @@
       "REVIEW": "In revisione",
       "PUBLISHED": "Pubblicato",
       "ARCHIVED": "Archiviato"
+    },
+    "manage": {
+      "title": "Blog",
+      "description": "Gestisci gli articoli del blog",
+      "new": "Nuovo Articolo",
+      "filterAll": "Tutti",
+      "filterDraft": "Bozze",
+      "filterReview": "In Revisione",
+      "filterPublished": "Pubblicati",
+      "empty": "Nessun articolo trovato",
+      "colTitle": "Titolo",
+      "colStatus": "Stato",
+      "colDate": "Data",
+      "colActions": "Azioni",
+      "deleteTitle": "Elimina Articolo",
+      "deleteConfirm": "Sì, elimina",
+      "publishLabel": "Pubblica Articolo",
+      "publishButton": "Pubblica"
+    },
+    "newPage": {
+      "title": "Nuovo Articolo",
+      "description": "Crea un nuovo articolo per il blog"
+    },
+    "editPage": {
+      "title": "Modifica Articolo",
+      "version": "Versione",
+      "viewHistory": "Vedi Cronologia"
+    },
+    "articleList": {
+      "empty": "Nessun articolo pubblicato ancora.",
+      "pagination": "Paginazione blog",
+      "prevPage": "Pagina precedente",
+      "nextPage": "Pagina successiva"
     }
   },
   "errors": {
@@ -164,7 +373,8 @@
     "ERR-022": "Operazione non consentita",
     "ERR-500": "Errore interno del server",
     "generic": "Qualcosa è andato storto. Riprova.",
-    "networkError": "Errore di connessione. Controlla la tua connessione internet."
+    "networkError": "Errore di connessione. Controlla la tua connessione internet.",
+    "externalServiceDown": "{service} non disponibile — riprova tra {retryAfter}s"
   },
   "empty": {
     "noContent": "Nessun contenuto ancora",
@@ -184,17 +394,40 @@
   },
   "analytics": {
     "title": "Analytics",
+    "description": "Metriche di prestazione della pipeline inbound",
     "period": "Periodo",
     "conversionRate": "Tasso di conversione",
     "totalLeads": "Totale lead",
     "topChannel": "Canale principale"
+  },
+  "calendar": {
+    "title": "Calendario Editoriale",
+    "description": "Pianifica e programma le tue pubblicazioni"
   },
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Bentornato",
     "publishedToday": "Pubblicati oggi",
     "pendingApproval": "In attesa di approvazione",
-    "workerStatus": "Stato dei worker"
+    "workerStatus": "Stato dei worker",
+    "themes": {
+      "title": "Temi di Contenuto",
+      "showing": "Visualizzazione di {total} temi",
+      "generate": "Genera Temi",
+      "generating": "Generando...",
+      "recalculate": "Ricalcola Punteggi",
+      "calculating": "Calcolando...",
+      "statusAll": "Tutti",
+      "statusActive": "Attivi",
+      "statusRejected": "Rifiutati",
+      "emptyTitle": "Nessun tema ancora",
+      "emptyDesc": "Genera i tuoi primi temi dalla base di conoscenza."
+    }
+  },
+  "header": {
+    "openMenu": "Apri menu di navigazione",
+    "logoutLabel": "Esci dall'applicazione",
+    "reconciliationPending": "{count} elementi di riconciliazione in sospeso"
   },
   "settings": {
     "title": "Impostazioni",
@@ -203,5 +436,125 @@
     "integrations": "Integrazioni",
     "saved": "Impostazioni salvate",
     "saveError": "Errore nel salvataggio delle impostazioni"
+  },
+  "onboarding": {
+    "tour": {
+      "back": "Indietro",
+      "next": "Avanti",
+      "skip": "Salta tour",
+      "finish": "Concludi",
+      "close": "Chiudi tour",
+      "reopen": "Riapri tour",
+      "welcome": {
+        "title": "Benvenuto in Inbound Forge",
+        "body": "Ti guideremo in 5 passaggi — meno di 10 minuti."
+      },
+      "cases": {
+        "title": "I tuoi casi",
+        "body": "Registra 5 casi reali che hai già consegnato. Alimentano idee di contenuto e lead capture."
+      },
+      "pains": {
+        "title": "Dolori del cliente",
+        "body": "Elenca 5 dolori che hai risolto. Ancorano copy e CTA nel funnel."
+      },
+      "objections": {
+        "title": "Obiezioni comuni",
+        "body": "Mappa le obiezioni ricorrenti per anticipare i dubbi."
+      },
+      "patterns": {
+        "title": "Pattern di soluzione",
+        "body": "Collega casi e dolori in pattern riutilizzabili — la tua base di conoscenza viva."
+      },
+      "done": {
+        "title": "Pronto all'attivazione",
+        "body": "Quando arrivi a 5 casi + 5 dolori sblocchi la modalità produttiva."
+      }
+    },
+    "examples": {
+      "heading": "Esempi rapidi",
+      "subheading": "Passa il mouse per mettere in pausa. Solo ispirazione per iniziare.",
+      "tablistLabel": "Esempi di casi",
+      "saas-churn": {
+        "title": "SaaS — riduzione churn",
+        "problem": "Churn mensile del 9% in un SaaS B2B.",
+        "solution": "Sequenza di email di riattivazione + campagna di contenuti sull'onboarding.",
+        "stack": "Resend, Notion, Supabase"
+      },
+      "ecom-leads": {
+        "title": "E-commerce — acquisizione lead",
+        "problem": "Traffico alto, bassa conversione sui moduli.",
+        "solution": "Exit-intent, lead magnet con sconto, flusso di nurture.",
+        "stack": "Next.js, Klaviyo, Meta Ads"
+      },
+      "b2b-discovery": {
+        "title": "B2B — scoperta della domanda",
+        "problem": "Team vendite senza pipeline qualificata.",
+        "solution": "Blog di autorità + outbound LinkedIn mirato.",
+        "stack": "LinkedIn, Hubspot, GA4"
+      }
+    },
+    "nudge": {
+      "title": "Bloccato su un campo?",
+      "description": "Dai un'occhiata a un esempio reale per trovare ispirazione.",
+      "cta": "Vedi esempio"
+    },
+    "banner": {
+      "title": "Completa il tuo seed.",
+      "progress": "{cases}/{casesTarget} casi · {pains}/{painsTarget} dolori",
+      "cta": "Continua seed",
+      "dismiss": "Ignora per 24h"
+    },
+    "guided": {
+      "title": "Prossimo da validare",
+      "counter": "{index} di {total}",
+      "validate": "Valida ora",
+      "empty": "Nessuna voce in sospeso. Aggiungi case e dolori per ricevere suggerimenti prioritizzati.",
+      "case": "Validare questo case sblocca ~{count} temi relativi a {domain}.",
+      "pain": "Validare questo dolore sblocca ~{count} temi relativi a {domain}.",
+      "themesUnlocked": "~{count} temi",
+      "domainFallback": "settori correlati"
+    }
+  },
+  "network": {
+    "offlineTitle": "Nessuna connessione a Internet",
+    "offlineBody": "Alcune azioni potrebbero non essere salvate. In attesa della riconnessione…",
+    "retry": "Riprova ora",
+    "restored": "Connessione ripristinata"
+  },
+  "rateLimits": {
+    "title": "Limiti per integrazione",
+    "resetAt": "Reset alle",
+    "criticalToast": "Rate limit critico: {provider}"
+  },
+  "leadJourney": {
+    "empty": "Nessun evento registrato per questo lead.",
+    "error": "Errore nel caricare il percorso",
+    "postView": "Ha visto il post",
+    "formSubmit": "Ha inviato il modulo",
+    "conversion": "Conversione",
+    "utmClick": "Click UTM",
+    "emailOpen": "Email aperta",
+    "filter": {
+      "post-view": "Post",
+      "form-submit": "Modulo",
+      "conversion": "Conversione",
+      "utm-click": "UTM",
+      "email-open": "Email"
+    }
+  },
+  "assetDownload": {
+    "label": "Scarica",
+    "png": "PNG (originale)",
+    "webp": "WebP (ottimizzato)"
+  },
+  "regeneration": {
+    "button": "Rigenera tema",
+    "confirmTitle": "Rigenerare questo tema?",
+    "confirmBody": "Questo tema e stato rigenerato {count} volte. Ogni rigenerazione consuma quota dell API Claude.",
+    "confirm": "Rigenera comunque",
+    "capReached": "Limite di rigenerazioni raggiunto ({cap})",
+    "blocked": "Limite di rigenerazioni raggiunto",
+    "success": "Tema rigenerato",
+    "error": "Errore nella rigenerazione"
   }
 }

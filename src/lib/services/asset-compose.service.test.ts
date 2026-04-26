@@ -50,6 +50,11 @@ const mockStorageUpload    = vi.fn()
 const mockStorageGetPublic = vi.fn()
 const mockStorageDownload  = vi.fn()
 
+vi.mock('@/lib/sentry', () => ({
+  captureException: vi.fn(),
+  captureMessage:   vi.fn(),
+}))
+
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
     storage: {

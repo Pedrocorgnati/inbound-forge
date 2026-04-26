@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from '@/components/ui/toast'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { CaseForm } from '@/components/knowledge/CaseForm'
+import { KnowledgeBacklinks } from '@/components/knowledge/KnowledgeBacklinks'
 import { AlertTriangle } from 'lucide-react'
 import type { CaseResponse } from '@/lib/dtos/case-library.dto'
 
@@ -14,6 +16,7 @@ export default function EditCasePage() {
   const router = useRouter()
   const locale = params.locale
   const id = params.id
+  const t = useTranslations('knowledge.casePage')
 
   const [caseData, setCaseData] = useState<CaseResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -28,24 +31,24 @@ export default function EditCasePage() {
         const res = await fetch(`/api/knowledge/cases/${id}`)
         if (!res.ok) {
           if (res.status === 404) {
-            toast.error('Case não encontrado')
+            toast.error(t('notFound'))
             router.push(`/${locale}/knowledge?tab=cases`)
             return
           }
-          throw new Error('Falha ao carregar case')
+          throw new Error(t('loadError'))
         }
 
         const json = await res.json()
         setCaseData(json.data)
       } catch {
-        setError('Não foi possível carregar o case.')
+        setError(t('loadError'))
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchCase()
-  }, [id, locale, router])
+  }, [id, locale, router, t])
 
   if (isLoading) {
     return (
@@ -69,12 +72,12 @@ export default function EditCasePage() {
         className="mx-auto max-w-2xl flex flex-col items-center gap-4 py-12"
       >
         <AlertTriangle className="h-10 w-10 text-danger" />
-        <p className="text-sm text-muted-foreground">{error ?? 'Case não encontrado'}</p>
+        <p className="text-sm text-muted-foreground">{error ?? t('notFound')}</p>
         <Button
           variant="outline"
           onClick={() => router.push(`/${locale}/knowledge?tab=cases`)}
         >
-          Voltar para cases
+          {t('backToCases')}
         </Button>
       </div>
     )
@@ -84,7 +87,7 @@ export default function EditCasePage() {
     <div data-testid="edit-case-page" className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Editar Case
+          {t('edit')}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {caseData.name}
@@ -92,6 +95,8 @@ export default function EditCasePage() {
       </div>
 
       <CaseForm mode="edit" initialData={caseData} locale={locale} />
+
+      <KnowledgeBacklinks type="case" id={id} />
     </div>
   )
 }

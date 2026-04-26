@@ -68,3 +68,34 @@ export interface PaginatedArticles {
   limit: number
   totalPages: number
 }
+
+/**
+ * Campos de artigo retornados pela listagem pública (publicListSelect).
+ * Não inclui body, hreflang, canonicalUrl, schemaTypes, cta*, currentVersion, approvedAt.
+ */
+export type BlogArticleSummary = Pick<
+  BlogArticle,
+  | 'id'
+  | 'slug'
+  | 'title'
+  | 'excerpt'
+  | 'featuredImageUrl'
+  | 'coverImageAlt'
+  | 'metaTitle'
+  | 'metaDescription'
+  | 'tags'
+  | 'status'
+  | 'authorName'
+  | 'publishedAt'
+  | 'updatedAt'
+  | 'createdAt'
+>
+
+/** Resposta paginada da listagem pública de artigos (campos parciais) */
+export interface PaginatedArticleSummaries {
+  items: BlogArticleSummary[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}

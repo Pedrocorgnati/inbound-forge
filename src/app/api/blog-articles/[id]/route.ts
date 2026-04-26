@@ -7,15 +7,16 @@ import { requireSession, ok, notFound, badRequest, conflict, internalError } fro
 import { blogAdminService } from '@/lib/services/blog-admin.service'
 import { updateArticleSchema } from '@/lib/validators/blog-article'
 
-type Params = { params: { id: string } }
+type Params = { params: Promise<{ id: string }> }
 
 // ─── GET /api/blog-articles/[id] ────────────────────────────────────────────
 
 export async function GET(_req: NextRequest, { params }: Params) {
+  const { id } = await params
   const { response } = await requireSession()
   if (response) return response // BLOG_001
 
-  const article = await blogAdminService.getArticle(params.id)
+  const article = await blogAdminService.getArticle(id)
   if (!article) return notFound('BLOG_080: Artigo não encontrado') // BLOG_080
 
   return ok(article)
@@ -24,6 +25,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 // ─── PUT /api/blog-articles/[id] ────────────────────────────────────────────
 
 export async function PUT(req: NextRequest, { params }: Params) {
+  const { id } = await params
   const { response } = await requireSession()
   if (response) return response // BLOG_001
 
@@ -43,7 +45,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 
   try {
-    const article = await blogAdminService.updateArticle(params.id, parsed.data)
+    const article = await blogAdminService.updateArticle(id, parsed.data)
     return ok(article)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Erro interno'
@@ -61,11 +63,12 @@ export async function PUT(req: NextRequest, { params }: Params) {
 // ─── DELETE /api/blog-articles/[id] ─────────────────────────────────────────
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
+  const { id } = await params
   const { response } = await requireSession()
   if (response) return response // BLOG_001
 
   try {
-    await blogAdminService.deleteArticle(params.id)
+    await blogAdminService.deleteArticle(id)
     return ok({ success: true })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Erro interno'

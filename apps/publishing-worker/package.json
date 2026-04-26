@@ -1,0 +1,19 @@
+{
+  "name": "@inbound-forge/publishing-worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "dev": "ts-node src/main.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "*",
+    "@upstash/redis": "*",
+    "@sentry/node": "*"
+  },
+  "devDependencies": {
+    "typescript": "*",
+    "ts-node": "*"
+  }
+}

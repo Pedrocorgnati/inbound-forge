@@ -5,6 +5,11 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle2, XCircle, Loader2, PartyPopper } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
+import { NudgeTooltip } from '@/components/onboarding/NudgeTooltip'
+import { ONBOARDING_STEPS_WITH_META } from '@/constants/onboarding-steps'
+import { STORAGE_KEYS } from '@/constants/storage-keys'
+
+const STEP_META = ONBOARDING_STEPS_WITH_META.find((s) => s.key === 'activation')
 
 interface Counts {
   cases: number
@@ -17,7 +22,7 @@ interface ActivationStepProps {
   onBack: () => void
 }
 
-const STORAGE_KEY = 'inbound-forge-onboarding'
+const STORAGE_KEY = STORAGE_KEYS.ONBOARDING
 
 export function ActivationStep({ locale, onBack }: ActivationStepProps) {
   const router = useRouter()
@@ -44,8 +49,8 @@ export function ActivationStep({ locale, onBack }: ActivationStepProps) {
     fetchCounts()
   }, [])
 
-  const casesOk = (counts?.cases ?? 0) >= 1
-  const painsOk = (counts?.pains ?? 0) >= 3
+  const casesOk = (counts?.cases ?? 0) >= 5
+  const painsOk = (counts?.pains ?? 0) >= 5
   const patternsOk = (counts?.solutions ?? 0) >= 1
   const allMet = casesOk && painsOk && patternsOk
 
@@ -128,16 +133,21 @@ export function ActivationStep({ locale, onBack }: ActivationStepProps) {
   }
 
   const checklistItems = [
-    { label: 'Pelo menos 1 case registrado', ok: casesOk, count: counts?.cases ?? 0, min: 1 },
-    { label: 'Pelo menos 3 dores registradas', ok: painsOk, count: counts?.pains ?? 0, min: 3 },
+    { label: 'Pelo menos 5 cases registrados', ok: casesOk, count: counts?.cases ?? 0, min: 5 },
+    { label: 'Pelo menos 5 dores registradas', ok: painsOk, count: counts?.pains ?? 0, min: 5 },
     { label: 'Pelo menos 1 padrao de solucao', ok: patternsOk, count: counts?.solutions ?? 0, min: 1 },
   ]
 
   return (
     <div data-testid="activation-step" className="space-y-6">
-      <p className="text-sm text-muted-foreground">
-        Verifique se todos os requisitos foram atendidos para ativar o Inbound Forge.
-      </p>
+      <div className="flex items-center gap-2">
+        <p className="text-sm text-muted-foreground flex-1">
+          Verifique se todos os requisitos foram atendidos para ativar o Inbound Forge.
+        </p>
+        {STEP_META?.nudgeMessage && (
+          <NudgeTooltip message={STEP_META.nudgeMessage} position="left" />
+        )}
+      </div>
 
       {/* Checklist */}
       <div className="space-y-3">

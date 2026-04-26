@@ -1,10 +1,13 @@
-// module-9: VIDEO_COVER Template — 1080x1080
+// module-9: VIDEO_COVER Template — dimensao em ./dimensions.ts (VIDEO_COVER)
 // Canal: Instagram / YouTube thumbnail
 // CONSTRAINTS: flexbox only, no hooks, no dynamic imports
 
 import React from 'react'
 import type { VideoCoverTemplateProps } from './types'
 import { BRAND_COLOR_DEFAULT } from '../constants'
+import { TEMPLATE_TYPE_TO_DIMENSION } from './dimensions'
+
+const DIM = TEMPLATE_TYPE_TO_DIMENSION.VIDEO_COVER
 
 export function VideoCoverTemplate({ headline, subheadline, showPlayIcon = true, brandColor = BRAND_COLOR_DEFAULT }: VideoCoverTemplateProps) {
   return (
@@ -12,8 +15,8 @@ export function VideoCoverTemplate({ headline, subheadline, showPlayIcon = true,
       style={{
         display:         'flex',
         flexDirection:   'column',
-        width:           1080,
-        height:          1080,
+        width:           DIM.w,
+        height:          DIM.h,
         backgroundColor: '#0F172A',
         padding:         80,
         justifyContent:  'space-between',

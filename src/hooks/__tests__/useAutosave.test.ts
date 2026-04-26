@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderHook, act } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { useAutosave } from '../useAutosave'

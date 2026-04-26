@@ -27,14 +27,15 @@ interface FunnelChartProps {
   data: FunnelMetrics | null
   loading?: boolean
   className?: string
+  onStageClick?: (stageLabel: string) => void
 }
 
-function FunnelChartComponent({ data, loading, className }: FunnelChartProps) {
+function FunnelChartComponent({ data, loading, className, onStageClick }: FunnelChartProps) {
   return (
     <div
       role="img"
       aria-label="Gráfico de funil de conversão"
-      className={cn('w-full', className)}
+      className={cn('w-full overflow-x-auto', className)} // G02: RESOLVED — overflow para mobile
       style={{ height: HEIGHT }}
     >
       {loading || !data ? (
@@ -49,7 +50,7 @@ function FunnelChartComponent({ data, loading, className }: FunnelChartProps) {
         </div>
       ) : (
         <>
-          <FunnelChartInner data={data} />
+          <FunnelChartInner data={data} onStageClick={onStageClick} />
           {/* Tabela acessível para screen readers — aria-hidden no chart visual */}
           <table className="sr-only" aria-label="Dados do funil de conversão">
             <thead>

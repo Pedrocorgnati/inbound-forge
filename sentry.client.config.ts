@@ -6,24 +6,27 @@
 import * as Sentry from '@sentry/nextjs'
 import { sanitizeSentryEvent } from '@/lib/sentry'
 
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  environment: process.env.NODE_ENV,
+// Guard contra múltiplas inicializações (ex: HMR em dev)
+if (!Sentry.isInitialized()) {
+  Sentry.init({
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    environment: process.env.NODE_ENV,
 
-  // Amostragem de performance — 10% em produção para reduzir custos
-  tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    // Amostragem de performance — 10% em produção para reduzir custos
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
 
-  // Replay de sessão apenas para erros
-  replaysOnErrorSampleRate: 1.0,
-  replaysSessionSampleRate: 0.1,
+    // Replay de sessão apenas para erros
+    replaysOnErrorSampleRate: 1.0,
+    replaysSessionSampleRate: 0.1,
 
-  // Remover PII antes de enviar para Sentry (SEC-008)
-  beforeSend(event) {
-    return sanitizeSentryEvent(event)
-  },
+    // Remover PII antes de enviar para Sentry (SEC-008)
+    beforeSend(event) {
+      return sanitizeSentryEvent(event)
+    },
 
-  // Integrations
-  integrations: [
-    Sentry.replayIntegration(),
-  ],
-})
+    // Integrations
+    integrations: [
+      Sentry.replayIntegration(),
+    ],
+  })
+}

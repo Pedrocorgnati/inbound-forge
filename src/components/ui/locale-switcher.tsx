@@ -6,10 +6,10 @@ import { useRouter, usePathname } from 'next/navigation'
 import { routing } from '@/i18n/config'
 
 const LOCALE_LABELS: Record<string, string> = {
-  'pt-BR': 'Portugues',
+  'pt-BR': 'Português',
   'en-US': 'English',
   'it-IT': 'Italiano',
-  'es-ES': 'Espanol',
+  'es-ES': 'Español',
 }
 
 export function LocaleSwitcher() {

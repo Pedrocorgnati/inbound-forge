@@ -9,6 +9,18 @@ export const KNOWLEDGE_THRESHOLDS = {
   objections: 5,  // recomendado
 } as const
 
+/**
+ * TASK-3 ST001: Thresholds de ativação do Learn-to-Rank (CL-030, CL-071).
+ * LTR se ativa automaticamente quando ambos os thresholds são atingidos.
+ */
+export const LTR_THRESHOLDS = {
+  postsRequired: 50,        // posts publicados para ativar LTR
+  conversionsRequired: 10,  // conversões registradas para ativar LTR
+  minPostsPerTheme: 5,      // mínimo de posts antes de penalizar tema
+  boostMultiplier: 1.3,     // boost para temas acima da média de conversão
+  penaltyMultiplier: 0.7,   // penalidade para temas sem conversão com 5+ posts
+} as const
+
 /** Mensagens de nudge contextual por estado do operador (INT-008/INT-010). */
 export const THRESHOLD_NUDGES = {
   cases_zero: 'Comece adicionando seu primeiro case de sucesso. Cases provam que você resolve o problema.',

@@ -36,8 +36,10 @@ describe('ContentStatus state machine', () => {
 
   // --- Estado terminal ---
   describe('getAvailableTransitions', () => {
-    it('PUBLISHED retorna array vazio (estado terminal)', () => {
-      expect(getAvailableTransitions(ContentStatus.PUBLISHED)).toEqual([])
+    it('PUBLISHED permite apenas ROLLED_BACK (rollback de publicacao)', () => {
+      expect(getAvailableTransitions(ContentStatus.PUBLISHED)).toEqual([
+        ContentStatus.ROLLED_BACK,
+      ])
     })
     it('DRAFT retorna REVIEW e FAILED', () => {
       const transitions = getAvailableTransitions(ContentStatus.DRAFT)

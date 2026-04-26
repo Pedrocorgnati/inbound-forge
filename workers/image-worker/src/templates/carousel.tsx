@@ -1,10 +1,13 @@
-// module-9: CAROUSEL Template — 1080x1080
+// module-9: CAROUSEL Template — dimensao em ./dimensions.ts (INSTAGRAM_SQUARE)
 // Rastreabilidade: TASK-2 ST002, INT-061, FEAT-creative-generation-005
 // CONSTRAINTS: flexbox only, no hooks, no dynamic imports, explicit dimensions
 
 import React from 'react'
 import type { CarouselTemplateProps } from './types'
 import { BRAND_COLOR_DEFAULT } from '../constants'
+import { TEMPLATE_TYPE_TO_DIMENSION } from './dimensions'
+
+const DIM = TEMPLATE_TYPE_TO_DIMENSION.CAROUSEL
 
 export function CarouselTemplate({ headline, subheadline, bodyText, slideNumber, totalSlides, brandColor = BRAND_COLOR_DEFAULT }: CarouselTemplateProps) {
   return (
@@ -12,8 +15,8 @@ export function CarouselTemplate({ headline, subheadline, bodyText, slideNumber,
       style={{
         display:         'flex',
         flexDirection:   'column',
-        width:           1080,
-        height:          1080,
+        width:           DIM.w,
+        height:          DIM.h,
         backgroundColor: '#0F172A',
         padding:         60,
         justifyContent:  'space-between',

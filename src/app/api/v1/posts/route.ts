@@ -3,23 +3,27 @@ import { prisma } from '@/lib/prisma'
 import { requireSession, ok, okPaginated, validationError, internalError } from '@/lib/api-auth'
 import { createPostSchema as CreatePostSchema, listPostsSchema as ListPostsSchema } from '@/lib/validators/post'
 import { PUBLISHING_CHANNELS } from '@/lib/constants/publishing'
+import { CONTENT_STATUS } from '@/constants/status'
 
 // GET /api/v1/posts
 export async function GET(request: NextRequest) {
   const { response } = await requireSession()
   if (response) return response
 
-  try {
-    const { searchParams } = new URL(request.url)
-    const parsed = ListPostsSchema.parse({
-      page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
-      channel: searchParams.get('channel'),
-      status: searchParams.get('status'),
-      from: searchParams.get('from'),
-      to: searchParams.get('to'),
-    })
+  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para parâmetros inválidos
+  const { searchParams } = new URL(request.url)
+  const listResult = ListPostsSchema.safeParse({
+    page: searchParams.get('page'),
+    limit: searchParams.get('limit'),
+    channel: searchParams.get('channel'),
+    status: searchParams.get('status'),
+    from: searchParams.get('from'),
+    to: searchParams.get('to'),
+  })
+  if (!listResult.success) return validationError(listResult.error)
+  const parsed = listResult.data
 
+  try {
     const where: Record<string, unknown> = {}
     if (parsed.channel) where.channel = parsed.channel
     if (parsed.status) where.status = parsed.status
@@ -71,7 +75,7 @@ export async function POST(request: NextRequest) {
       data: {
         ...parsed.data,
         scheduledAt: parsed.data.scheduledAt ? new Date(parsed.data.scheduledAt) : null,
-        status: 'DRAFT',
+        status: CONTENT_STATUS.DRAFT,
       },
     })
     return ok(post, 201)

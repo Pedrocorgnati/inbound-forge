@@ -10,6 +10,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import {
   buildClassificationPrompt,
+  CLASSIFICATION_SYSTEM_PROMPT,
   CLAUDE_MODEL,
   CLAUDE_MAX_TOKENS,
   COST_PER_INPUT_TOKEN,
@@ -126,9 +127,11 @@ export async function classifyText(
 
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
+      // TASK-1 ST002: system prompt com instrução explícita de sanitização PII (LGPD)
       const response = await client.messages.create({
         model: CLAUDE_MODEL,
         max_tokens: CLAUDE_MAX_TOKENS,
+        system: CLASSIFICATION_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: prompt }],
       })
 
@@ -159,12 +162,14 @@ export async function classifyText(
         result.scores.isOperationalPain === 'sim' &&
         result.scores.isSolvableWithSoftware === 'sim'
 
+      // TASK-1 ST002: marcar piiRemoved=true após classificação via Claude com system prompt PII
       await prisma.scrapedText.update({
         where: { id: scrapedTextId },
         data: {
           classificationResult: result as object,
           isPainCandidate: result.isPainCandidate,
           isProcessed: true,
+          piiRemoved: true,
         },
       })
 

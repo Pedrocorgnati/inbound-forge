@@ -1,10 +1,13 @@
-// module-9: STATIC_LANDSCAPE Template — 1200x630
+// module-9: STATIC_LANDSCAPE Template — dimensao em ./dimensions.ts (OG_BLOG)
 // Canal: LinkedIn / Blog OG
 // CONSTRAINTS: flexbox only, no hooks, no dynamic imports
 
 import React from 'react'
 import type { StaticLandscapeTemplateProps } from './types'
 import { BRAND_COLOR_DEFAULT } from '../constants'
+import { TEMPLATE_TYPE_TO_DIMENSION } from './dimensions'
+
+const DIM = TEMPLATE_TYPE_TO_DIMENSION.STATIC_LANDSCAPE
 
 export function StaticLandscapeTemplate({ headline, subheadline, bodyText, ctaText, brandColor = BRAND_COLOR_DEFAULT }: StaticLandscapeTemplateProps) {
   return (
@@ -12,8 +15,8 @@ export function StaticLandscapeTemplate({ headline, subheadline, bodyText, ctaTe
       style={{
         display:         'flex',
         flexDirection:   'row',
-        width:           1200,
-        height:          630,
+        width:           DIM.w,
+        height:          DIM.h,
         backgroundColor: '#FFFFFF',
       }}
     >

@@ -7,7 +7,7 @@ import { requireSession, ok, notFound, badRequest, internalError } from '@/lib/a
 import { blogVersionService } from '@/lib/services/blog-version.service'
 import { z } from 'zod'
 
-type Params = { params: { id: string } }
+type Params = { params: Promise<{ id: string }> }
 
 const rollbackSchema = z.object({
   versionId: z.string().uuid('versionId deve ser um UUID válido'), // BLOG_082
@@ -15,6 +15,7 @@ const rollbackSchema = z.object({
 })
 
 export async function POST(req: NextRequest, { params }: Params) {
+  const { id } = await params
   const { response } = await requireSession()
   if (response) return response // BLOG_001
 
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   try {
     const result = await blogVersionService.rollback(
-      params.id,
+      id,
       parsed.data.versionId,
       parsed.data.changeNote,
     )

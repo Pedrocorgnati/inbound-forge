@@ -7,13 +7,20 @@ import { prisma } from '@/lib/prisma'
 import { Channel, ContentStatus } from '@/types/enums'
 import type { CreatePostInput, UpdatePostInput } from '@/lib/validators/post'
 import { adaptForChannel } from '@/lib/utils/channel-adapter'
+import { buildSearchWhere } from '@/lib/search/text-search'
 
 const POST_PAGE_LIMIT = 20
 
 export interface PostListParams {
   channel?: string
+  channels?: string[]
   status?: string
+  statuses?: string[]
   page?: number
+  scheduledFrom?: string
+  scheduledTo?: string
+  // Intake-Review TASK-22 ST002 (CL-PB-052): busca textual em caption.
+  search?: string
 }
 
 export class PostService {
@@ -24,10 +31,23 @@ export class PostService {
     const page = Math.max(1, params.page ?? 1)
     const skip = (page - 1) * POST_PAGE_LIMIT
 
-    const where = {
-      ...(params.channel && { channel: params.channel as Channel }),
-      ...(params.status && { status: params.status as ContentStatus }),
+    const channels = params.channels ?? (params.channel ? [params.channel] : undefined)
+    const statuses = params.statuses ?? (params.status ? [params.status] : undefined)
+    const where: Record<string, unknown> = {
+      ...(channels?.length && { channel: { in: channels as Channel[] } }),
+      ...(statuses?.length && { status: { in: statuses as ContentStatus[] } }),
+      ...(params.scheduledFrom || params.scheduledTo
+        ? {
+            scheduledAt: {
+              ...(params.scheduledFrom && { gte: new Date(params.scheduledFrom) }),
+              ...(params.scheduledTo && { lte: new Date(params.scheduledTo) }),
+            },
+          }
+        : {}),
     }
+
+    const searchWhere = buildSearchWhere(params.search, ['caption'] as const)
+    if (searchWhere) Object.assign(where, searchWhere)
 
     const [items, total] = await Promise.all([
       prisma.post.findMany({

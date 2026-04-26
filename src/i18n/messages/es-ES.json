@@ -21,7 +21,49 @@
     "of": "de",
     "items": "elementos",
     "next": "Siguiente",
-    "previous": "Anterior"
+    "previous": "Anterior",
+    "retry": "Intentar de nuevo",
+    "publish": "Publicar",
+    "saveDraft": "Guardar Borrador",
+    "emptyState": {
+      "noDataTitle": "Aun no hay nada aqui",
+      "noDataDescription": "Cuando haya datos, apareceran en esta lista.",
+      "noResultsTitle": "No se encontraron resultados",
+      "noResultsDescription": "Ajusta los filtros o prueba otros criterios.",
+      "errorTitle": "No se pudo cargar",
+      "errorDescription": "Intenta de nuevo en unos instantes.",
+      "primaryAction": "Agregar",
+      "clearFilters": "Limpiar filtros"
+    },
+    "confirmDialog": {
+      "defaultTitle": "Confirmar accion",
+      "defaultDescription": "Deseas continuar con esta operacion?",
+      "destructiveTitle": "Estas seguro?",
+      "destructiveDescription": "Esta accion no se puede deshacer.",
+      "confirmLabel": "Confirmar",
+      "cancelLabel": "Cancelar",
+      "deleteLabel": "Eliminar"
+    },
+    "delete_dialog": {
+      "confirm_keyword": "ELIMINAR",
+      "confirm_button": "Eliminar permanentemente",
+      "cancel": "Cancelar",
+      "success": "Eliminado correctamente",
+      "description_default": "Esta accion es irreversible.",
+      "description_with_label": "\"{label}\" sera eliminado permanentemente. Esta accion es irreversible.",
+      "case_title": "Eliminar caso permanentemente?",
+      "pain_title": "Eliminar pain permanentemente?",
+      "pattern_title": "Eliminar solution pattern permanentemente?",
+      "asset_title": "Eliminar visual asset permanentemente?",
+      "case_warning": "Elimina del BD y puede invalidar SolutionPatterns vinculados. No hay deshacer.",
+      "pain_warning": "Elimina del BD y puede invalidar casos/themes vinculados. No hay deshacer.",
+      "pattern_warning": "Elimina del BD e invalida los casos que referencian este pattern. No hay deshacer.",
+      "asset_warning": "Archivo de storage y thumbnail seran eliminados del bucket inmediatamente. Posts publicados que referencian este asset pueden romperse.",
+      "archive_keyword": "ARCHIVAR",
+      "archive_button": "Archivar piece",
+      "content_piece_title": "Archivar esta piece?",
+      "content_piece_warning": "La piece sale del dashboard activo pero el historial queda preservado para auditoria (soft-delete via status). Puedes restaurar en cualquier momento."
+    }
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -31,8 +73,40 @@
     "blog": "Blog",
     "leads": "Leads",
     "analytics": "Analytics",
+    "utm": "Enlaces UTM",
+    "health": "Salud",
     "settings": "Configuración",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "sources": "Fuentes"
+  },
+  "breadcrumbs": {
+    "home": "Inicio",
+    "dashboard": "Dashboard",
+    "analytics": "Analytics",
+    "assets": "Activos",
+    "blogManage": "Blog (admin)",
+    "blogArticle": "Artículo",
+    "blogPreview": "Vista previa",
+    "calendar": "Calendario",
+    "compliance": "Compliance",
+    "content": "Contenido",
+    "fila": "Cola",
+    "health": "Salud",
+    "knowledge": "Base de Conocimiento",
+    "leads": "Leads",
+    "lead": "Lead",
+    "nicheOpportunities": "Oportunidades de Nicho",
+    "rejectedThemes": "Temas Rechazados",
+    "posts": "Posts",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "settingsApi": "Credenciales & API",
+    "settingsSchedule": "Agenda",
+    "settingsPreferences": "Preferencias",
+    "settingsCosts": "Costos",
+    "sources": "Fuentes",
+    "utm": "Enlaces UTM",
+    "blog": "Blog"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -45,7 +119,15 @@
     "loginError": "Correo electrónico o contraseña incorrectos",
     "sessionExpired": "Sesión expirada. Inicia sesión nuevamente.",
     "accountLocked": "Cuenta bloqueada por {minutes} minutos después de {attempts} intentos.",
-    "logoutSuccess": "Sesión cerrada con éxito"
+    "logoutSuccess": "Sesión cerrada con éxito",
+    "logoutError": "Error al cerrar sesión. Inténtalo de nuevo.",
+    "emailInvalid": "Correo electrónico inválido",
+    "passwordMin": "La contraseña debe tener al menos 8 caracteres",
+    "formLabel": "Formulario de inicio de sesión",
+    "submitting": "Enviando formulario...",
+    "emailPlaceholder": "tu@email.com",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
   },
   "workers": {
     "idle": "Inactivo",
@@ -130,15 +212,109 @@
   },
   "knowledge": {
     "title": "Base de Conocimiento",
+    "description": "Gestiona tus casos de estudio, puntos de dolor y patrones de solución",
     "pains": "Puntos de dolor",
     "cases": "Casos de estudio",
     "solutions": "Patrones de solución",
     "objections": "Objeciones",
-    "niches": "Oportunidades de nicho"
+    "niches": "Oportunidades de nicho",
+    "progress": {
+      "loading": "Cargando progreso",
+      "ready": "Base de conocimiento lista",
+      "title": "Progreso de la base de conocimiento",
+      "error": "Error al cargar el progreso de la base de conocimiento."
+    },
+    "tabs": {
+      "cases": "Casos",
+      "pains": "Puntos de dolor",
+      "patterns": "Patrones",
+      "objections": "Objeciones"
+    },
+    "casePage": {
+      "title": "Casos de Éxito",
+      "description": "Gestiona tus casos para alimentar la generación de contenido",
+      "new": "Nuevo Caso",
+      "newDescription": "Agrega un nuevo caso de éxito a la base de conocimiento",
+      "edit": "Editar Caso",
+      "notFound": "Caso no encontrado",
+      "loadError": "Error al cargar el caso",
+      "backToCases": "Volver a casos"
+    },
+    "caseList": {
+      "all": "Todos",
+      "draft": "Borrador",
+      "published": "Publicado",
+      "new": "Nuevo Caso",
+      "empty": "No se encontraron casos",
+      "emptyFilter": "No se encontraron casos con este filtro.",
+      "emptyFirst": "Comienza agregando tu primer caso de éxito.",
+      "createFirst": "Crear primer caso",
+      "deleteSuccess": "Caso \"{name}\" eliminado",
+      "deleteError": "Error al eliminar el caso. Inténtalo de nuevo."
+    },
+    "caseForm": {
+      "nameMin": "El nombre debe tener al menos 3 caracteres",
+      "sectorRequired": "El sector es obligatorio",
+      "systemTypeRequired": "El tipo de sistema es obligatorio",
+      "resultMin": "El resultado debe tener al menos {min} caracteres para publicar",
+      "draftNote": "Borrador — no visible en análisis",
+      "saving": "Guardando...",
+      "savedAt": "Guardado a las {time}",
+      "autoSaveError": "Error al guardar automáticamente",
+      "nameLabel": "Nombre del caso",
+      "sectorLabel": "Sector",
+      "systemTypeLabel": "Tipo de sistema",
+      "resultLabel": "Resultado obtenido",
+      "autoSaveHint": "Los cambios se guardan automáticamente. También puedes guardar ahora.",
+      "minChars": "{count} caracteres mínimos",
+      "quantifiableResult": "Resultado cuantificable"
+    },
+    "painList": {
+      "filterByCategory": "Filtrar por categoría",
+      "new": "Nuevo Punto de Dolor",
+      "empty": "No se encontraron puntos de dolor",
+      "emptyFilter": "No se encontraron puntos de dolor con este filtro. Prueba otra categoría.",
+      "emptyFirst": "Comienza agregando tu primer punto de dolor para alimentar la base de conocimiento.",
+      "createFirst": "Crear primer punto de dolor",
+      "deleteSuccess": "Punto de dolor \"{name}\" eliminado",
+      "deleteError": "Error al eliminar el punto de dolor. Inténtalo de nuevo."
+    },
+    "patternList": {
+      "new": "Nuevo Patrón",
+      "empty": "No se encontraron patrones",
+      "emptyFirst": "Comienza agregando tu primer patrón de solución para alimentar la base de conocimiento.",
+      "createFirst": "Crear primer patrón",
+      "linkedPain": "Punto de dolor vinculado",
+      "linkedCase": "Caso vinculado",
+      "deleteSuccess": "Patrón \"{name}\" eliminado",
+      "deleteError": "Error al eliminar el patrón. Inténtalo de nuevo."
+    },
+    "objectionList": {
+      "price": "Objeciones de Precio",
+      "trust": "Objeciones de Confianza",
+      "timing": "Objeciones de Momento",
+      "need": "Objeciones de Necesidad",
+      "authority": "Objeciones de Autoridad",
+      "new": "Nueva Objeción",
+      "count": "{count} objeción/es registrada/s",
+      "empty": "No se encontraron objeciones",
+      "emptyFirst": "Comienza agregando objeciones comunes de tus prospectos para alimentar la base de conocimiento.",
+      "createFirst": "Crear primera objeción",
+      "loadError": "Error al cargar objeciones",
+      "loadErrorDesc": "No se pudieron cargar las objeciones. Inténtalo de nuevo.",
+      "deleteFailure": "Error al eliminar",
+      "deleteSuccess": "Objeción eliminada",
+      "deleteError": "Error al eliminar la objeción. Inténtalo de nuevo."
+    }
   },
   "leads": {
     "title": "Leads",
     "total": "{count} leads",
+    "contact": "Contacto",
+    "reveal": "Revelar",
+    "hide": "Ocultar",
+    "noCompany": "Sin empresa",
+    "revealError": "Error al revelar información de contacto",
     "funnel": {
       "TOFU": "Parte superior del embudo",
       "MOFU": "Parte media del embudo",
@@ -153,6 +329,39 @@
       "REVIEW": "En revisión",
       "PUBLISHED": "Publicado",
       "ARCHIVED": "Archivado"
+    },
+    "manage": {
+      "title": "Blog",
+      "description": "Gestiona los artículos del blog",
+      "new": "Nuevo Artículo",
+      "filterAll": "Todos",
+      "filterDraft": "Borradores",
+      "filterReview": "En Revisión",
+      "filterPublished": "Publicados",
+      "empty": "No se encontraron artículos",
+      "colTitle": "Título",
+      "colStatus": "Estado",
+      "colDate": "Fecha",
+      "colActions": "Acciones",
+      "deleteTitle": "Eliminar Artículo",
+      "deleteConfirm": "Sí, eliminar",
+      "publishLabel": "Publicar Artículo",
+      "publishButton": "Publicar"
+    },
+    "newPage": {
+      "title": "Nuevo Artículo",
+      "description": "Crea un nuevo artículo para el blog"
+    },
+    "editPage": {
+      "title": "Editar Artículo",
+      "version": "Versión",
+      "viewHistory": "Ver Historial"
+    },
+    "articleList": {
+      "empty": "Aún no hay artículos publicados.",
+      "pagination": "Paginación del blog",
+      "prevPage": "Página anterior",
+      "nextPage": "Página siguiente"
     }
   },
   "errors": {
@@ -164,7 +373,8 @@
     "ERR-022": "Operación no permitida",
     "ERR-500": "Error interno del servidor",
     "generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
-    "networkError": "Error de conexión. Verifica tu conexión a internet."
+    "networkError": "Error de conexión. Verifica tu conexión a internet.",
+    "externalServiceDown": "{service} no disponible — intenta de nuevo en {retryAfter}s"
   },
   "empty": {
     "noContent": "Aún no hay contenido",
@@ -184,17 +394,40 @@
   },
   "analytics": {
     "title": "Analytics",
+    "description": "Métricas de rendimiento del pipeline de inbound",
     "period": "Período",
     "conversionRate": "Tasa de conversión",
     "totalLeads": "Total de leads",
     "topChannel": "Canal principal"
+  },
+  "calendar": {
+    "title": "Calendario Editorial",
+    "description": "Planificación y programación de publicaciones"
   },
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Bienvenido de nuevo",
     "publishedToday": "Publicados hoy",
     "pendingApproval": "Pendiente de aprobación",
-    "workerStatus": "Estado de los workers"
+    "workerStatus": "Estado de los workers",
+    "themes": {
+      "title": "Temas de Contenido",
+      "showing": "Mostrando {total} temas",
+      "generate": "Generar Temas",
+      "generating": "Generando...",
+      "recalculate": "Recalcular Puntuaciones",
+      "calculating": "Calculando...",
+      "statusAll": "Todos",
+      "statusActive": "Activos",
+      "statusRejected": "Rechazados",
+      "emptyTitle": "Ningún tema todavía",
+      "emptyDesc": "Genera tus primeros temas desde la base de conocimiento."
+    }
+  },
+  "header": {
+    "openMenu": "Abrir menú de navegación",
+    "logoutLabel": "Cerrar sesión",
+    "reconciliationPending": "{count} elementos de reconciliación pendientes"
   },
   "settings": {
     "title": "Configuración",
@@ -203,5 +436,125 @@
     "integrations": "Integraciones",
     "saved": "Configuración guardada",
     "saveError": "Error al guardar la configuración"
+  },
+  "onboarding": {
+    "tour": {
+      "back": "Atrás",
+      "next": "Siguiente",
+      "skip": "Saltar tour",
+      "finish": "Finalizar",
+      "close": "Cerrar tour",
+      "reopen": "Reabrir tour",
+      "welcome": {
+        "title": "Bienvenido a Inbound Forge",
+        "body": "Te guiaremos por 5 pasos — menos de 10 minutos."
+      },
+      "cases": {
+        "title": "Tus casos",
+        "body": "Registra 5 casos reales que hayas entregado. Alimentan ideas de contenido y captación de leads."
+      },
+      "pains": {
+        "title": "Dolores del cliente",
+        "body": "Lista 5 dolores que hayas resuelto. Anclan copy y CTAs en todo el funnel."
+      },
+      "objections": {
+        "title": "Objeciones comunes",
+        "body": "Mapea objeciones recurrentes para anticipar dudas."
+      },
+      "patterns": {
+        "title": "Patrones de solución",
+        "body": "Conecta casos y dolores en patrones reutilizables — tu base de conocimiento viva."
+      },
+      "done": {
+        "title": "Listo para activar",
+        "body": "Al llegar a 5 casos + 5 dolores desbloqueas el modo productivo."
+      }
+    },
+    "examples": {
+      "heading": "Ejemplos rápidos",
+      "subheading": "Pasa el ratón para pausar. Solo inspiración para empezar.",
+      "tablistLabel": "Ejemplos de casos",
+      "saas-churn": {
+        "title": "SaaS — reducción de churn",
+        "problem": "Churn mensual del 9% en un SaaS B2B.",
+        "solution": "Secuencia de emails de reactivación + campaña de contenidos sobre onboarding.",
+        "stack": "Resend, Notion, Supabase"
+      },
+      "ecom-leads": {
+        "title": "E-commerce — captación de leads",
+        "problem": "Tráfico alto, baja conversión en formularios.",
+        "solution": "Exit-intent, lead magnet con descuento, flujo de nurturing.",
+        "stack": "Next.js, Klaviyo, Meta Ads"
+      },
+      "b2b-discovery": {
+        "title": "B2B — descubrimiento de demanda",
+        "problem": "Equipo comercial sin pipeline cualificado.",
+        "solution": "Blog de autoridad + outbound en LinkedIn segmentado.",
+        "stack": "LinkedIn, Hubspot, GA4"
+      }
+    },
+    "nudge": {
+      "title": "¿Atascado en un campo?",
+      "description": "Consulta un ejemplo real para inspirarte.",
+      "cta": "Ver ejemplo"
+    },
+    "banner": {
+      "title": "Completa tu seed.",
+      "progress": "{cases}/{casesTarget} casos · {pains}/{painsTarget} dolores",
+      "cta": "Continuar seed",
+      "dismiss": "Descartar por 24h"
+    },
+    "guided": {
+      "title": "Siguiente a validar",
+      "counter": "{index} de {total}",
+      "validate": "Validar ahora",
+      "empty": "Sin entradas pendientes. Agrega cases y dolores para recibir sugerencias priorizadas.",
+      "case": "Validar este case libera ~{count} temas relacionados con {domain}.",
+      "pain": "Validar este dolor libera ~{count} temas relacionados con {domain}.",
+      "themesUnlocked": "~{count} temas",
+      "domainFallback": "sectores relacionados"
+    }
+  },
+  "network": {
+    "offlineTitle": "Sin conexión a internet",
+    "offlineBody": "Algunas acciones pueden no guardarse. Esperando reconexión…",
+    "retry": "Intentar ahora",
+    "restored": "Conexión restaurada"
+  },
+  "rateLimits": {
+    "title": "Límites por integración",
+    "resetAt": "Reset a las",
+    "criticalToast": "Rate limit crítico: {provider}"
+  },
+  "leadJourney": {
+    "empty": "Sin eventos registrados para este lead.",
+    "error": "Error al cargar el recorrido",
+    "postView": "Vio el post",
+    "formSubmit": "Envió formulario",
+    "conversion": "Conversión",
+    "utmClick": "Clic UTM",
+    "emailOpen": "Email abierto",
+    "filter": {
+      "post-view": "Post",
+      "form-submit": "Formulario",
+      "conversion": "Conversión",
+      "utm-click": "UTM",
+      "email-open": "Email"
+    }
+  },
+  "assetDownload": {
+    "label": "Descargar",
+    "png": "PNG (original)",
+    "webp": "WebP (optimizado)"
+  },
+  "regeneration": {
+    "button": "Regenerar tema",
+    "confirmTitle": "¿Regenerar este tema?",
+    "confirmBody": "Este tema ya fue regenerado {count} veces. Cada regeneración consume cuota de la API Claude.",
+    "confirm": "Regenerar de todos modos",
+    "capReached": "Límite de regeneraciones alcanzado ({cap})",
+    "blocked": "Límite de regeneraciones alcanzado",
+    "success": "Tema regenerado",
+    "error": "Error al regenerar"
   }
 }

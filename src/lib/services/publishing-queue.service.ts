@@ -4,7 +4,14 @@
  * INT-065 | INT-066 | INT-070 | FEAT-publishing-blog-001
  */
 import { prisma } from '@/lib/prisma'
+import { redis, QUEUE_KEYS } from '@/lib/redis'
 import { ContentStatus, QueueStatus } from '@/types/enums'
+
+// TODO (pós-MVP — CL-135): Implementar publicação automática para LinkedIn e Instagram
+// sem necessidade de aprovação manual do operador. O fluxo atual exige approvedAt preenchido
+// antes de agendar (INT-070). No pós-MVP, posts aprovados automaticamente pelo score de
+// qualidade devem ser elegíveis para publicação direta via PublishingQueue.
+// Ver INTAKE.md seção "Auto-publish pós-MVP" para regras de negócio completas.
 
 export class PublishingQueueService {
   /**
@@ -76,6 +83,7 @@ export class PublishingQueueService {
 
   /**
    * Lista posts com publicação programada para hoje (dashboard "Publicar Hoje").
+   * CL-051: se publishing worker disponível, enfileira no Redis; caso contrário, retorna inline.
    */
   static async listDueToday() {
     const startOfDay = new Date()
@@ -84,7 +92,7 @@ export class PublishingQueueService {
     const endOfDay = new Date()
     endOfDay.setHours(23, 59, 59, 999)
 
-    return prisma.publishingQueue.findMany({
+    const duePosts = await prisma.publishingQueue.findMany({
       where: {
         scheduledAt: { gte: startOfDay, lte: endOfDay },
         status: QueueStatus.PENDING,
@@ -92,13 +100,35 @@ export class PublishingQueueService {
       include: { post: true },
       orderBy: { scheduledAt: 'asc' },
     })
+
+    // Graceful degradation: enfileira no Redis se publishing worker habilitado
+    if (process.env.ENABLE_PUBLISHING_WORKER === 'true' && duePosts.length > 0) {
+      try {
+        for (const queued of duePosts) {
+          await redis.lpush(QUEUE_KEYS.publishing, JSON.stringify({ postId: queued.postId, channel: queued.post.channel }))
+        }
+      } catch {
+        // Fallback silencioso — worker processa pelo polling direto ao DB
+      }
+    }
+
+    return duePosts
   }
 
   /**
    * Retorna post para a fila com backoff exponencial.
    * Incrementa attempts.
    */
-  static async returnToQueue(postId: string, errorMessage: string) {
+  static async returnToQueue(
+    postId: string,
+    errorMessage: string,
+    context?: {
+      channel?: string
+      statusCode?: number
+      requestPayload?: unknown
+      responseBody?: unknown
+    }
+  ) {
     const queue = await prisma.publishingQueue.findUnique({ where: { postId } })
     if (!queue) return
 
@@ -117,6 +147,27 @@ export class PublishingQueueService {
         updatedAt: new Date(),
       },
     })
+
+    // TASK-5/ST001 (CL-198): grava snapshot da falha com payload sanitizado.
+    try {
+      const { sanitizeForLog } = await import('@/lib/log-sanitizer')
+      await prisma.postPublishError.create({
+        data: {
+          postId,
+          channel: context?.channel ?? queue.channel ?? 'unknown',
+          statusCode: context?.statusCode,
+          apiMessage: errorMessage,
+          requestPayload: context?.requestPayload
+            ? (sanitizeForLog(context.requestPayload) as object)
+            : undefined,
+          responseBody: context?.responseBody
+            ? (sanitizeForLog(context.responseBody) as object)
+            : undefined,
+        },
+      })
+    } catch {
+      /* nao bloqueia retry em caso de falha de log */
+    }
   }
 
   /**
@@ -133,5 +184,69 @@ export class PublishingQueueService {
         data: { status: ContentStatus.FAILED, errorMessage },
       }),
     ])
+  }
+
+  /**
+   * TASK-5 ST001: Processa fila de publicações agendadas (CL-052).
+   * Busca posts com scheduledAt <= now e status SCHEDULED.
+   * Invocado pelo Vercel Cron a cada 5 minutos.
+   */
+  static async processQueue(): Promise<{ processed: number; failed: number; skipped: number }> {
+    const now = new Date()
+
+    const dueItems = await prisma.publishingQueue.findMany({
+      where: {
+        scheduledAt: { lte: now },
+        status: QueueStatus.PENDING,
+      },
+      include: {
+        post: { select: { id: true, channel: true, status: true, approvedAt: true } },
+      },
+      orderBy: { scheduledAt: 'asc' },
+      take: 20, // processar em lotes de 20
+    })
+
+    let processed = 0
+    let failed = 0
+    const skipped = 0
+
+    for (const item of dueItems) {
+      // Marcar como PROCESSING
+      await prisma.publishingQueue.update({
+        where: { postId: item.postId },
+        data: { status: QueueStatus.PROCESSING, updatedAt: new Date() },
+      }).catch(() => {})
+
+      try {
+        // Enfileirar no Redis para o worker de publicação
+        await redis.lpush(
+          QUEUE_KEYS.publishing,
+          JSON.stringify({ postId: item.postId, channel: item.post.channel })
+        )
+
+        // Atualizar status do Post para SCHEDULED → aguarda publicação pelo worker
+        await prisma.post.update({
+          where: { id: item.postId },
+          data: { status: ContentStatus.SCHEDULED },
+        })
+
+        await prisma.publishingQueue.update({
+          where: { postId: item.postId },
+          data: { status: QueueStatus.DONE, updatedAt: new Date() },
+        })
+
+        processed++
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Erro desconhecido'
+        await PublishingQueueService.returnToQueue(item.postId, msg).catch(() => {})
+        failed++
+      }
+    }
+
+    console.info(
+      `[PublishingQueue] processQueue | processed=${processed} failed=${failed} skipped=${skipped}`
+    )
+
+    return { processed, failed, skipped }
   }
 }

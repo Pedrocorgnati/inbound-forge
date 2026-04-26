@@ -3,7 +3,7 @@
 // Recalcula scores de todos os temas em batch — max 1 execução simultânea via Redis lock
 import { NextRequest } from 'next/server'
 import { requireSession, ok, internalError } from '@/lib/api-auth'
-import { themeScoringService } from '@/services/theme-scoring.service'
+import { themeScoringService } from '@/lib/services/theme-scoring.service'
 import { redis } from '@/lib/redis'
 
 const LOCK_KEY = 'theme:score-all:lock'

@@ -3,7 +3,9 @@
 import React from 'react'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
-import { useSidebarState } from '@/hooks/use-sidebar-state'
+import { BuildVersionBadge } from './BuildVersionBadge'
+import { CriticalAlertBanner } from '@/components/shared/CriticalAlertBanner'
+import { useSidebarState } from '@/hooks/useSidebarState'
 import type { SidebarBadges, ProgressWidgetData, WorkerHeartbeat } from '@/types'
 
 interface AppShellProps {
@@ -55,6 +57,8 @@ export function AppShell({
           onMenuToggle={openMobile}
         />
 
+        <CriticalAlertBanner />
+
         <main
           id="main-content"
           data-testid="main-content"
@@ -63,6 +67,10 @@ export function AppShell({
         >
           {children}
         </main>
+
+        <footer className="flex justify-end border-t border-border px-4 py-2">
+          <BuildVersionBadge />
+        </footer>
       </div>
     </div>
   )

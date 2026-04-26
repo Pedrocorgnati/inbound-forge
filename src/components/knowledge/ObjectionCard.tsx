@@ -32,7 +32,7 @@ function snippetContent(text: string, maxLen = 120): string {
   return text.slice(0, maxLen).trimEnd() + '...'
 }
 
-export function ObjectionCard({ objection, onEdit, onDelete, _locale }: ObjectionCardProps) {
+export function ObjectionCard({ objection, onEdit, onDelete, locale: _locale }: ObjectionCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
 
   const typeInfo = TYPE_MAP[objection.type] ?? { label: objection.type, variant: 'default' as const }
@@ -58,7 +58,7 @@ export function ObjectionCard({ objection, onEdit, onDelete, _locale }: Objectio
       data-testid={`objection-card-${objection.id}`}
     >
       <div
-        className={`relative h-[220px] transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none motion-reduce:duration-0 ${
+        className={`relative min-h-[220px] transition-transform duration-500 [transform-style:preserve-3d] motion-reduce:transition-none motion-reduce:duration-0 ${
           isFlipped ? '[transform:rotateY(180deg)]' : ''
         }`}
       >

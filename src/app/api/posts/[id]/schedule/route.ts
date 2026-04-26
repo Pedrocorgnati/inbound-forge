@@ -4,33 +4,34 @@
  * module-12-calendar-publishing | POST_050
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { requireSession, ok, notFound, badRequest, internalError } from '@/lib/api-auth'
+import { requireSession, ok, notFound, validationError, internalError } from '@/lib/api-auth'
 import { PublishingQueueService } from '@/lib/services/publishing-queue.service'
 import { PostService } from '@/lib/services/post.service'
 import { schedulePostSchema } from '@/lib/validators/post'
-import { ZodError } from 'zod'
 
 interface RouteParams {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
   const { response } = await requireSession()
   if (response) return response
 
-  try {
-    const body = await request.json()
-    const data = schedulePostSchema.parse(body)
+  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para input inválido
+  let body: unknown
+  try { body = await request.json() } catch { return validationError(new Error('Body inválido')) }
 
-    const post = await PostService.findById(params.id)
+  const parsed = schedulePostSchema.safeParse(body)
+  if (!parsed.success) return validationError(parsed.error)
+
+  try {
+    const post = await PostService.findById(id)
     if (!post) return notFound('Post não encontrado')
 
-    const queue = await PublishingQueueService.schedule(params.id, new Date(data.scheduledAt))
+    const queue = await PublishingQueueService.schedule(id, new Date(parsed.data.scheduledAt))
     return ok(queue, 201)
   } catch (error) {
-    if (error instanceof ZodError) {
-      return badRequest(error.issues[0].message)
-    }
     if (error instanceof Error) {
       const err = error as Error & { code?: string }
       if (err.code === 'POST_050') {

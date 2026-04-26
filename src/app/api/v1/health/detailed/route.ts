@@ -3,6 +3,7 @@ import { requireSession, internalError } from '@/lib/api-auth'
 import { prisma } from '@/lib/prisma'
 import { redis } from '@/lib/redis'
 import { WorkerStatus, WorkerType } from '@/types/enums'
+import { CONTENT_STATUS } from '@/constants/status'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -53,7 +54,7 @@ export async function GET() {
           }
         })(),
         prisma.workerHealth.findMany(),
-        prisma.contentPiece.count({ where: { status: 'PUBLISHED' } }).catch(() => 0),
+        prisma.contentPiece.count({ where: { status: CONTENT_STATUS.PUBLISHED } }).catch(() => 0),
         prisma.conversionEvent.count().catch(() => 0),
       ])
 

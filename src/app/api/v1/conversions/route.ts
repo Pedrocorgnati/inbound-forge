@@ -30,12 +30,15 @@ export async function GET(request: NextRequest) {
   if (response) return response
 
   const { searchParams } = new URL(request.url)
-  const parsed = ListSchema.parse({
+  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para parâmetros inválidos
+  const listResult = ListSchema.safeParse({
     page: searchParams.get('page'),
     limit: searchParams.get('limit'),
     leadId: searchParams.get('leadId'),
     themeId: searchParams.get('themeId'),
   })
+  if (!listResult.success) return validationError(listResult.error)
+  const parsed = listResult.data
 
   try {
     const where = {

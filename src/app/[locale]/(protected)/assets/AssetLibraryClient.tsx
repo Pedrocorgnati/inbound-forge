@@ -23,12 +23,12 @@ export function AssetLibraryClient() {
   }, [])
 
   return (
-    <div className="space-y-6">
-      <AssetUploadZone onUploadComplete={handleUploadComplete} />
+    <div data-testid="assets-library" className="space-y-6">
+      <AssetUploadZone data-testid="assets-upload-zone" onUploadComplete={handleUploadComplete} />
 
-      <AssetFilters filter={filter} onChange={handleFilterChange} />
+      <AssetFilters data-testid="assets-filters" filter={filter} onChange={handleFilterChange} />
 
-      <AssetGallery filter={filter} onRefresh={refreshCounter} />
+      <AssetGallery data-testid="assets-gallery" filter={filter} onRefresh={refreshCounter} />
     </div>
   )
 }

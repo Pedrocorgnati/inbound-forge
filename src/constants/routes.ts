@@ -10,9 +10,14 @@ export const ROUTES = {
   LEADS: '/leads',
   ANALYTICS: '/analytics',
   HEALTH: '/health',
+  ASSETS: '/assets',
+  SOURCES: '/sources',
+  ONBOARDING: '/onboarding',
+  PRIVACY: '/privacy',
+  TERMS: '/terms',
 } as const
 
-export const PUBLIC_ROUTES = ['/login', '/blog']
+export const PUBLIC_ROUTES = [ROUTES.LOGIN, ROUTES.BLOG_PUBLIC]
 
 export const API_ROUTES = {
   HEALTH: '/api/v1/health',

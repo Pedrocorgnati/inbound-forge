@@ -75,11 +75,15 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       contactInfo = parsed.data.contactInfo ? encryptPII(parsed.data.contactInfo) : null
     }
 
+    const statusChanged =
+      parsed.data.status !== undefined && parsed.data.status !== existing.status
+
     const updated = await prisma.lead.update({
       where: { id },
       data: {
         ...parsed.data,
         ...(contactInfo !== undefined ? { contactInfo } : {}),
+        ...(statusChanged ? { statusUpdatedAt: new Date() } : {}),
       },
     })
 

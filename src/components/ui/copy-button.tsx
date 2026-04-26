@@ -4,6 +4,7 @@ import * as React from 'react'
 import { Copy, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from './button'
+import { UI_TIMING } from '@/constants/timing'
 
 export interface CopyButtonProps {
   textToCopy: string
@@ -18,7 +19,7 @@ export function CopyButton({ textToCopy, size = 'md', className }: CopyButtonPro
     try {
       await navigator.clipboard.writeText(textToCopy)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setTimeout(() => setCopied(false), UI_TIMING.COPY_FEEDBACK_MS)
     } catch {
       // Fallback silencioso — clipboard API pode nao estar disponivel
     }

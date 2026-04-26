@@ -49,7 +49,7 @@ function ChannelBreakdownComponent({ breakdown, className }: ChannelBreakdownPro
             >
               <div
                 style={{ width: `${width}%`, backgroundColor: color }}
-                className="h-full rounded-full transition-all"
+                className="h-full rounded-full transition-[width]"
               />
             </div>
             <span className="text-[10px] text-muted-foreground truncate">{label}</span>

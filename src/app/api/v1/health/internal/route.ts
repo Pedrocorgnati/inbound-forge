@@ -63,14 +63,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       // Queue depths
       (async () => {
         try {
-          const [scraping, image, publishing] = await Promise.all([
+          const [scraping, image, video, publishing] = await Promise.all([
             redis.llen(QUEUE_KEYS.scraping),
             redis.llen(QUEUE_KEYS.image),
+            redis.llen(QUEUE_KEYS.video),
             redis.llen(QUEUE_KEYS.publishing),
           ])
-          return { scraping, image, publishing }
+          return { scraping, image, video, publishing }
         } catch {
-          return { scraping: -1, image: -1, publishing: -1 }
+          return { scraping: -1, image: -1, video: -1, publishing: -1 }
         }
       })(),
 

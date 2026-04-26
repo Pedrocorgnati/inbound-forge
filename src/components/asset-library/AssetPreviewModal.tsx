@@ -112,7 +112,7 @@ export function AssetPreviewModal({ asset, open, onClose }: AssetPreviewModalPro
               src={asset.storageUrl}
               alt={asset.altText ?? asset.originalName}
               fill
-              sizes="640px"
+              sizes="(max-width: 640px) 100vw, 640px"
               className="object-contain"
               priority
             />

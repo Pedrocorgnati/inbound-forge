@@ -9,6 +9,7 @@
 import sharp            from 'sharp'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { ASSET_UPLOAD_CONFIG } from '@/lib/constants/asset-library'
+import { captureException } from '@/lib/sentry'
 
 export const thumbnailService = {
   /**
@@ -33,7 +34,7 @@ export const thumbnailService = {
 
       return thumbnail
     } catch (err) {
-      console.error('[thumbnail.service] Falha ao gerar thumbnail:', err)
+      captureException(err, { service: 'thumbnail', step: 'generate' })
       return null
     }
   },
@@ -65,7 +66,7 @@ export const thumbnailService = {
       })
 
     if (error) {
-      console.error('[thumbnail.service] Falha ao fazer upload do thumbnail:', error)
+      captureException(error, { service: 'thumbnail', step: 'upload' })
       return null
     }
 

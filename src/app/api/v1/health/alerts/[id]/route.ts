@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireSession, ok, badRequest, notFound, internalError } from '@/lib/api-auth'
+import { NextRequest } from 'next/server'
+import { requireSession, ok, validationError, notFound, internalError } from '@/lib/api-auth'
 import { prisma } from '@/lib/prisma'
-import { ZodError } from 'zod'
 import { AlertResolvePatchSchema } from '@/schemas/health.schema'
 
 export const runtime = 'nodejs'
@@ -9,34 +8,18 @@ export const runtime = 'nodejs'
 // PATCH /api/v1/health/alerts/[id] — marcar alerta como resolvido
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const { response } = await requireSession()
   if (response) return response
 
-  const { id } = params
-
+  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para input inválido
   let body: unknown
-  try {
-    body = await request.json()
-  } catch {
-    return badRequest('Corpo inválido')
-  }
+  try { body = await request.json() } catch { return validationError(new Error('Body inválido')) }
 
-  let parsed: { resolved: true; resolvedNote?: string }
-  try {
-    parsed = AlertResolvePatchSchema.parse(body)
-  } catch (err) {
-    if (err instanceof ZodError) {
-      return NextResponse.json(
-        { error: 'Validação falhou', issues: err.errors },
-        { status: 422 }
-      )
-    }
-    return badRequest('VAL_001: resolved deve ser true')
-  }
-
-  const { } = parsed
+  const parsed = AlertResolvePatchSchema.safeParse(body)
+  if (!parsed.success) return validationError(parsed.error)
 
   try {
     const existing = await prisma.alertLog.findUnique({ where: { id } })

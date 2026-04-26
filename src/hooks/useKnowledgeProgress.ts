@@ -30,14 +30,15 @@ export function useKnowledgeProgress(): UseKnowledgeProgressReturn {
       const res = await fetch('/api/knowledge/progress')
       if (!res.ok) throw new Error('Falha ao carregar progresso')
 
-      const json: KnowledgeProgress = await res.json()
-      setData(json)
+      const json = await res.json()
+      const progress: KnowledgeProgress = json.data ?? json
+      setData(progress)
       setError(null)
 
       // Detect unlock transition: previous was false, now is true
       if (
         prevUnlockedRef.current === false &&
-        json.overallUnlocked === true
+        progress.overallUnlocked === true
       ) {
         setJustUnlocked(true)
         unlockTimerRef.current = setTimeout(() => {
@@ -45,7 +46,7 @@ export function useKnowledgeProgress(): UseKnowledgeProgressReturn {
         }, UNLOCK_DISPLAY_MS)
       }
 
-      prevUnlockedRef.current = json.overallUnlocked
+      prevUnlockedRef.current = progress.overallUnlocked
     } catch {
       setError('Não foi possível carregar o progresso.')
     } finally {

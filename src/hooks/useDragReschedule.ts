@@ -22,6 +22,16 @@ interface UseDragRescheduleReturn {
   isDragging: boolean
 }
 
+interface SlotCheckResponse {
+  ok: boolean
+  reason?: string
+  message?: string
+}
+
+// Intake-Review TASK-1 ST005 (CL-080):
+// - preflight em /api/v1/posts/check-slot antes do PATCH
+// - new Date(y, m-1, d, h, m) preserva o timezone local do operador
+//   (toISOString() serializa o instante UTC correspondente)
 export function useDragReschedule({
   posts,
   onOptimisticUpdate,
@@ -38,7 +48,6 @@ export function useDragReschedule({
       const postId = String(active.id)
       const newDateStr = String(over.id)
 
-      // Find the post
       let movedPost: PublishingPost | null = null
       let oldDateKey: string | null = null
 
@@ -53,7 +62,6 @@ export function useDragReschedule({
 
       if (!movedPost || !oldDateKey || oldDateKey === newDateStr) return
 
-      // Preserve original time, change the date
       const originalDate = movedPost.scheduledAt
         ? new Date(movedPost.scheduledAt)
         : new Date()
@@ -66,7 +74,6 @@ export function useDragReschedule({
         originalDate.getMinutes(),
       )
 
-      // Optimistic update
       const prevPosts = { ...posts }
       const updatedPosts = { ...posts }
 
@@ -83,21 +90,42 @@ export function useDragReschedule({
       onOptimisticUpdate(updatedPosts)
 
       try {
-        const res = await fetch(`/api/posts/${postId}`, {
+        const channel = (movedPost as { channel?: string }).channel
+        if (channel) {
+          const qs = new URLSearchParams({
+            channel,
+            scheduledAt: newScheduledAt.toISOString(),
+            ignorePostId: postId,
+          })
+          const check = await fetch(`/api/v1/posts/check-slot?${qs}`)
+          if (check.ok) {
+            const slot = (await check.json()) as SlotCheckResponse
+            if (!slot.ok) {
+              onOptimisticUpdate(prevPosts)
+              toast.error(slot.message ?? 'Slot indisponivel')
+              return
+            }
+          }
+        }
+
+        const res = await fetch(`/api/v1/posts/${postId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ scheduledAt: newScheduledAt.toISOString() }),
         })
 
-        if (!res.ok) throw new Error('Falha ao reagendar')
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Falha ao reagendar' }))
+          throw new Error(err.error ?? 'Falha ao reagendar')
+        }
 
         const formattedDate = format(newScheduledAt, "dd 'de' MMMM", {
           locale: ptBR,
         })
         toast.success(`Post reagendado para ${formattedDate}`)
-      } catch {
+      } catch (e) {
         onOptimisticUpdate(prevPosts)
-        toast.error('Erro ao reagendar post. Tente novamente.')
+        toast.error(e instanceof Error ? e.message : 'Erro ao reagendar post')
         refetch()
       }
     },

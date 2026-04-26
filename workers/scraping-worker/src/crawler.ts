@@ -6,8 +6,9 @@
  * SEC-008: NUNCA logar rawText — apenas url, timestamp e erros técnicos.
  * COMP-006: rawText é temporário — descartado após pipeline LGPD (TASK-3).
  */
-import { chromium, type Browser, type Page } from 'playwright'
+import type { Browser, Page } from 'playwright'
 import { PAGE_TIMEOUT_MS, CRAWLER_MAX_RETRIES } from './constants'
+import { getBrowser, getBrowserMode } from './browserless-client'
 
 export interface CrawlResult {
   url: string
@@ -15,9 +16,6 @@ export interface CrawlResult {
   rawText: string
   extractedAt: string
 }
-
-const CHROMIUM_EXECUTABLE =
-  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ?? '/usr/bin/chromium-browser'
 
 async function extractFromPage(page: Page, url: string, selector?: string | null): Promise<CrawlResult> {
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: PAGE_TIMEOUT_MS })
@@ -59,16 +57,9 @@ export async function crawlUrl(url: string, selector?: string | null): Promise<C
 
   for (let attempt = 1; attempt <= CRAWLER_MAX_RETRIES + 1; attempt++) {
     try {
-      browser = await chromium.launch({
-        executablePath: CHROMIUM_EXECUTABLE,
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-        ],
-      })
+      // TASK-11 ST002: conecta via Browserless remoto quando BROWSERLESS_WS_URL
+      // estiver setada; fallback automatico para chromium.launch local.
+      browser = await getBrowser()
 
       const page = await browser.newPage()
       page.setDefaultTimeout(PAGE_TIMEOUT_MS)
@@ -79,7 +70,7 @@ export async function crawlUrl(url: string, selector?: string | null): Promise<C
       browser = null
 
       // SEC-008: log apenas url e extractedAt — NUNCA rawText
-      console.info(`[Crawler] Extracted | url=${url} | chars=${result.rawText.length} | at=${result.extractedAt}`)
+      console.info(`[Crawler] Extracted | url=${url} | mode=${getBrowserMode()} | chars=${result.rawText.length} | at=${result.extractedAt}`)
 
       return result
     } catch (err) {

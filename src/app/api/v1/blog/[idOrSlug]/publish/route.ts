@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession, ok, notFound, internalError } from '@/lib/api-auth'
+import { BLOG_STATUS } from '@/constants/status'
 
 type Params = { params: Promise<{ idOrSlug: string }> }
 
@@ -17,7 +18,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
 
     const updated = await prisma.blogArticle.update({
       where: { id: idOrSlug },
-      data: { status: 'PUBLISHED', publishedAt: new Date() },
+      data: { status: BLOG_STATUS.PUBLISHED, publishedAt: new Date() },
     })
     return ok(updated)
   } catch {

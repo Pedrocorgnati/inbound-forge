@@ -5,9 +5,9 @@ import { Badge } from '@/components/ui/badge'
 
 const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'info' | 'success' | 'danger' | 'primary'; pulse?: boolean }> = {
   DRAFT: { label: 'Rascunho', variant: 'default' },
-  REVIEW: { label: 'Gerando...', variant: 'info', pulse: true },
+  REVIEW: { label: 'Em Revisão', variant: 'info' },
   APPROVED: { label: 'Aprovado', variant: 'success' },
-  REJECTED: { label: 'Rejeitado', variant: 'danger' },
+  SCHEDULED: { label: 'Agendado', variant: 'info' },
   PUBLISHED: { label: 'Publicado', variant: 'primary' },
   PENDING_ART: { label: 'Aguardando Arte', variant: 'info' },
   FAILED: { label: 'Erro', variant: 'danger' },

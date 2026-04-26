@@ -107,6 +107,17 @@ export class PainLibraryService {
   }
 
   /**
+   * Retorna IDs dos cases vinculados a uma dor.
+   */
+  static async getLinkedCaseIds(painId: string): Promise<string[]> {
+    const links = await prisma.casePain.findMany({
+      where: { painId },
+      select: { caseId: true },
+    })
+    return links.map((l) => l.caseId)
+  }
+
+  /**
    * Desvincula um case de uma dor em transação atômica (DB-002).
    */
   static async unlinkCase(painId: string, caseId: string, operatorId: string) {

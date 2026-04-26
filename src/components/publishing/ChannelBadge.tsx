@@ -17,7 +17,7 @@ export function ChannelBadge({ channel, className }: ChannelBadgeProps) {
   const upperChannel = channel.toUpperCase()
   const config = PUBLISHING_CHANNELS[upperChannel as keyof typeof PUBLISHING_CHANNELS]
   const label = config?.label ?? channel
-  const colorClasses = CHANNEL_STYLES[upperChannel] ?? 'bg-gray-500 text-white'
+  const colorClasses = CHANNEL_STYLES[upperChannel] ?? 'bg-muted text-muted-foreground'
 
   return (
     <span

@@ -1,5 +1,9 @@
 import type { Metadata } from 'next'
 import { HealthDashboard } from '@/components/health/HealthDashboard'
+import { WorkerControlPanel } from '@/components/workers/WorkerControlPanel'
+import { IntegrationsStatusPanel } from '@/components/health/IntegrationsStatusPanel'
+import { ApiCostBreakdown } from '@/components/health/ApiCostBreakdown'
+import { CostAlertPanel } from '@/components/health/CostAlertPanel'
 
 export const metadata: Metadata = {
   title: 'Saude do Sistema | Inbound Forge',
@@ -39,6 +43,12 @@ export default async function HealthPage({ params }: HealthPageProps) {
       </div>
 
       <HealthDashboard />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <ApiCostBreakdown />
+        <CostAlertPanel />
+      </div>
+      <IntegrationsStatusPanel />
+      <WorkerControlPanel />
     </div>
   )
 }

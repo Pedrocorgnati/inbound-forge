@@ -126,6 +126,18 @@ export function TemplateSelector({ selectedTemplateId, channel, onSelect, disabl
                     {dims ? `${dims.widthPx}×${dims.heightPx}` : ''}
                   </span>
 
+                  {/* Provider badge (Flux economico vs Ideogram texto) */}
+                  <span
+                    className={`mt-0.5 rounded px-1 text-[8px] font-medium ${
+                      template.backgroundNeedsText
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-emerald-100 text-emerald-800'
+                    }`}
+                    data-testid={`template-provider-${template.templateType}`}
+                  >
+                    {template.backgroundNeedsText ? 'Ideogram (texto)' : 'Flux (economico)'}
+                  </span>
+
                   {/* Selected check */}
                   {isSelected && (
                     <div className="absolute right-1 top-1 rounded-full bg-primary p-0.5">

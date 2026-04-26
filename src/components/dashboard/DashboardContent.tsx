@@ -1,6 +1,7 @@
 'use client'
 
 import { LayoutDashboard } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { EmptyState } from '@/components/shared/empty-state'
 import { DashboardHeader } from './DashboardHeader'
 import { PreviewGate } from './PreviewGate'
@@ -10,6 +11,7 @@ import { useThemes } from '@/hooks/useThemes'
 import { useThemeActions } from '@/hooks/useThemeActions'
 
 export function DashboardContent() {
+  const t = useTranslations('dashboard.themes')
   const {
     themes,
     total,
@@ -18,6 +20,8 @@ export function DashboardContent() {
     isLocked,
     statusFilter,
     setStatusFilter,
+    filters,
+    setFilters,
     refetch,
   } = useThemes()
 
@@ -45,6 +49,8 @@ export function DashboardContent() {
             total={total}
             statusFilter={statusFilter}
             onStatusFilter={setStatusFilter}
+            filters={filters}
+            onFiltersChange={setFilters}
             onGenerate={handleGenerate}
             onScoreAll={handleScoreAll}
             isGenerating={isGenerating}
@@ -64,9 +70,9 @@ export function DashboardContent() {
           {showEmpty ? (
             <EmptyState
               icon={<LayoutDashboard className="h-12 w-12" />}
-              title="Nenhum tema ainda"
-              description="Gere seus primeiros temas a partir da base de conhecimento."
-              ctaLabel="Gerar Temas"
+              title={t('emptyTitle')}
+              description={t('emptyDesc')}
+              ctaLabel={t('generate')}
               onCtaClick={handleGenerate}
             />
           ) : (

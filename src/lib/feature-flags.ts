@@ -10,6 +10,7 @@
  */
 
 import { PostHog } from 'posthog-node'
+import { logger } from '@/lib/logger'
 
 // ---------------------------------------------------------------------------
 // Cliente PostHog (singleton)
@@ -22,7 +23,7 @@ function getPostHogClient(): PostHog {
     if (!process.env.POSTHOG_API_KEY) {
       // Em desenvolvimento sem chave configurada, retornar instância mock
       if (process.env.NODE_ENV === 'development') {
-        console.warn('[feature-flags] POSTHOG_API_KEY não configurado — todas as flags = false')
+        logger.warn('feature-flags', 'POSTHOG_API_KEY não configurado — todas as flags = false')
       }
     }
     _client = new PostHog(process.env.POSTHOG_API_KEY ?? 'phc_placeholder', {
@@ -103,7 +104,7 @@ export async function isFeatureEnabled(
     return result ?? false
   } catch (error) {
     // Fail-safe: desabilitar feature se PostHog indisponível
-    console.error(`[feature-flags] Erro ao avaliar flag "${flagKey}":`, error)
+    logger.error('feature-flags', `Erro ao avaliar flag "${flagKey}"`, { error: String(error) })
     return false
   }
 }

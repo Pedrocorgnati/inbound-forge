@@ -3,7 +3,7 @@
 // ThemeRankingTable — tabela de ranking de temas por conversão
 // INT-027, INT-041 | PERF-002: paginação obrigatória
 
-import React, { memo, useState, useEffect } from 'react'
+import React, { memo, useState, useEffect, useCallback, useTransition } from 'react'
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import { SparklineChart } from './SparklineChart'
 import { ChannelBreakdown } from './ChannelBreakdown'
 import { EmptyState } from '@/components/shared/empty-state'
 import { useThemeRanking } from '@/hooks/useThemeRanking'
+import { useFormatters } from '@/lib/i18n/formatters'
 import type { AnalyticsPeriod } from '@/types/analytics'
 import { BarChart3 } from 'lucide-react'
 
@@ -29,6 +30,7 @@ function SortIcon({ field, current, dir }: { field: SortBy; current: SortBy; dir
 const LIMIT = 20
 
 function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
+  const fmt = useFormatters()
   const [sortBy, setSortBy] = useState<SortBy>('conversionScore')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [page, setPage] = useState(1)
@@ -41,15 +43,25 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
     }
   }, [error])
 
-  function handleSort(field: SortBy) {
-    if (field === sortBy) {
-      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))
-    } else {
-      setSortBy(field)
-      setSortDir('desc')
-    }
-    setPage(1)
-  }
+  const [isSortPending, startSortTransition] = useTransition()
+
+  const handleSort = useCallback((field: SortBy) => {
+    startSortTransition(() => {
+      if (field === sortBy) {
+        setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))
+      } else {
+        setSortBy(field)
+        setSortDir('desc')
+      }
+      setPage(1)
+    })
+  }, [sortBy])
+
+  const handleRetry = useCallback(() => refetch(), [refetch])
+  const handleSortConversion = useCallback(() => handleSort('conversionScore'), [handleSort])
+  const handleSortLeads = useCallback(() => handleSort('leadsCount'), [handleSort])
+  const handlePrevPage = useCallback(() => setPage((p) => p - 1), [])
+  const handleNextPage = useCallback(() => setPage((p) => p + 1), [])
 
   // Skeleton
   if (isLoading) {
@@ -84,7 +96,7 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
       <div className="rounded-lg border border-border bg-surface p-6">
         <div className="flex flex-col items-center gap-2 py-4">
           <p className="text-sm text-muted-foreground">Erro ao carregar ranking de temas</p>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button variant="outline" size="sm" onClick={handleRetry}>
             Tentar novamente
           </Button>
         </div>
@@ -118,8 +130,9 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
               <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
                 <button
                   type="button"
-                  onClick={() => handleSort('conversionScore')}
-                  className="flex items-center gap-1 hover:text-foreground transition-colors"
+                  onClick={handleSortConversion}
+                  disabled={isSortPending}
+                  className="flex items-center gap-1 hover:text-foreground transition-colors disabled:opacity-60"
                 >
                   Score <SortIcon field="conversionScore" current={sortBy} dir={sortDir} />
                 </button>
@@ -127,8 +140,9 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
               <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
                 <button
                   type="button"
-                  onClick={() => handleSort('leadsCount')}
-                  className="flex items-center gap-1 hover:text-foreground transition-colors"
+                  onClick={handleSortLeads}
+                  disabled={isSortPending}
+                  className="flex items-center gap-1 hover:text-foreground transition-colors disabled:opacity-60"
                 >
                   Leads <SortIcon field="leadsCount" current={sortBy} dir={sortDir} />
                 </button>
@@ -150,8 +164,8 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
                 <td className="px-3 py-2">
                   <span className="tabular-nums">{item.conversionScore}%</span>
                 </td>
-                <td className="px-3 py-2 tabular-nums">{item.leadsCount.toLocaleString('pt-BR')}</td>
-                <td className="px-3 py-2 tabular-nums">{item.conversionsCount.toLocaleString('pt-BR')}</td>
+                <td className="px-3 py-2 tabular-nums">{fmt.number(item.leadsCount)}</td>
+                <td className="px-3 py-2 tabular-nums">{fmt.number(item.conversionsCount)}</td>
                 <td className="px-3 py-2 hidden md:table-cell">
                   <SparklineChart trend={item.trend} />
                 </td>
@@ -173,7 +187,7 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
               variant="outline"
               size="sm"
               disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
+              onClick={handlePrevPage}
             >
               Anterior
             </Button>
@@ -181,7 +195,7 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
               variant="outline"
               size="sm"
               disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
+              onClick={handleNextPage}
             >
               Próximo
             </Button>

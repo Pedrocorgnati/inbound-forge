@@ -9,18 +9,22 @@ import { BLOG_OG_IMAGE_CACHE_SECONDS } from '@/lib/constants/blog'
 export const runtime = 'edge'
 
 export async function GET(
-  _req: Request,
-  { params }: { params: { slug: string } },
+  req: Request,
+  { params }: { params: Promise<{ slug: string }> },
 ) {
-  const article = await blogService.findBySlug(params.slug)
+  const { slug } = await params
+  const article = await blogService.findBySlug(slug)
 
   // BLOG_080: Artigo não encontrado ou não publicado
   if (!article) {
     return new Response('Not found', { status: 404 })
   }
 
+  // RESOLVED: G002 — locale dinâmico via query param em vez de 'pt-BR' hardcoded
+  const locale = new URL(req.url).searchParams.get('locale') ?? 'pt-BR'
+
   const publishedDate = article.publishedAt
-    ? new Date(article.publishedAt).toLocaleDateString('pt-BR', {
+    ? new Date(article.publishedAt).toLocaleDateString(locale, {
         day: '2-digit',
         month: 'long',
         year: 'numeric',

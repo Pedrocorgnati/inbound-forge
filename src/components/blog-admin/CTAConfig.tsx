@@ -22,7 +22,7 @@ const CTA_OPTIONS = [
   { value: '', label: 'Nenhum CTA' },
   { value: 'WHATSAPP', label: 'WhatsApp' },
   { value: 'BLOG', label: 'Link para Blog' },
-  { value: 'CONTACT_FORM', label: 'Formulario de Contato' },
+  { value: 'CONTACT_FORM', label: 'Formulário de Contato' },
 ]
 
 export function CTAConfig({
@@ -54,7 +54,14 @@ export function CTAConfig({
             onChange={(e) => onCtaUrlChange(e.target.value)}
             placeholder={ctaType === 'WHATSAPP' ? 'https://wa.me/5511999999999' : 'https://...'}
             error={errors?.ctaUrl}
+            inputMode="url" // G05: RESOLVED
           />
+          {ctaType === 'WHATSAPP' && (
+            <p className="text-xs text-muted-foreground">
+              Ao salvar, este URL sera convertido em shortlink rastreavel
+              (/go/...) para medir cliques no GA4.
+            </p>
+          )}
           <Input
             label="Texto do botao CTA"
             value={ctaLabel}

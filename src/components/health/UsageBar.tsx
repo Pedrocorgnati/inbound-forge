@@ -29,7 +29,7 @@ export function UsageBar({ percentUsed, service, label, className }: UsageBarPro
       <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
         <div
           className={cn(
-            'h-full rounded-full transition-all duration-500',
+            'h-full rounded-full transition-[width] duration-500',
             getBarColor(clamped),
             isHighUsage && 'animate-pulse'
           )}

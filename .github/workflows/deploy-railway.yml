@@ -1,0 +1,69 @@
+# Intake-Review TASK-7 ST001 (CL-344): deploy automatizado dos workers Railway
+# Dispara em push para main quando arquivos relevantes mudam.
+name: Deploy Workers (Railway)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/**'
+      - 'src/workers/**'
+      - 'prisma/schema.prisma'
+      - '.github/workflows/deploy-railway.yml'
+
+concurrency:
+  group: railway-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy-scraping-worker:
+    name: Deploy scraping-worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: curl -fsSL https://railway.app/install.sh | sh
+      - name: Deploy
+        working-directory: workers/scraping-worker
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service inbound-forge-scraping-worker --ci
+
+  deploy-image-worker:
+    name: Deploy image-worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: curl -fsSL https://railway.app/install.sh | sh
+      - name: Deploy
+        working-directory: workers/image-worker
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service inbound-forge-image-worker --ci
+
+  deploy-video-worker:
+    name: Deploy video-worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: curl -fsSL https://railway.app/install.sh | sh
+      - name: Deploy
+        working-directory: workers/video-worker
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service inbound-forge-video-worker --ci
+
+  deploy-publishing-worker:
+    name: Deploy publishing-worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Railway CLI
+        run: curl -fsSL https://railway.app/install.sh | sh
+      - name: Deploy
+        working-directory: workers/publishing-worker
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: railway up --service inbound-forge-publishing-worker --ci

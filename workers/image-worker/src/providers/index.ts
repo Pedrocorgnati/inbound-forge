@@ -36,9 +36,16 @@ export async function generateBackground(
   dimensions:   { widthPx: number; heightPx: number },
   env:          { IDEOGRAM_API_KEY: string; FAL_API_KEY: string },
   signal?:      AbortSignal,
-  brandColor?:  string
+  brandColor?:  string,
+  opts?:        { backgroundNeedsText?: boolean }
 ): Promise<Buffer> {
-  const primary = selectProvider(templateType)
+  // TASK-2 ST003 — override explicito (Ideogram com texto, Flux sem) prevalece sobre TEMPLATE_PROVIDER_MAP.
+  const primary: 'ideogram' | 'flux' =
+    opts?.backgroundNeedsText === true
+      ? 'ideogram'
+      : opts?.backgroundNeedsText === false
+        ? 'flux'
+        : selectProvider(templateType)
   const secondary: 'ideogram' | 'flux' = primary === 'ideogram' ? 'flux' : 'ideogram'
 
   // Helper: call provider and download buffer

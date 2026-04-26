@@ -20,6 +20,7 @@ import { z }                          from 'zod'
 import { requireSession }             from '@/lib/api-auth'
 import { prisma }                     from '@/lib/prisma'
 import { assetComposeService }        from '@/lib/services/asset-compose.service'
+import { IMAGE_JOB_STATUS }           from '@/constants/status'
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
   const existingJob = await prisma.imageJob.findFirst({
     where: {
       contentPieceId,
-      status: { in: ['PENDING', 'PROCESSING'] },
+      status: { in: [IMAGE_JOB_STATUS.PENDING, IMAGE_JOB_STATUS.PROCESSING] },
     },
   })
   if (existingJob) {
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
       templateId,
       templateType: template.imageType,
       provider:     'operator-asset',
-      status:       'PROCESSING',
+      status:       IMAGE_JOB_STATUS.PROCESSING,
       retryCount:   0,
     },
   })
@@ -122,7 +123,7 @@ export async function POST(request: NextRequest) {
     await prisma.imageJob.update({
       where: { id: job.id },
       data:  {
-        status:       'FAILED',
+        status:       IMAGE_JOB_STATUS.FAILED,
         errorMessage: err instanceof Error ? err.message : 'Erro desconhecido',
         completedAt:  new Date(),
       },

@@ -4,12 +4,14 @@
 
 import React from 'react'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 interface SparklineChartInnerProps {
   trend: number[]
 }
 
 export default function SparklineChartInner({ trend }: SparklineChartInnerProps) {
+  const prefersReducedMotion = useReducedMotion()
   const isGrowing = trend[trend.length - 1] >= trend[0]
   const color = isGrowing ? '#22C55E' : '#EF4444'
   const data = trend.map((value, i) => ({ value, i }))
@@ -23,6 +25,7 @@ export default function SparklineChartInner({ trend }: SparklineChartInnerProps)
           stroke={color}
           strokeWidth={1.5}
           dot={false}
+          isAnimationActive={!prefersReducedMotion} // G06: RESOLVED
         />
       </LineChart>
     </ResponsiveContainer>

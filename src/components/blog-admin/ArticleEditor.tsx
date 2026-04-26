@@ -6,19 +6,22 @@ import remarkGfm from 'remark-gfm'
 import rehypeSanitize from 'rehype-sanitize'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { BLOG_READING_WPM } from '@/lib/constants/blog'
+import { MarkdownToolbar } from './MarkdownToolbar'
 
 interface ArticleEditorProps {
   value: string
   onChange: (value: string) => void
+  onInsertImage?: () => void
 }
 
 function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length
 }
 
-export function ArticleEditor({ value, onChange }: ArticleEditorProps) {
+export function ArticleEditor({ value, onChange, onInsertImage }: ArticleEditorProps) {
   const wordCount = countWords(value)
   const readingTime = Math.max(1, Math.ceil(wordCount / BLOG_READING_WPM))
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
 
   const preview = (
     <div
@@ -37,13 +40,22 @@ export function ArticleEditor({ value, onChange }: ArticleEditorProps) {
   )
 
   const editor = (
-    <textarea
-      aria-label="Editor de conteudo Markdown"
-      className="min-h-[300px] lg:min-h-[500px] w-full resize-y rounded-md border border-input bg-background p-4 font-mono text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      placeholder="Escreva seu artigo em Markdown..."
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    />
+    <div className="space-y-2">
+      <MarkdownToolbar
+        textareaRef={textareaRef}
+        value={value}
+        onChange={onChange}
+        onInsertImage={onInsertImage}
+      />
+      <textarea
+        ref={textareaRef}
+        aria-label="Editor de conteudo Markdown"
+        className="min-h-[300px] lg:min-h-[500px] w-full resize-y rounded-md border border-input bg-background p-4 font-mono text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        placeholder="Escreva seu artigo em Markdown..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </div>
   )
 
   return (

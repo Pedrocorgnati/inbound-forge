@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useImageJobPolling } from '@/hooks/useImageJobPolling'
 import type { ImageJobStatus } from '@/types/image-worker'
+import { IMAGE_JOB_STATUS } from '@/constants/status'
 
 interface ImagePreviewPanelProps {
   contentPieceId: string
@@ -65,7 +66,7 @@ export function ImagePreviewPanel({ contentPieceId, onImageGenerated }: ImagePre
   }, [handleGenerate])
 
   // Notify parent when image is ready
-  if (data?.status === 'DONE' && data.imageUrl && onImageGenerated) {
+  if (data?.status === IMAGE_JOB_STATUS.DONE && data.imageUrl && onImageGenerated) {
     onImageGenerated(data.imageUrl)
   }
 
@@ -111,7 +112,7 @@ export function ImagePreviewPanel({ contentPieceId, onImageGenerated }: ImagePre
           <div className="space-y-3">
             {/* Status badge */}
             <div className={`flex items-center gap-2 text-sm ${statusConfig?.color ?? ''}`}>
-              <StatusIcon className={`h-4 w-4 ${data.status === 'PROCESSING' || data.status === 'PENDING' ? 'animate-spin' : ''}`} />
+              <StatusIcon className={`h-4 w-4 ${data.status === IMAGE_JOB_STATUS.PROCESSING || data.status === IMAGE_JOB_STATUS.PENDING ? 'animate-spin' : ''}`} />
               <span>{statusConfig?.label}</span>
               {data.retryCount > 0 && (
                 <span className="text-xs text-muted-foreground">(tentativa {data.retryCount + 1})</span>
@@ -119,7 +120,7 @@ export function ImagePreviewPanel({ contentPieceId, onImageGenerated }: ImagePre
             </div>
 
             {/* Image preview */}
-            {data.status === 'DONE' && data.imageUrl && (
+            {data.status === IMAGE_JOB_STATUS.DONE && data.imageUrl && (
               <div className="relative aspect-square w-full overflow-hidden rounded-md border" data-testid="image-preview">
                 <Image
                   src={data.imageUrl}
@@ -132,7 +133,7 @@ export function ImagePreviewPanel({ contentPieceId, onImageGenerated }: ImagePre
             )}
 
             {/* Error state */}
-            {(data.status === 'FAILED' || data.status === 'DEAD_LETTER') && (
+            {(data.status === IMAGE_JOB_STATUS.FAILED || data.status === IMAGE_JOB_STATUS.DEAD_LETTER) && (
               <div className="space-y-2">
                 {data.errorMessage && (
                   <p className="text-xs text-muted-foreground">{data.errorMessage}</p>
@@ -151,7 +152,7 @@ export function ImagePreviewPanel({ contentPieceId, onImageGenerated }: ImagePre
             )}
 
             {/* Regenerate for completed images */}
-            {data.status === 'DONE' && (
+            {data.status === IMAGE_JOB_STATUS.DONE && (
               <Button
                 onClick={handleRetry}
                 size="sm"

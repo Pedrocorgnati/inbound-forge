@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requireSession, ok, okPaginated, validationError, internalError } from '@/lib/api-auth'
 import { createClient } from '@/lib/supabase-server'
 import { CreateBlogArticleSchema, ListBlogSchema } from '@/schemas/blog.schema'
+import { BLOG_STATUS } from '@/constants/status'
 
 function slugify(title: string): string {
   return title
@@ -16,21 +17,24 @@ function slugify(title: string): string {
 
 // GET /api/v1/blog — público retorna PUBLISHED, autenticado retorna todos
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const parsed = ListBlogSchema.parse({
-      page: searchParams.get('page'),
-      limit: searchParams.get('limit'),
-      status: searchParams.get('status'),
-    })
+  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para parâmetros inválidos
+  const { searchParams } = new URL(request.url)
+  const listResult = ListBlogSchema.safeParse({
+    page: searchParams.get('page'),
+    limit: searchParams.get('limit'),
+    status: searchParams.get('status'),
+  })
+  if (!listResult.success) return validationError(listResult.error)
+  const parsed = listResult.data
 
+  try {
     // Verificar autenticação para filtros adicionais
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     const where: Record<string, unknown> = user
       ? (parsed.status ? { status: parsed.status } : {})
-      : { status: 'PUBLISHED' }
+      : { status: BLOG_STATUS.PUBLISHED }
 
     const [data, total] = await Promise.all([
       prisma.blogArticle.findMany({

@@ -1,98 +1,71 @@
 'use client'
 
+// TASK-12 ST002 (CL-255): diff visual line-by-line entre duas versoes de texto.
+// Algoritmo LCS simples (O(n*m)) suficiente para textos curtos de content piece.
+
 import { useMemo } from 'react'
-import { cn } from '@/lib/utils'
 
 interface VersionDiffProps {
-  oldText: string
-  newText: string
-  className?: string
+  before: string
+  after: string
 }
 
-interface DiffLine {
-  type: 'added' | 'removed' | 'unchanged'
-  text: string
-}
+type LineOp = { kind: 'equal' | 'del' | 'add'; text: string }
 
-function computeDiff(oldText: string, newText: string): DiffLine[] {
-  const oldLines = oldText.split('\n')
-  const newLines = newText.split('\n')
-  const result: DiffLine[] = []
-
-  const maxLen = Math.max(oldLines.length, newLines.length)
-  let oi = 0
-  let ni = 0
-
-  while (oi < oldLines.length || ni < newLines.length) {
-    if (oi >= oldLines.length) {
-      result.push({ type: 'added', text: newLines[ni] })
-      ni++
-    } else if (ni >= newLines.length) {
-      result.push({ type: 'removed', text: oldLines[oi] })
-      oi++
-    } else if (oldLines[oi] === newLines[ni]) {
-      result.push({ type: 'unchanged', text: oldLines[oi] })
-      oi++
-      ni++
-    } else {
-      // Simple heuristic: look ahead to find matching lines
-      let foundInNew = false
-      for (let j = ni + 1; j < Math.min(ni + 5, newLines.length); j++) {
-        if (oldLines[oi] === newLines[j]) {
-          // Lines ni..j-1 are additions
-          for (let k = ni; k < j; k++) {
-            result.push({ type: 'added', text: newLines[k] })
-          }
-          ni = j
-          foundInNew = true
-          break
-        }
-      }
-      if (!foundInNew) {
-        result.push({ type: 'removed', text: oldLines[oi] })
-        oi++
-        if (ni < newLines.length && oi <= maxLen) {
-          result.push({ type: 'added', text: newLines[ni] })
-          ni++
-        }
-      }
+function diffLines(a: string[], b: string[]): LineOp[] {
+  const n = a.length
+  const m = b.length
+  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0))
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      if (a[i] === b[j]) dp[i][j] = dp[i + 1][j + 1] + 1
+      else dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1])
     }
   }
-
-  return result
+  const out: LineOp[] = []
+  let i = 0
+  let j = 0
+  while (i < n && j < m) {
+    if (a[i] === b[j]) {
+      out.push({ kind: 'equal', text: a[i] })
+      i++
+      j++
+    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
+      out.push({ kind: 'del', text: a[i++] })
+    } else {
+      out.push({ kind: 'add', text: b[j++] })
+    }
+  }
+  while (i < n) out.push({ kind: 'del', text: a[i++] })
+  while (j < m) out.push({ kind: 'add', text: b[j++] })
+  return out
 }
 
-export function VersionDiff({ oldText, newText, className }: VersionDiffProps) {
-  const diff = useMemo(() => computeDiff(oldText, newText), [oldText, newText])
-
-  if (oldText === newText) {
-    return (
-      <p className="text-sm text-muted-foreground italic">Sem diferenças</p>
-    )
-  }
+export function VersionDiff({ before, after }: VersionDiffProps) {
+  const ops = useMemo(() => diffLines(before.split('\n'), after.split('\n')), [before, after])
 
   return (
-    <div
-      className={cn('rounded-md border border-border overflow-hidden', className)}
+    <pre
       data-testid="version-diff"
+      className="max-h-[60vh] overflow-auto rounded-md border border-border bg-card p-3 text-xs font-mono"
     >
-      <pre className="text-xs font-mono p-3 overflow-x-auto">
-        {diff.map((line, i) => (
-          <div
-            key={i}
-            className={cn(
-              'px-2 py-0.5',
-              line.type === 'added' && 'bg-[#D1FAE5] text-[#065F46]',
-              line.type === 'removed' && 'bg-[#FEE2E2] text-[#991B1B]'
-            )}
-          >
-            <span className="select-none mr-2 text-muted-foreground">
-              {line.type === 'added' ? '+' : line.type === 'removed' ? '-' : ' '}
-            </span>
-            {line.text}
-          </div>
-        ))}
-      </pre>
-    </div>
+      {ops.map((op, i) => (
+        <div
+          key={i}
+          className={
+            op.kind === 'add'
+              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+              : op.kind === 'del'
+                ? 'bg-destructive/10 text-destructive line-through'
+                : 'text-muted-foreground'
+          }
+        >
+          <span className="select-none pr-2 opacity-60">
+            {op.kind === 'add' ? '+' : op.kind === 'del' ? '-' : ' '}
+          </span>
+          {op.text || '\u00A0'}
+        </div>
+      ))}
+    </pre>
   )
 }

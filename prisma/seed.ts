@@ -15,6 +15,15 @@ const prisma = new PrismaClient()
 async function main() {
   const env = process.env.SEED_ENV ?? process.env.NODE_ENV ?? 'development'
 
+  const { seedCoreLibraries } = await import('./seeds/index')
+  await seedCoreLibraries(prisma)
+
+  // Intake Review TASK-2 (CL-029/034): 10 dores MVP pre-configuradas.
+  // Idempotente via upsert por title — seguro em todos os ambientes.
+  const { seedMvpPains } = await import('./seed-mvp-pains')
+  const mvp = await seedMvpPains(prisma)
+  console.log(`[seed:mvp-pains] inseridas=${mvp.inserted} existentes=${mvp.existing}`)
+
   if (env === 'production') {
     const { seedProd } = await import('./seeds/prod')
     await seedProd(prisma)

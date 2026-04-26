@@ -1,11 +1,14 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Copy, Link2, Trash2 } from 'lucide-react'
+import { Copy, Link2, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/shared/empty-state'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { toast } from '@/components/ui/toast'
+// TASK-17 ST002 (CL-263): dialog de edicao de UTM.
+import { UtmEditDialog } from '@/components/utm/UtmEditDialog'
 
 interface UTMLinkItem {
   id: string
@@ -43,6 +46,7 @@ export function UTMLinkListClient() {
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeletePostId, setConfirmDeletePostId] = useState<string | null>(null)
 
   const fetchLinks = useCallback(async (p: number) => {
     setIsLoading(true)
@@ -94,7 +98,7 @@ export function UTMLinkListClient() {
       <div data-testid="utm-header">
         <h1 className="text-2xl font-bold text-foreground">UTM Links</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Gerenciamento de links UTM para rastreamento de conversoes
+          Gerenciamento de links UTM para rastreamento de conversões
         </p>
       </div>
 
@@ -119,7 +123,7 @@ export function UTMLinkListClient() {
         <EmptyState
           icon={<Link2 className="h-12 w-12" />}
           title="Nenhum UTM link criado"
-          description="Gere UTM links a partir dos seus posts para rastrear conversoes"
+          description="Gere UTM links a partir dos seus posts para rastrear conversões"
         />
       )}
 
@@ -142,6 +146,7 @@ export function UTMLinkListClient() {
                   {link.post.caption && (
                     <span
                       className="truncate text-sm font-medium text-foreground"
+                      title={link.post.caption} // G08: RESOLVED
                       data-testid="utm-item-caption"
                     >
                       {link.post.caption.length > 80
@@ -169,10 +174,30 @@ export function UTMLinkListClient() {
                 >
                   <Copy className="h-4 w-4" aria-hidden />
                 </Button>
+                <UtmEditDialog
+                  utmId={link.id}
+                  postId={link.postId}
+                  initial={{
+                    source: link.source,
+                    medium: link.medium,
+                    campaign: link.campaign,
+                    content: link.content ?? '',
+                    term: '',
+                  }}
+                >
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    aria-label={`Editar UTM do post ${link.post.caption ?? link.postId}`}
+                    data-testid="utm-item-edit"
+                  >
+                    <Pencil className="h-4 w-4" aria-hidden />
+                  </Button>
+                </UtmEditDialog>
                 <Button
                   variant="destructive"
                   size="icon"
-                  onClick={() => handleDelete(link.postId)}
+                  onClick={() => setConfirmDeletePostId(link.postId)}
                   disabled={deletingId === link.postId}
                   isLoading={deletingId === link.postId}
                   aria-label={`Remover link UTM do post ${link.post.caption ?? link.postId}`}
@@ -197,7 +222,7 @@ export function UTMLinkListClient() {
             size="sm"
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
-            aria-label="Pagina anterior"
+            aria-label="Página anterior"
           >
             Anterior
           </Button>
@@ -215,6 +240,22 @@ export function UTMLinkListClient() {
           </Button>
         </div>
       )}
+
+      {/* Confirmação de exclusão de UTM link */}
+      <ConfirmDialog
+        open={confirmDeletePostId !== null}
+        onClose={() => setConfirmDeletePostId(null)}
+        onConfirm={async () => {
+          if (confirmDeletePostId) {
+            await handleDelete(confirmDeletePostId)
+            setConfirmDeletePostId(null)
+          }
+        }}
+        title="Remover UTM Link"
+        message="Tem certeza que deseja remover este UTM link? O histórico de cliques será perdido. Esta ação não pode ser desfeita."
+        confirmText="Remover"
+        variant="danger"
+      />
     </div>
   )
 }

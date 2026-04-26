@@ -9,7 +9,7 @@ interface QueueStatusBadgeProps {
 }
 
 const STATUS_STYLES: Record<PostStatus, string> = {
-  DRAFT: 'bg-gray-100 text-gray-700',
+  DRAFT: 'bg-muted text-muted-foreground',
   REVIEW: 'bg-yellow-100 text-yellow-700',
   APPROVED: 'bg-green-100 text-green-700',
   SCHEDULED: 'bg-blue-100 text-blue-700',
@@ -28,7 +28,7 @@ const STATUS_LABELS: Record<PostStatus, string> = {
 
 export function QueueStatusBadge({ status, className }: QueueStatusBadgeProps) {
   const upperStatus = status.toUpperCase() as PostStatus
-  const colorClasses = STATUS_STYLES[upperStatus] ?? 'bg-gray-100 text-gray-700'
+  const colorClasses = STATUS_STYLES[upperStatus] ?? 'bg-muted text-muted-foreground'
   const label = STATUS_LABELS[upperStatus] ?? status
 
   return (

@@ -98,13 +98,13 @@ export function InstagramPreChecks({
             {/* Post aprovado */}
             <CheckRow
               status={isApproved ? 'ok' : 'error'}
-              label={isApproved ? 'Post aprovado' : 'Post nao aprovado (bloqueante)'}
+              label={isApproved ? 'Post aprovado' : 'Post não aprovado (bloqueante)'}
             />
 
             {/* Imagem */}
             <CheckRow
               status={hasImage ? 'ok' : 'error'}
-              label={hasImage ? 'Imagem disponivel' : 'Imagem nao disponivel (bloqueante)'}
+              label={hasImage ? 'Imagem disponível' : 'Imagem não disponível (bloqueante)'}
             />
 
             {/* Rate limit */}

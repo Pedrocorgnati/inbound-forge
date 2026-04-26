@@ -51,6 +51,7 @@ export interface UseContentEditorReturn {
   changeCTADestination: (dest: CTADestination) => void
   changeCTACustomText: (text: string) => void
   updateAngle: (angleId: string, editedBody: string) => Promise<void>
+  adaptContent: (angleId: string, targetChannel: Channel) => Promise<void>
   approvePiece: (angleId: string) => Promise<boolean>
   rejectPiece: (reason: string, angle?: ContentAngle) => Promise<boolean>
   refetch: () => void
@@ -79,7 +80,8 @@ export function useContentEditor(themeId: string): UseContentEditorReturn {
         }
         throw new Error('Falha ao carregar conteúdo')
       }
-      const data: ContentPiece = await res.json()
+      const json = await res.json()
+      const data: ContentPiece = json.data ?? json
       setPiece(data)
       if (data.recommendedChannel) setSelectedChannel(data.recommendedChannel)
       if (data.funnelStage) setFunnelStage(data.funnelStage)
@@ -114,7 +116,13 @@ export function useContentEditor(themeId: string): UseContentEditorReturn {
         })
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
-          throw new Error(body.message ?? 'Falha ao gerar conteúdo')
+          // TASK-2 ST006: resposta degradada (503) — mensagem informativa, não erro genérico
+          if (res.status === 503 && body.degraded) {
+            throw new Error(
+              body.error ?? 'Geração temporariamente indisponível — tente novamente em alguns minutos.'
+            )
+          }
+          throw new Error(body.message ?? body.error ?? 'Falha ao gerar conteúdo')
         }
         await fetchPiece()
       } catch (err) {
@@ -134,6 +142,34 @@ export function useContentEditor(themeId: string): UseContentEditorReturn {
   const changeChannel = useCallback((channel: Channel) => {
     setSelectedChannel(channel)
   }, [])
+
+  const adaptContent = useCallback(
+    async (angleId: string, targetChannel: Channel) => {
+      setError(null)
+      try {
+        const res = await fetch(`/api/content/${themeId}/adapt`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            angleId,
+            targetChannel,
+            funnelStage,
+            ctaDestination,
+            ctaCustomText: ctaCustomText || undefined,
+          }),
+        })
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          throw new Error(body.data?.message ?? body.message ?? 'Falha ao adaptar conteúdo')
+        }
+        await fetchPiece()
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Erro ao adaptar conteúdo'
+        setError(msg)
+      }
+    },
+    [themeId, funnelStage, ctaDestination, ctaCustomText, fetchPiece]
+  )
 
   const changeFunnelStage = useCallback((stage: FunnelStage) => {
     setFunnelStage(stage)
@@ -227,6 +263,7 @@ export function useContentEditor(themeId: string): UseContentEditorReturn {
     changeCTADestination,
     changeCTACustomText,
     updateAngle,
+    adaptContent,
     approvePiece,
     rejectPiece,
     refetch: fetchPiece,

@@ -1,9 +1,15 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
+import Link from 'next/link'
 import { blogService } from '@/lib/services/blog.service'
 import { ArticleList } from '@/components/blog/ArticleList'
-import { BLOG_REVALIDATE } from '@/lib/constants/blog'
+import { TagNavigation } from '@/components/blog/TagNavigation'
+import { StickyActionBar } from '@/components/mobile/StickyActionBar' // RESOLVED: FE-009 — StickyActionBar CTA em mobile
 
-export const revalidate = BLOG_REVALIDATE
+// searchParams força dynamic rendering em Next.js 15 App Router,
+// tornando revalidate = BLOG_REVALIDATE ineficaz (página nunca seria cacheada).
+// force-dynamic é explícito e honesto com o comportamento real da rota.
+export const dynamic = 'force-dynamic'
 
 interface BlogPageProps {
   params: Promise<{ locale: string }>
@@ -59,12 +65,29 @@ export default async function BlogPage({ params, searchParams }: BlogPageProps) 
         </p>
       </div>
 
+      {/* TagNavigation via Suspense — não bloqueia artigos (T003) */}
+      <div className="mb-6">
+        <Suspense fallback={null}>
+          <TagNavigation locale={locale} />
+        </Suspense>
+      </div>
+
       <ArticleList
         articles={items}
         locale={locale}
         page={page}
         totalPages={totalPages}
       />
+
+      {/* Mobile CTA — StickyActionBar oculto em md+ (mobileOnly padrão) */}
+      <StickyActionBar>
+        <Link
+          href={`/${locale}/leads/new`}
+          className="flex-1 inline-flex items-center justify-center gap-2 min-h-[44px] rounded-md bg-primary text-primary-foreground text-sm font-medium px-4 hover:bg-primary/90 transition-colors"
+        >
+          Fale comigo
+        </Link>
+      </StickyActionBar>
     </main>
   )
 }

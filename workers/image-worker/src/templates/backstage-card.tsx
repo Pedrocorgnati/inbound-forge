@@ -1,10 +1,13 @@
-// module-9: BACKSTAGE_CARD Template — 1080x1080
+// module-9: BACKSTAGE_CARD Template — dimensao em ./dimensions.ts (BACKSTAGE)
 // Canal: Instagram Feed — conteúdo nos bastidores
 // CONSTRAINTS: flexbox only, no hooks, no dynamic imports
 
 import React from 'react'
 import type { BackstageCardProps } from './types'
 import { BRAND_COLOR_DEFAULT } from '../constants'
+import { TEMPLATE_TYPE_TO_DIMENSION } from './dimensions'
+
+const DIM = TEMPLATE_TYPE_TO_DIMENSION.BACKSTAGE_CARD
 
 export function BackstageCardTemplate({ headline, subheadline, bodyText, brandColor = BRAND_COLOR_DEFAULT }: BackstageCardProps) {
   return (
@@ -12,8 +15,8 @@ export function BackstageCardTemplate({ headline, subheadline, bodyText, brandCo
       style={{
         display:         'flex',
         flexDirection:   'column',
-        width:           1080,
-        height:          1080,
+        width:           DIM.w,
+        height:          DIM.h,
         backgroundColor: '#F8FAFC',
         padding:         72,
         gap:             36,

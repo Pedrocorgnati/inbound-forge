@@ -3,95 +3,130 @@ import { prisma } from '@/lib/prisma'
 import { requireSession, ok, internalError } from '@/lib/api-auth'
 import { auditLog } from '@/lib/audit'
 
-// POST /api/v1/analytics/reconciliation — Reconciliação com GA4
-// ANALYTICS_050: GA4 falhou durante reconciliação semanal
+// GET /api/v1/analytics/reconciliation — Retorna contagem de itens não resolvidos por tipo
+export async function GET(_request: NextRequest) {
+  const { response } = await requireSession()
+  if (response) return response
+
+  try {
+    const [postsWithoutConversion, leadsWithoutPost] = await Promise.all([
+      prisma.reconciliationItem.count({
+        where: { type: 'click_without_conversion', resolved: false },
+      }),
+      prisma.reconciliationItem.count({
+        where: { type: 'conversion_without_post', resolved: false },
+      }),
+    ])
+
+    return ok({ postsWithoutConversion, leadsWithoutPost })
+  } catch {
+    return internalError()
+  }
+}
+
+// POST /api/v1/analytics/reconciliation — Detecção de órfãos semanal
+// INT-106 | ANALYTICS_050: divergências detectadas
 export async function POST(_request: NextRequest) {
   const { user, response } = await requireSession()
   if (response) return response
 
-  const ga4MeasurementId = process.env.NEXT_PUBLIC_GA4_ID
-  const ga4SecretKey = process.env.GA4_SECRET_KEY
-
-  if (!ga4MeasurementId || !ga4SecretKey) {
-    return internalError('GA4 não configurado')
-  }
-
   try {
-    // Buscar conversões da semana atual sem GA4 confirmado
     const weekAgo = new Date()
     weekAgo.setDate(weekAgo.getDate() - 7)
 
-    const conversions = await prisma.conversionEvent.findMany({
-      where: { occurredAt: { gte: weekAgo } },
-      select: { id: true, leadId: true, type: true, occurredAt: true },
+    // 1. Posts com cliques (UTMLink.clicks > 0) mas sem leads associados
+    const postsWithClicksNoLeads = await prisma.uTMLink.findMany({
+      where: {
+        clicks: { gt: 0 },
+        post: { publishedAt: { gte: weekAgo } },
+      },
+      select: {
+        postId: true,
+        clicks: true,
+        post: {
+          select: {
+            id: true,
+            firstTouchLeads: { select: { id: true }, take: 1 },
+          },
+        },
+      },
     })
 
-    let ga4Synced = 0
-    let ga4Mismatches = 0
-
-    for (const conversion of conversions) {
-      try {
-        const ga4Res = await fetch(
-          `https://www.googleapis.com/analytics/v3/management/accounts?key=${ga4SecretKey}`,
-          {
-            method: 'GET',
-            signal: AbortSignal.timeout(15_000),
-          }
-        )
-
-        if (!ga4Res.ok) {
-          // Criar ReconciliationItem com GA4_MISMATCH — ANALYTICS_050
+    let clickOrphans = 0
+    for (const link of postsWithClicksNoLeads) {
+      if (link.post && link.post.firstTouchLeads.length === 0) {
+        // Check if item already exists for this post this week
+        const existing = await prisma.reconciliationItem.findFirst({
+          where: { type: 'click_without_conversion', postId: link.postId, weekOf: { gte: weekAgo } },
+        })
+        if (!existing) {
           await prisma.reconciliationItem.create({
             data: {
-              type: 'conversion_without_post',
-              leadId: conversion.leadId ?? undefined,
+              type: 'click_without_conversion',
+              postId: link.postId,
               weekOf: new Date(),
               resolved: false,
-              resolution: `ANALYTICS_050: GA4 mismatch para conversão ${conversion.id}`,
             },
           })
-          ga4Mismatches++
-        } else {
-          ga4Synced++
+          clickOrphans++
         }
-      } catch {
-        // Timeout ou falha de rede com GA4
+      }
+    }
+
+    // 2. Conversões cujo lead não tem UTM tracking associado (post sem UTMLink)
+    const conversionsWithoutTracking = await prisma.conversionEvent.findMany({
+      where: {
+        occurredAt: { gte: weekAgo },
+        lead: {
+          firstTouchPost: { utmLink: { is: null } },
+        },
+      },
+      select: {
+        id: true,
+        leadId: true,
+      },
+    })
+
+    let conversionOrphans = 0
+    for (const conv of conversionsWithoutTracking) {
+      const existing = await prisma.reconciliationItem.findFirst({
+        where: { type: 'conversion_without_post', leadId: conv.leadId, weekOf: { gte: weekAgo } },
+      })
+      if (!existing) {
         await prisma.reconciliationItem.create({
           data: {
             type: 'conversion_without_post',
-            leadId: conversion.leadId ?? undefined,
+            leadId: conv.leadId,
             weekOf: new Date(),
             resolved: false,
-            resolution: `ANALYTICS_050: Falha de conexão GA4 para conversão ${conversion.id}`,
           },
         })
-        ga4Mismatches++
+        conversionOrphans++
       }
     }
 
     auditLog({
-      action: 'analytics.reconciliation.ga4',
+      action: 'analytics.reconciliation.detect',
       entityType: 'ReconciliationItem',
-      entityId: 'ga4-sync',
+      entityId: 'weekly-scan',
       userId: user!.id,
-      metadata: { total: conversions.length, synced: ga4Synced, mismatches: ga4Mismatches },
+      metadata: { clickOrphans, conversionOrphans },
     }).catch(() => {})
 
-    if (ga4Mismatches > 0) {
-      return ok(
-        {
-          code: 'ANALYTICS_050',
-          message: 'Reconciliação com GA4 concluída com divergências.',
-          synced: ga4Synced,
-          mismatches: ga4Mismatches,
-        },
-        207
-      )
+    const totalCreated = clickOrphans + conversionOrphans
+
+    if (totalCreated > 0) {
+      return ok({
+        message: `Reconciliação concluída: ${totalCreated} novos itens detectados.`,
+        clickOrphans,
+        conversionOrphans,
+      }, 207)
     }
 
-    return ok({ synced: ga4Synced, mismatches: 0 })
+    return ok({ message: 'Nenhum novo item detectado.', clickOrphans: 0, conversionOrphans: 0 })
   } catch (err) {
     console.error('[analytics/reconciliation]', err)
-    return internalError('Erro ao executar reconciliação com GA4')
+    // ANALYTICS_050: falha na detecção de divergências
+    return internalError('Erro ao executar reconciliação')
   }
 }

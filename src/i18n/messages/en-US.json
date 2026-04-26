@@ -21,7 +21,49 @@
     "of": "of",
     "items": "items",
     "next": "Next",
-    "previous": "Previous"
+    "previous": "Previous",
+    "retry": "Try again",
+    "publish": "Publish",
+    "saveDraft": "Save Draft",
+    "emptyState": {
+      "noDataTitle": "Nothing here yet",
+      "noDataDescription": "Once there is data, it will show up in this list.",
+      "noResultsTitle": "No results found",
+      "noResultsDescription": "Adjust filters or try different criteria.",
+      "errorTitle": "Unable to load",
+      "errorDescription": "Please try again in a moment.",
+      "primaryAction": "Add",
+      "clearFilters": "Clear filters"
+    },
+    "confirmDialog": {
+      "defaultTitle": "Confirm action",
+      "defaultDescription": "Do you want to proceed with this operation?",
+      "destructiveTitle": "Are you sure?",
+      "destructiveDescription": "This action cannot be undone.",
+      "confirmLabel": "Confirm",
+      "cancelLabel": "Cancel",
+      "deleteLabel": "Delete"
+    },
+    "delete_dialog": {
+      "confirm_keyword": "DELETE",
+      "confirm_button": "Permanently delete",
+      "cancel": "Cancel",
+      "success": "Deleted successfully",
+      "description_default": "This action is irreversible.",
+      "description_with_label": "\"{label}\" will be permanently removed. This action is irreversible.",
+      "case_title": "Permanently delete case?",
+      "pain_title": "Permanently delete pain?",
+      "pattern_title": "Permanently delete solution pattern?",
+      "asset_title": "Permanently delete visual asset?",
+      "case_warning": "Removes from DB and may invalidate linked SolutionPatterns. There is no undo.",
+      "pain_warning": "Removes from DB and may invalidate linked cases/themes. There is no undo.",
+      "pattern_warning": "Removes from DB and invalidates cases referencing this pattern. There is no undo.",
+      "asset_warning": "Storage file and thumbnail will be deleted from the bucket immediately. Published posts referencing this asset may break.",
+      "archive_keyword": "ARCHIVE",
+      "archive_button": "Archive piece",
+      "content_piece_title": "Archive this piece?",
+      "content_piece_warning": "The piece leaves the active dashboard but history stays preserved for audit (soft-delete via status). You can restore it anytime."
+    }
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -31,8 +73,40 @@
     "blog": "Blog",
     "leads": "Leads",
     "analytics": "Analytics",
+    "utm": "UTM Links",
+    "health": "Health",
     "settings": "Settings",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "sources": "Sources"
+  },
+  "breadcrumbs": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "analytics": "Analytics",
+    "assets": "Assets",
+    "blogManage": "Blog (admin)",
+    "blogArticle": "Article",
+    "blogPreview": "Preview",
+    "calendar": "Calendar",
+    "compliance": "Compliance",
+    "content": "Content",
+    "fila": "Queue",
+    "health": "Health",
+    "knowledge": "Knowledge Base",
+    "leads": "Leads",
+    "lead": "Lead",
+    "nicheOpportunities": "Niche Opportunities",
+    "rejectedThemes": "Rejected Themes",
+    "posts": "Posts",
+    "profile": "Profile",
+    "settings": "Settings",
+    "settingsApi": "Credentials & API",
+    "settingsSchedule": "Schedule",
+    "settingsPreferences": "Preferences",
+    "settingsCosts": "Costs",
+    "sources": "Sources",
+    "utm": "UTM Links",
+    "blog": "Blog"
   },
   "auth": {
     "login": "Sign In",
@@ -45,7 +119,15 @@
     "loginError": "Incorrect email or password",
     "sessionExpired": "Session expired. Please sign in again.",
     "accountLocked": "Account locked for {minutes} minutes after {attempts} attempts.",
-    "logoutSuccess": "Successfully signed out"
+    "logoutSuccess": "Successfully signed out",
+    "logoutError": "Error signing out. Please try again.",
+    "emailInvalid": "Invalid email",
+    "passwordMin": "Password must be at least 8 characters",
+    "formLabel": "Login form",
+    "submitting": "Submitting form...",
+    "emailPlaceholder": "you@email.com",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
   },
   "workers": {
     "idle": "Idle",
@@ -130,15 +212,109 @@
   },
   "knowledge": {
     "title": "Knowledge Base",
+    "description": "Manage your case studies, pain points, and solution patterns",
     "pains": "Pain Points",
     "cases": "Case Studies",
     "solutions": "Solution Patterns",
     "objections": "Objections",
-    "niches": "Niche Opportunities"
+    "niches": "Niche Opportunities",
+    "progress": {
+      "loading": "Loading progress",
+      "ready": "Knowledge base ready",
+      "title": "Knowledge base progress",
+      "error": "Error loading knowledge base progress."
+    },
+    "tabs": {
+      "cases": "Cases",
+      "pains": "Pain Points",
+      "patterns": "Patterns",
+      "objections": "Objections"
+    },
+    "casePage": {
+      "title": "Success Cases",
+      "description": "Manage your cases to feed content generation",
+      "new": "New Case",
+      "newDescription": "Add a new success case to the knowledge base",
+      "edit": "Edit Case",
+      "notFound": "Case not found",
+      "loadError": "Failed to load case",
+      "backToCases": "Back to cases"
+    },
+    "caseList": {
+      "all": "All",
+      "draft": "Draft",
+      "published": "Published",
+      "new": "New Case",
+      "empty": "No cases found",
+      "emptyFilter": "No cases found with this filter.",
+      "emptyFirst": "Start by adding your first success case.",
+      "createFirst": "Create first case",
+      "deleteSuccess": "Case \"{name}\" deleted",
+      "deleteError": "Error deleting case. Try again."
+    },
+    "caseForm": {
+      "nameMin": "Name must be at least 3 characters",
+      "sectorRequired": "Sector is required",
+      "systemTypeRequired": "System type is required",
+      "resultMin": "Result must be at least {min} characters to publish",
+      "draftNote": "Draft — not visible in analyses",
+      "saving": "Saving...",
+      "savedAt": "Saved at {time}",
+      "autoSaveError": "Error auto-saving",
+      "nameLabel": "Case name",
+      "sectorLabel": "Sector",
+      "systemTypeLabel": "System type",
+      "resultLabel": "Result obtained",
+      "autoSaveHint": "Changes are saved automatically. You can also save now.",
+      "minChars": "{count} minimum characters",
+      "quantifiableResult": "Quantifiable result"
+    },
+    "painList": {
+      "filterByCategory": "Filter by category",
+      "new": "New Pain Point",
+      "empty": "No pain points found",
+      "emptyFilter": "No pain points found with this filter. Try another category.",
+      "emptyFirst": "Start by adding your first pain point to feed the knowledge base.",
+      "createFirst": "Create first pain point",
+      "deleteSuccess": "Pain point \"{name}\" deleted",
+      "deleteError": "Error deleting pain point. Try again."
+    },
+    "patternList": {
+      "new": "New Pattern",
+      "empty": "No patterns found",
+      "emptyFirst": "Start by adding your first solution pattern to feed the knowledge base.",
+      "createFirst": "Create first pattern",
+      "linkedPain": "Linked pain point",
+      "linkedCase": "Linked case",
+      "deleteSuccess": "Pattern \"{name}\" deleted",
+      "deleteError": "Error deleting pattern. Try again."
+    },
+    "objectionList": {
+      "price": "Price Objections",
+      "trust": "Trust Objections",
+      "timing": "Timing Objections",
+      "need": "Need Objections",
+      "authority": "Authority Objections",
+      "new": "New Objection",
+      "count": "{count} objection(s) registered",
+      "empty": "No objections found",
+      "emptyFirst": "Start by adding common objections from your prospects to feed the knowledge base.",
+      "createFirst": "Create first objection",
+      "loadError": "Failed to load objections",
+      "loadErrorDesc": "Could not load objections. Try again.",
+      "deleteFailure": "Failed to delete",
+      "deleteSuccess": "Objection deleted",
+      "deleteError": "Error deleting objection. Try again."
+    }
   },
   "leads": {
     "title": "Leads",
     "total": "{count} leads",
+    "contact": "Contact",
+    "reveal": "Reveal",
+    "hide": "Hide",
+    "noCompany": "No company",
+    "revealError": "Error revealing contact information",
     "funnel": {
       "TOFU": "Top of Funnel",
       "MOFU": "Middle of Funnel",
@@ -153,6 +329,39 @@
       "REVIEW": "In review",
       "PUBLISHED": "Published",
       "ARCHIVED": "Archived"
+    },
+    "manage": {
+      "title": "Blog",
+      "description": "Manage blog articles",
+      "new": "New Article",
+      "filterAll": "All",
+      "filterDraft": "Drafts",
+      "filterReview": "In Review",
+      "filterPublished": "Published",
+      "empty": "No articles found",
+      "colTitle": "Title",
+      "colStatus": "Status",
+      "colDate": "Date",
+      "colActions": "Actions",
+      "deleteTitle": "Delete Article",
+      "deleteConfirm": "Yes, delete",
+      "publishLabel": "Publish Article",
+      "publishButton": "Publish"
+    },
+    "newPage": {
+      "title": "New Article",
+      "description": "Create a new blog article"
+    },
+    "editPage": {
+      "title": "Edit Article",
+      "version": "Version",
+      "viewHistory": "View History"
+    },
+    "articleList": {
+      "empty": "No published articles yet.",
+      "pagination": "Blog pagination",
+      "prevPage": "Previous page",
+      "nextPage": "Next page"
     }
   },
   "errors": {
@@ -164,7 +373,8 @@
     "ERR-022": "Operation not permitted",
     "ERR-500": "Internal server error",
     "generic": "Something went wrong. Please try again.",
-    "networkError": "Connection error. Check your internet connection."
+    "networkError": "Connection error. Check your internet connection.",
+    "externalServiceDown": "{service} unavailable — try again in {retryAfter}s"
   },
   "empty": {
     "noContent": "No content yet",
@@ -184,17 +394,40 @@
   },
   "analytics": {
     "title": "Analytics",
+    "description": "Inbound pipeline performance metrics",
     "period": "Period",
     "conversionRate": "Conversion rate",
     "totalLeads": "Total leads",
     "topChannel": "Top channel"
+  },
+  "calendar": {
+    "title": "Editorial Calendar",
+    "description": "Plan and schedule your publications"
   },
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Welcome back",
     "publishedToday": "Published today",
     "pendingApproval": "Pending approval",
-    "workerStatus": "Worker status"
+    "workerStatus": "Worker status",
+    "themes": {
+      "title": "Content Themes",
+      "showing": "Showing {total} themes",
+      "generate": "Generate Themes",
+      "generating": "Generating...",
+      "recalculate": "Recalculate Scores",
+      "calculating": "Calculating...",
+      "statusAll": "All",
+      "statusActive": "Active",
+      "statusRejected": "Rejected",
+      "emptyTitle": "No themes yet",
+      "emptyDesc": "Generate your first themes from the knowledge base."
+    }
+  },
+  "header": {
+    "openMenu": "Open navigation menu",
+    "logoutLabel": "Sign out",
+    "reconciliationPending": "{count} pending reconciliation items"
   },
   "settings": {
     "title": "Settings",
@@ -203,5 +436,125 @@
     "integrations": "Integrations",
     "saved": "Settings saved",
     "saveError": "Error saving settings"
+  },
+  "onboarding": {
+    "tour": {
+      "back": "Back",
+      "next": "Next",
+      "skip": "Skip tour",
+      "finish": "Finish",
+      "close": "Close tour",
+      "reopen": "Reopen tour",
+      "welcome": {
+        "title": "Welcome to Inbound Forge",
+        "body": "We'll walk you through 5 guided steps — less than 10 minutes."
+      },
+      "cases": {
+        "title": "Your cases",
+        "body": "Register 5 real cases you've shipped. They fuel content ideas and lead capture."
+      },
+      "pains": {
+        "title": "Customer pains",
+        "body": "List 5 pains you've solved. They anchor copy and CTAs across the funnel."
+      },
+      "objections": {
+        "title": "Common objections",
+        "body": "Map recurring objections to generate content that pre-empts doubts."
+      },
+      "patterns": {
+        "title": "Solution patterns",
+        "body": "Connect cases and pains into reusable patterns — your living knowledge base."
+      },
+      "done": {
+        "title": "Ready to activate",
+        "body": "Once you hit 5 cases + 5 pains, productive mode unlocks."
+      }
+    },
+    "examples": {
+      "heading": "Quick examples",
+      "subheading": "Hover to pause. Just inspiration to get you started.",
+      "tablistLabel": "Case examples",
+      "saas-churn": {
+        "title": "SaaS — churn reduction",
+        "problem": "9% monthly churn in a B2B SaaS.",
+        "solution": "Reactivation email sequence + content campaign on onboarding.",
+        "stack": "Resend, Notion, Supabase"
+      },
+      "ecom-leads": {
+        "title": "E-commerce — lead capture",
+        "problem": "High traffic, low form conversion.",
+        "solution": "Exit-intent, discount lead magnet, nurture flow.",
+        "stack": "Next.js, Klaviyo, Meta Ads"
+      },
+      "b2b-discovery": {
+        "title": "B2B — demand discovery",
+        "problem": "Sales team without a qualified pipeline.",
+        "solution": "Authority blog + targeted LinkedIn outbound.",
+        "stack": "LinkedIn, Hubspot, GA4"
+      }
+    },
+    "nudge": {
+      "title": "Stuck on a field?",
+      "description": "Check a real example for inspiration.",
+      "cta": "See example"
+    },
+    "banner": {
+      "title": "Finish your seed.",
+      "progress": "{cases}/{casesTarget} cases · {pains}/{painsTarget} pains",
+      "cta": "Continue seed",
+      "dismiss": "Dismiss for 24h"
+    },
+    "guided": {
+      "title": "Next to validate",
+      "counter": "{index} of {total}",
+      "validate": "Validate now",
+      "empty": "No pending entries. Add cases and pains to receive prioritized suggestions.",
+      "case": "Validating this case unlocks ~{count} themes related to {domain}.",
+      "pain": "Validating this pain unlocks ~{count} themes related to {domain}.",
+      "themesUnlocked": "~{count} themes",
+      "domainFallback": "related sectors"
+    }
+  },
+  "network": {
+    "offlineTitle": "No internet connection",
+    "offlineBody": "Some actions may not be saved. Waiting for reconnection…",
+    "retry": "Try now",
+    "restored": "Connection restored"
+  },
+  "rateLimits": {
+    "title": "Integration rate limits",
+    "resetAt": "Resets at",
+    "criticalToast": "Critical rate limit: {provider}"
+  },
+  "leadJourney": {
+    "empty": "No events recorded for this lead.",
+    "error": "Failed to load journey",
+    "postView": "Viewed post",
+    "formSubmit": "Submitted form",
+    "conversion": "Conversion",
+    "utmClick": "UTM click",
+    "emailOpen": "Email opened",
+    "filter": {
+      "post-view": "Post",
+      "form-submit": "Form",
+      "conversion": "Conversion",
+      "utm-click": "UTM",
+      "email-open": "Email"
+    }
+  },
+  "assetDownload": {
+    "label": "Download",
+    "png": "PNG (original)",
+    "webp": "WebP (optimized)"
+  },
+  "regeneration": {
+    "button": "Regenerate theme",
+    "confirmTitle": "Regenerate this theme?",
+    "confirmBody": "This theme has been regenerated {count} times. Each regeneration consumes Claude API quota.",
+    "confirm": "Regenerate anyway",
+    "capReached": "Regeneration cap reached ({cap})",
+    "blocked": "Regeneration cap reached",
+    "success": "Theme regenerated",
+    "error": "Failed to regenerate"
   }
 }

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import { axe, toHaveNoViolations } from 'jest-axe'
@@ -15,6 +16,8 @@ vi.mock('next/navigation', () => ({
     replace: vi.fn(),
     prefetch: vi.fn(),
   }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '/pt-BR/login',
 }))
 
 // Mock supabase client
@@ -38,6 +41,12 @@ vi.mock('sonner', () => ({
     success: vi.fn(),
     error: vi.fn(),
   },
+}))
+
+// Mock next-intl
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => key,
+  useLocale: () => 'pt-BR',
 }))
 
 // Import after mocks

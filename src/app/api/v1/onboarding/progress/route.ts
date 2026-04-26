@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireSession, badRequest, internalError } from '@/lib/api-auth'
+import { requireSession, validationError, internalError } from '@/lib/api-auth'
 import { prisma } from '@/lib/prisma'
-import { ZodError } from 'zod'
 import { OnboardingProgressPatchSchema } from '@/schemas/health.schema'
 
 export const runtime = 'nodejs'
@@ -37,24 +36,12 @@ export async function PATCH(req: NextRequest) {
   const { user, response } = await requireSession()
   if (response) return response
 
+  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para input inválido
   let body: unknown
-  try {
-    body = await req.json()
-  } catch {
-    return badRequest('Corpo inválido')
-  }
+  try { body = await req.json() } catch { return validationError(new Error('Body inválido')) }
 
-  try {
-    OnboardingProgressPatchSchema.parse(body)
-  } catch (err) {
-    if (err instanceof ZodError) {
-      return NextResponse.json(
-        { error: 'Validação falhou', issues: err.errors },
-        { status: 422 }
-      )
-    }
-    return badRequest('VAL_001: Campo completed ausente ou falso')
-  }
+  const parsed = OnboardingProgressPatchSchema.safeParse(body)
+  if (!parsed.success) return validationError(parsed.error)
 
   try {
     // Upsert: cria ou atualiza o registro do operador com onboarding_completed=true

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireSession, ok, validationError, internalError } from '@/lib/api-auth'
 import { apiError } from '@/constants/errors'
 import { NicheOpportunitySchema } from '@/schemas/theme.schema'
-import { nicheOpportunityService } from '@/services/niche-opportunity.service'
+import { nicheOpportunityService } from '@/lib/services/niche-opportunity.service'
 
 type Params = { params: Promise<{ id: string }> }
 

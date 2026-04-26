@@ -172,3 +172,31 @@ Ver template em: [docs/decisions/INT-124-competitors-mapping.md](./decisions/INT
 ## Próxima Revisão
 
 **2026-06-01** — priorizar Q3 com base em 3 meses de dados reais.
+
+---
+
+## Backlog diferido — Intake Review TASK-16 (CL-076, CL-086, CL-087)
+
+**Origem:** `output/wbs/inbound-forge/intake-review/INTAKE-REVIEW-TASKS/TASK-16.md`
+**Status:** diferido pela onda P2+P3 de 2026-04-23 (decisão 1C).
+**Motivo:** `docs/governance/MVP-VALIDATION.md` exclui explicitamente TikTok/YouTube Shorts do gate de MVP validado; executar agora seria scope bloat.
+
+### Escopo diferido
+
+| ST | Item | Complexidade | Quarter sugerido |
+|----|------|--------------|------------------|
+| ST001 | TikTok adapter + handle audit callbacks | Média (2h) | Q4 2026 (quando plano TikTok API for acessível) |
+| ST002 | video-worker com FFmpeg pipeline (Dockerfile + fluent-ffmpeg) | Alta (4h) | Q4 2026 |
+| ST003 | YouTube adapter usando video-worker | Média (2h) | Q4 2026 (depende ST002) |
+| ST004 | `sober-style` validator (heurística de paleta) | Média (1h) | Q3 2026 |
+| ST005 | Playwright visual regression tests (baseline por template) | Média (2h) | Q3 2026 (depende ST004) |
+| ST006 | GitHub Actions workflow de visual regression | Baixa (30min) | Q3 2026 (depende ST005) |
+
+### Observação arquitetural
+
+video-worker atual usa "Short Video Maker MCP" (`workers/video-worker/package.json` declara integração MCP). A spec da TASK-16 ST002 pede FFmpeg local via fluent-ffmpeg — **avaliar se é melhor estender o worker MCP existente** em vez de substituí-lo antes de executar.
+
+### Dependências atendidas
+
+- TASK-12 (adapter pattern) — **concluída** em 2026-04-23, facilita ST001/ST003.
+- `channel-locale-gate.ts` + `social-locale-policy.ts` — já cobrem bloqueio de locales sociais (TASK-14).

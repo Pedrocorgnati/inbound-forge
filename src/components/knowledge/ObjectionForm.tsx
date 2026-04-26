@@ -1,12 +1,13 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toast'
-import { useAutosave } from '@/hooks/useAutosave'
+import { useKnowledgeAutosave } from '@/hooks/useKnowledgeAutosave'
+import { useFormatters } from '@/lib/i18n/formatters'
 import type { ObjectionResponse } from '@/lib/dtos/objection.dto'
 
 interface ObjectionFormProps {
@@ -39,7 +40,7 @@ export function ObjectionForm({
   isOpen,
   onClose,
   onSuccess,
-  _locale,
+  locale: _locale,
 }: ObjectionFormProps) {
   const [form, setForm] = useState<FormData>({
     content: initialData?.content ?? '',
@@ -49,34 +50,20 @@ export function ObjectionForm({
   const [_isSubmitting, setIsSubmitting] = useState(false)
 
   // Autosave (edit mode only)
-  const formSerialized = useMemo(() => JSON.stringify(form), [form])
+  const { autosaveStatus, lastSaved } = useKnowledgeAutosave({
+    form,
+    endpoint: `/api/knowledge/objections/${initialData?.id}`,
+    getPayload: (data) => ({
+      content: data.content.trim(),
+      type: data.type,
+    }),
+    entityId: initialData?.id,
+    mode,
+    isOpen,
+  })
 
-  const autosaveFn = useCallback(
-    async (data: FormData) => {
-      if (!initialData?.id) return
-      const res = await fetch(`/api/knowledge/objections/${initialData.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: data.content.trim(),
-          type: data.type,
-        }),
-      })
-      if (!res.ok) throw new Error('Falha ao salvar')
-    },
-    [initialData?.id]
-  )
-
-  const { status: autosaveStatus, lastSaved } = useAutosave(
-    formSerialized,
-    async () => autosaveFn(form),
-    2000,
-    mode === 'edit' && !!initialData?.id && isOpen
-  )
-
-  function formatTime(date: Date): string {
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  }
+  // RESOLVED: G002 — useFormatters usa locale dinâmico
+  const fmt = useFormatters()
 
   const selectedType = TYPE_OPTIONS.find((t) => t.value === form.type)
 
@@ -177,7 +164,7 @@ export function ObjectionForm({
         {mode === 'edit' && (
           <div aria-live="polite" className="text-xs text-muted-foreground text-right" data-testid="objection-autosave-status">
             {autosaveStatus === 'saving' && 'Salvando...'}
-            {autosaveStatus === 'saved' && lastSaved && `Salvo às ${formatTime(lastSaved)}`}
+            {autosaveStatus === 'saved' && lastSaved && `Salvo às ${fmt.time(lastSaved)}`}
             {autosaveStatus === 'error' && (
               <span className="text-danger">Erro ao salvar automaticamente</span>
             )}

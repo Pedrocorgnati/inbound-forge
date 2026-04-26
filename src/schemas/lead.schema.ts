@@ -25,9 +25,19 @@ export const UpdateLeadSchema = z.object({
   contactInfo: z.string().min(1).nullable().optional(), // plaintext — re-encryptado na API
   channel: z.enum(['BLOG', 'LINKEDIN', 'INSTAGRAM']).nullable().optional(),
   funnelStage: z.enum(['AWARENESS', 'CONSIDERATION', 'DECISION']).nullable().optional(),
+  status: z.enum(['NEW', 'MQL', 'SQL', 'OPPORTUNITY', 'CUSTOMER', 'LOST']).optional(),
+  lossReason: z
+    .enum(['BUDGET', 'TIMING', 'FIT', 'NO_RESPONSE', 'COMPETITOR', 'OTHER'])
+    .nullable()
+    .optional(),
+  lossReasonDetail: z.string().max(500).nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),
   name: z.string().nullable().optional(),
 })
+  .refine(
+    (data) => data.status !== 'LOST' || !!data.lossReason,
+    { message: 'lossReason obrigatorio quando status=LOST', path: ['lossReason'] },
+  )
 
 export const CreateConversionSchema = z.object({
   type: z.enum(['CONVERSATION', 'MEETING', 'PROPOSAL']),
@@ -42,6 +52,8 @@ export const ListLeadsSchema = z.object({
   funnelStage: z.enum(['AWARENESS', 'CONSIDERATION', 'DECISION']).optional(),
   themeId: z.string().uuid().optional(),
   includeContact: z.coerce.boolean().default(false),
+  // TASK-11 ST003 (CL-TA-041)
+  search: z.string().trim().max(100).optional(),
 })
 
 export type CreateLeadInput = z.infer<typeof CreateLeadSchema>

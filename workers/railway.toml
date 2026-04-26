@@ -1,0 +1,78 @@
+# Railway Configuration — Inbound Forge Workers
+# Rastreabilidade: CL-057, TASK-7 ST001
+# Cada worker é um serviço independente no Railway.
+# Deploy: railway up --service <service-name>
+
+[services]
+
+# ─── Scraping Worker ────────────────────────────────────────────────────────────
+[services.scraping-worker]
+  name        = "inbound-forge-scraping-worker"
+  source      = "./workers/scraping-worker"
+  startCommand = "node dist/index.js"
+  healthcheckPath = "/health"
+  healthcheckTimeout = 30
+
+  [services.scraping-worker.env]
+    REDIS_URL           = "${{REDIS_URL}}"
+    DATABASE_URL        = "${{DATABASE_URL}}"
+    ANTHROPIC_API_KEY   = "${{ANTHROPIC_API_KEY}}"
+    FIRECRAWL_API_KEY   = "${{FIRECRAWL_API_KEY}}"
+    WORKER_TOKEN        = "${{WORKER_TOKEN}}"
+    NODE_ENV            = "production"
+    LOG_LEVEL           = "info"
+
+# ─── Image Worker ────────────────────────────────────────────────────────────────
+[services.image-worker]
+  name        = "inbound-forge-image-worker"
+  source      = "./workers/image-worker"
+  startCommand = "node dist/index.js"
+  healthcheckPath = "/health"
+  healthcheckTimeout = 30
+
+  [services.image-worker.env]
+    REDIS_URL           = "${{REDIS_URL}}"
+    DATABASE_URL        = "${{DATABASE_URL}}"
+    IDEOGRAM_API_KEY    = "${{IDEOGRAM_API_KEY}}"
+    FAL_API_KEY         = "${{FAL_API_KEY}}"
+    SUPABASE_URL        = "${{SUPABASE_URL}}"
+    SUPABASE_SERVICE_KEY = "${{SUPABASE_SERVICE_KEY}}"
+    WORKER_TOKEN        = "${{WORKER_TOKEN}}"
+    NODE_ENV            = "production"
+    LOG_LEVEL           = "info"
+
+# ─── Publishing Worker ──────────────────────────────────────────────────────────
+[services.publishing-worker]
+  name        = "inbound-forge-publishing-worker"
+  source      = "./workers/publishing-worker"
+  startCommand = "node dist/index.js"
+  healthcheckPath = "/health"
+  healthcheckTimeout = 30
+
+  [services.publishing-worker.env]
+    REDIS_URL                   = "${{REDIS_URL}}"
+    DATABASE_URL                = "${{DATABASE_URL}}"
+    INSTAGRAM_ACCESS_TOKEN      = "${{INSTAGRAM_ACCESS_TOKEN}}"
+    INSTAGRAM_BUSINESS_ACCOUNT_ID = "${{INSTAGRAM_BUSINESS_ACCOUNT_ID}}"
+    INSTAGRAM_APP_ID            = "${{INSTAGRAM_APP_ID}}"
+    INSTAGRAM_APP_SECRET        = "${{INSTAGRAM_APP_SECRET}}"
+    WORKER_TOKEN                = "${{WORKER_TOKEN}}"
+    NODE_ENV                    = "production"
+    LOG_LEVEL                   = "info"
+
+# ─── Scheduled: Token Expiration Monitor (TASK-8 ST003 / CL-249) ────────────────
+[services.token-expiration-monitor]
+  name         = "inbound-forge-token-expiration-monitor"
+  source       = "./"
+  startCommand = "pnpm tsx workers/scheduled/check-token-expiration.ts"
+  cronSchedule = "0 8 * * *"
+
+  [services.token-expiration-monitor.env]
+    DATABASE_URL           = "${{DATABASE_URL}}"
+    RESEND_API_KEY         = "${{RESEND_API_KEY}}"
+    ALERT_EMAIL_TO         = "${{ALERT_EMAIL_TO}}"
+    OPENAI_API_KEY         = "${{OPENAI_API_KEY}}"
+    ANTHROPIC_API_KEY      = "${{ANTHROPIC_API_KEY}}"
+    INSTAGRAM_ACCESS_TOKEN = "${{INSTAGRAM_ACCESS_TOKEN}}"
+    NODE_ENV               = "production"
+    LOG_LEVEL              = "info"

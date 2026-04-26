@@ -1,0 +1,29 @@
+title = "Inbound Forge gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Paths e arquivos ignorados no scan"
+paths = [
+  '''(.*?)docs/.+''',
+  '''(.*?)output/.+''',
+  '''(.*?)node_modules/.+''',
+  '''(.*?)\.next/.+''',
+  '''(.*?)src/tests/fixtures/.+''',
+  '''(.*?)tests/fixtures/.+''',
+  '''(.*?)\.env\.example''',
+  '''(.*?)\.env\.test\.example''',
+  '''(.*?)\.env\.docker\.example''',
+  '''(.*?)\.env\.production\.example''',
+]
+
+regexes = [
+  '''AKIA[0-9A-Z]{16}(_EXAMPLE|_FAKE|_TEST)''',
+]
+
+[[rules]]
+id = "custom-supabase-service-key"
+description = "Supabase service role key em commit"
+regex = '''(?i)supabase_service_(role_)?key["'\s]*[:=]\s*["']?eyJ[A-Za-z0-9-_.]{50,}'''
+keywords = ["supabase_service_role_key", "supabase_service_key"]

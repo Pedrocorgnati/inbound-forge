@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
@@ -23,7 +23,7 @@ export function CasePainLinkModal({
   painId,
   painTitle,
   currentCaseIds,
-  _locale,
+  locale: _locale,
   onSuccess,
 }: CasePainLinkModalProps) {
   const [cases, setCases] = useState<CaseResponse[]>([])
@@ -31,31 +31,44 @@ export function CasePainLinkModal({
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const originalIdsRef = useRef<string[]>(currentCaseIds)
 
   const fetchCases = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const res = await fetch('/api/knowledge/cases?limit=100')
-      if (!res.ok) throw new Error('Falha ao carregar cases')
+      const [casesRes, linkedRes] = await Promise.all([
+        fetch('/api/knowledge/cases?limit=100'),
+        fetch(`/api/knowledge/pains/${painId}/cases`),
+      ])
+      if (!casesRes.ok) throw new Error('Falha ao carregar cases')
 
-      const json = await res.json()
-      setCases(json.data ?? [])
+      const casesJson = await casesRes.json()
+      setCases(casesJson.data ?? [])
+
+      if (linkedRes.ok) {
+        const linkedJson = await linkedRes.json()
+        const linkedIds: string[] = linkedJson.data ?? []
+        originalIdsRef.current = linkedIds
+        setSelectedIds(new Set(linkedIds))
+      } else {
+        originalIdsRef.current = currentCaseIds
+        setSelectedIds(new Set(currentCaseIds))
+      }
     } catch {
       setError('Não foi possível carregar os cases.')
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [painId, currentCaseIds])
 
-  // Fetch cases on open, reset selection
+  // Fetch cases on open
   useEffect(() => {
     if (isOpen) {
-      setSelectedIds(new Set(currentCaseIds))
       fetchCases()
     }
-  }, [isOpen, currentCaseIds, fetchCases])
+  }, [isOpen, fetchCases])
 
   function handleToggle(caseId: string) {
     setSelectedIds((prev) => {
@@ -72,9 +85,9 @@ export function CasePainLinkModal({
   async function handleSave() {
     setIsSaving(true)
 
-    const originalSet = new Set(currentCaseIds)
+    const originalSet = new Set(originalIdsRef.current)
     const toLink = Array.from(selectedIds).filter((id) => !originalSet.has(id))
-    const toUnlink = currentCaseIds.filter((id) => !selectedIds.has(id))
+    const toUnlink = originalIdsRef.current.filter((id) => !selectedIds.has(id))
 
     let successCount = 0
     let errorCount = 0

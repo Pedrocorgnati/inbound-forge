@@ -18,6 +18,29 @@ const PREVIEW_LENGTH = 500
 
 type Params = { params: Promise<{ id: string }> }
 
+// SEC: bloquear IPs privados e link-local para prevenir SSRF (A10)
+const PRIVATE_IP_PATTERNS = [
+  /^localhost$/i,
+  /^127\./,
+  /^10\./,
+  /^172\.(1[6-9]|2[0-9]|3[01])\./,
+  /^192\.168\./,
+  /^169\.254\./,   // link-local — inclui AWS/GCP metadata endpoint
+  /^::1$/,         // IPv6 loopback
+  /^fc00:/i,       // IPv6 ULA
+  /^fe80:/i,       // IPv6 link-local
+  /^0\./,
+]
+
+function isPrivateOrInternalUrl(urlString: string): boolean {
+  try {
+    const { hostname } = new URL(urlString)
+    return PRIVATE_IP_PATTERNS.some((pattern) => pattern.test(hostname))
+  } catch {
+    return true // URL malformada → tratar como interna
+  }
+}
+
 function extractTextFromHtml(html: string): string {
   // Remove tags e normaliza espaços para preview rápido
   return html
@@ -41,6 +64,14 @@ export async function POST(_request: NextRequest, { params }: Params) {
   if (isBlockedDomain(source.url)) {
     return NextResponse.json(
       { success: false, code: 'SRC_002', error: 'Domínio bloqueado (INT-136).' },
+      { status: 422 }
+    )
+  }
+
+  // SEC: bloquear IPs privados/internos para prevenir SSRF (A10)
+  if (isPrivateOrInternalUrl(source.url)) {
+    return NextResponse.json(
+      { success: false, code: 'SRC_004', error: 'URL aponta para endereço interno não permitido.' },
       { status: 422 }
     )
   }

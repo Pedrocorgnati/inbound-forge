@@ -3,8 +3,12 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { Button } from '@/components/ui/button'
 import { CredentialTestCard } from '@/components/onboarding/CredentialTestCard'
+import { NudgeTooltip } from '@/components/onboarding/NudgeTooltip'
 import type { OnboardingState, CredentialTestResult } from '@/types/onboarding'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ONBOARDING_STEPS_WITH_META } from '@/constants/onboarding-steps'
+
+const STEP_META = ONBOARDING_STEPS_WITH_META.find((s) => s.key === 'credentials')
 
 const CREDENTIALS = [
   { service: 'anthropic', serviceKey: 'anthropic', label: 'Anthropic API Key', required: true },
@@ -41,10 +45,15 @@ export function CredentialsStep({ state, setState, onComplete, onBack }: Credent
 
   return (
     <div data-testid="credentials-step" className="space-y-6">
-      <p className="text-sm text-muted-foreground">
-        Configure as credenciais de API necessarias. Pelo menos a <strong>Anthropic API Key</strong> e
-        a <strong>Supabase URL</strong> sao obrigatorias para prosseguir.
-      </p>
+      <div className="flex items-center gap-2">
+        <p className="text-sm text-muted-foreground flex-1">
+          Configure as credenciais de API necessarias. Pelo menos a <strong>Anthropic API Key</strong> e
+          a <strong>Supabase URL</strong> sao obrigatorias para prosseguir.
+        </p>
+        {STEP_META?.nudgeMessage && (
+          <NudgeTooltip message={STEP_META.nudgeMessage} position="left" />
+        )}
+      </div>
 
       <div className="space-y-4">
         {CREDENTIALS.map((cred) => (

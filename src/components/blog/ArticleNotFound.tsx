@@ -13,10 +13,10 @@ export function ArticleNotFound({ locale = 'pt-BR' }: ArticleNotFoundProps) {
     >
       <FileQuestion className="h-16 w-16 text-muted-foreground" />
       <h2 className="mt-6 text-xl font-semibold text-foreground">
-        Artigo nao encontrado
+        Artigo não encontrado
       </h2>
       <p className="mt-2 max-w-md text-sm text-muted-foreground">
-        O artigo que voce procura nao existe ou foi removido. Veja outros artigos no nosso blog.
+        O artigo que você procura não existe ou foi removido. Veja outros artigos no nosso blog.
       </p>
       <Link
         href={`/${locale}/blog`}

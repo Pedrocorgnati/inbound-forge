@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { BLOG_STATUS } from '@/constants/status'
 
 export const CreateBlogArticleSchema = z.object({
   contentPieceId: z.string().uuid().nullable().optional(),
@@ -13,6 +14,7 @@ export const CreateBlogArticleSchema = z.object({
 })
 
 export const UpdateBlogArticleSchema = z.object({
+  slug: z.string().min(3).max(255).optional(),
   title: z.string().max(500).optional(),
   excerpt: z.string().max(500).optional(),
   body: z.string().optional(),
@@ -26,7 +28,7 @@ export const UpdateBlogArticleSchema = z.object({
 export const ListBlogSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  status: z.enum(['DRAFT', 'REVIEW', 'PUBLISHED']).optional(),
+  status: z.enum([BLOG_STATUS.DRAFT, BLOG_STATUS.REVIEW, BLOG_STATUS.PUBLISHED]).optional(),
 })
 
 export type CreateBlogArticleInput = z.infer<typeof CreateBlogArticleSchema>

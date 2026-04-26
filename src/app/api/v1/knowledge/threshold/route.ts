@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession, ok, internalError } from '@/lib/api-auth'
+import { KNOWLEDGE_STATUS } from '@/constants/status'
 
 const THRESHOLD = 5 // 5 cases + 5 dores validadas para habilitar o motor
 
@@ -11,8 +12,8 @@ export async function GET(_request: NextRequest) {
 
   try {
     const [validatedCases, validatedPains] = await Promise.all([
-      prisma.caseLibraryEntry.count({ where: { status: 'VALIDATED' } }),
-      prisma.painLibraryEntry.count({ where: { status: 'VALIDATED' } }),
+      prisma.caseLibraryEntry.count({ where: { status: KNOWLEDGE_STATUS.VALIDATED } }),
+      prisma.painLibraryEntry.count({ where: { status: KNOWLEDGE_STATUS.VALIDATED } }),
     ])
 
     const casesMet = validatedCases >= THRESHOLD

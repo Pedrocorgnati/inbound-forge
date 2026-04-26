@@ -6,6 +6,8 @@ export const CHANNEL_CHAR_LIMITS: Record<Channel, number> = {
   LINKEDIN: 3000,
   INSTAGRAM: 2200,
   BLOG: Infinity,
+  TIKTOK: 2200,         // post-MVP CL-064
+  YOUTUBE_SHORTS: 100,  // post-MVP CL-065
 }
 
 // ─── Content Angles ───────────────────────────────────────────────────────────

@@ -38,6 +38,8 @@ export function PainsStep({ onComplete, onBack }: PainsStepProps) {
     formState: { errors },
   } = useForm<PainData>({
     resolver: zodResolver(painSchema),
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   })
 
   const MIN_PAINS = 3
@@ -130,11 +132,13 @@ export function PainsStep({ onComplete, onBack }: PainsStepProps) {
           <textarea
             id="pain-description"
             placeholder="Descreva a dor em detalhes (minimo 20 caracteres)"
+            aria-invalid={!!errors.description}
+            aria-describedby={errors.description ? 'pain-description-error' : undefined}
             className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-[150ms] hover:border-foreground/30"
             {...register('description')}
           />
           {errors.description?.message && (
-            <p className="mt-1 text-xs text-danger" role="alert">
+            <p id="pain-description-error" className="mt-1 text-xs text-danger" role="alert">
               {errors.description.message}
             </p>
           )}

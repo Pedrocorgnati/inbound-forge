@@ -1,0 +1,73 @@
+{
+  "_comment": "SLOs extraídos dos RNFs do PRD (seção Requisitos Não Funcionais). SLO-SPEC.md não existe ainda — executar /slo-create após F11.",
+  "_source": "PRD.md — Performance: TTFB < 800ms, Healthcheck < 500ms, Client-nav < 200ms",
+  "global": {
+    "error_rate_max": 0.01,
+    "http_req_failed_max": 0.05
+  },
+  "scenarios": {
+    "health_basic": {
+      "description": "GET /api/health — healthcheck público",
+      "type": "API leitura",
+      "p95_ms": 500,
+      "p99_ms": 1000,
+      "source": "PRD RNF: Healthcheck API < 500ms"
+    },
+    "health_v1": {
+      "description": "GET /api/v1/health — healthcheck com DB + Redis",
+      "type": "API leitura",
+      "p95_ms": 500,
+      "p99_ms": 1000,
+      "source": "PRD RNF: Healthcheck API < 500ms (inclui ping DB + Redis)"
+    },
+    "login": {
+      "description": "POST /api/auth/session — autenticação Supabase",
+      "type": "Autenticação",
+      "p95_ms": 800,
+      "p99_ms": 2000,
+      "source": "PRD RNF: TTFB < 800ms"
+    },
+    "knowledge_cases": {
+      "description": "GET /api/knowledge/cases — listagem de cases",
+      "type": "API leitura",
+      "p95_ms": 400,
+      "p99_ms": 800,
+      "source": "Default: GET leitura"
+    },
+    "knowledge_pains": {
+      "description": "GET /api/knowledge/pains — listagem de dores",
+      "type": "API leitura",
+      "p95_ms": 400,
+      "p99_ms": 800,
+      "source": "Default: GET leitura"
+    },
+    "knowledge_threshold": {
+      "description": "GET /api/knowledge/progress — threshold do motor de temas",
+      "type": "API leitura",
+      "p95_ms": 400,
+      "p99_ms": 800,
+      "source": "Default: GET leitura"
+    },
+    "themes_list": {
+      "description": "GET /api/v1/themes — listagem de temas com score",
+      "type": "API leitura",
+      "p95_ms": 400,
+      "p99_ms": 800,
+      "source": "Default: GET leitura"
+    },
+    "blog_public": {
+      "description": "GET /api/blog-articles — blog público (SSG/ISR)",
+      "type": "Página estática (ISR)",
+      "p95_ms": 500,
+      "p99_ms": 1000,
+      "source": "PRD RNF: TTFB < 800ms; ADR-0005 ISR"
+    },
+    "analytics_funnel": {
+      "description": "GET /api/v1/analytics/funnel — funil de conversão",
+      "type": "Operação pesada",
+      "p95_ms": 2000,
+      "p99_ms": 5000,
+      "source": "Default: operação de agregação/relatório"
+    }
+  }
+}

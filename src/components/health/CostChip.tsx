@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
+import { cn, formatCurrency } from '@/lib/utils'
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip'
+import { ROUTES } from '@/constants/routes'
 
 interface CostTotals {
   totalUSD: number
@@ -52,14 +53,15 @@ export function CostChip() {
     <Tooltip>
       <TooltipTrigger asChild>
         <Link
-          href="/health"
+          href={ROUTES.HEALTH}
           data-testid="cost-chip"
           className={cn(
             'inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium transition-colors hover:opacity-80',
             colorClass
           )}
         >
-          {totals ? `$${cost.toFixed(2)}/mes` : '$--.--/mes'}
+          {/* TASK-14 ST002 (CL-210): USD canonico (API costs) via formatCurrency */}
+          {totals ? `${formatCurrency(cost, 'USD')}/mes` : '$--.--/mes'}
         </Link>
       </TooltipTrigger>
       <TooltipContent side="bottom" className="space-y-1">
@@ -67,7 +69,7 @@ export function CostChip() {
           totals.breakdown.map((item) => (
             <div key={item.service} className="flex items-center justify-between gap-4 text-xs">
               <span>{item.service}</span>
-              <span className="font-medium">${item.costUSD.toFixed(2)}</span>
+              <span className="font-medium">{formatCurrency(item.costUSD, 'USD')}</span>
             </div>
           ))
         ) : (

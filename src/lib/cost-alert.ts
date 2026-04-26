@@ -2,6 +2,8 @@
 // SCHEMA NOTE: AlertLog real schema: type, severity, message, resolved, resolvedAt, createdAt
 // No service, operatorId, metadata fields. Encoding: type='cost_threshold:anthropic' for dedup.
 import { prisma } from '@/lib/prisma'
+import { getMonthlyCostThresholdUsd } from '@/lib/settings/system-settings'
+import { getMonthlyTotalAll } from '@/lib/cost-tracking'
 
 const COST_ALERT_THRESHOLD = 0.8   // 80%
 const COST_EXCEEDED_THRESHOLD = 1.0 // 100%
@@ -104,4 +106,32 @@ export async function checkCostAlerts(
       })
     }
   }
+}
+
+// Intake-Review TASK-5 ST001 (CL-225): alerta baseado em threshold USD configuravel.
+// Disparado apos trackCost (cost-tracking.ts) ou manualmente.
+export async function shouldAlertMonthlyCost(): Promise<{ alert: boolean; spend: number; threshold: number }> {
+  const threshold = await getMonthlyCostThresholdUsd()
+  const spend = await getMonthlyTotalAll()
+  return { alert: threshold > 0 && spend >= threshold, spend, threshold }
+}
+
+export async function checkMonthlyCostThreshold(): Promise<void> {
+  const { alert, spend, threshold } = await shouldAlertMonthlyCost()
+  if (!alert) return
+
+  const alertType = 'monthly_cost_threshold:usd'
+  const existing = await prisma.alertLog.findFirst({
+    where: { type: alertType, resolved: false },
+  })
+  if (existing) return
+
+  await prisma.alertLog.create({
+    data: {
+      type: alertType,
+      severity: 'critical',
+      message: `Custo mensal acumulado US$${spend.toFixed(2)} atingiu o threshold configurado de US$${threshold.toFixed(2)}.`,
+      resolved: false,
+    },
+  })
 }

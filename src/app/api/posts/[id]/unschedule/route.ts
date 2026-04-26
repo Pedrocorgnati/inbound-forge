@@ -8,18 +8,19 @@ import { PublishingQueueService } from '@/lib/services/publishing-queue.service'
 import { PostService } from '@/lib/services/post.service'
 
 interface RouteParams {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export async function POST(_request: NextRequest, { params }: RouteParams) {
+  const { id } = await params
   const { response } = await requireSession()
   if (response) return response
 
   try {
-    const post = await PostService.findById(params.id)
+    const post = await PostService.findById(id)
     if (!post) return notFound('Post não encontrado')
 
-    const result = await PublishingQueueService.unschedule(params.id)
+    const result = await PublishingQueueService.unschedule(id)
     return ok(result)
   } catch {
     return internalError()

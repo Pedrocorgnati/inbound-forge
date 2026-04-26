@@ -334,7 +334,7 @@ export function AssetUploadZone({ onUploadComplete }: AssetUploadZoneProps) {
                   {upload.status === 'uploading' && (
                     <div className="h-1.5 rounded-full bg-muted overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-primary transition-all duration-300"
+                        className="h-full rounded-full bg-primary transition-[width] duration-300"
                         style={{ width: `${upload.progress}%` }}
                         role="progressbar"
                         aria-valuenow={upload.progress}

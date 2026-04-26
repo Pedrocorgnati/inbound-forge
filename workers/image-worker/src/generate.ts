@@ -24,6 +24,8 @@ export interface GenerateImageOptions {
   prompt:          string
   contentPieceId?: string | null
   format?:         'png' | 'webp'
+  /** TASK-2 ST003 — override de roteamento Ideogram/Flux por template. */
+  backgroundNeedsText?: boolean
 }
 
 /**
@@ -45,6 +47,7 @@ export async function generateImage(
     prompt,
     contentPieceId,
     format = 'webp',
+    backgroundNeedsText,
   } = opts
 
   const dimensions  = IMAGE_DIMENSIONS[templateType]
@@ -60,11 +63,18 @@ export async function generateImage(
     dimensions,
     { IDEOGRAM_API_KEY: env.IDEOGRAM_API_KEY, FAL_API_KEY: env.FAL_API_KEY },
     signal,
-    brandColor
+    brandColor,
+    { backgroundNeedsText }
   )
 
   // 3. Determine which provider was actually used (best effort)
-  const providerUsed: ImageProvider = selectProvider(templateType)
+  //    TASK-2 ST003 — respeita override de needsText (Ideogram para texto, Flux senao).
+  const providerUsed: ImageProvider =
+    backgroundNeedsText === true
+      ? 'ideogram'
+      : backgroundNeedsText === false
+        ? 'flux'
+        : selectProvider(templateType)
 
   // 4. Compose SVG overlay on background
   const finalBuffer = await composeFinalImage(svgString, backgroundBuffer, dimensions, format)
