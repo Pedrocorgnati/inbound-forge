@@ -17,12 +17,14 @@ import type { PublishingPost } from '@/types/publishing'
 interface MonthViewProps {
   posts: Record<string, PublishingPost[]>
   startDate: Date
+  /** TASK-11 ST005 — clique em dia vazio abre PostFormDrawer (M11.4 / G-001). */
+  onSlotClick?: (slotId: string) => void
 }
 
 const DAY_HEADERS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
 const MAX_VISIBLE_POSTS = 3
 
-export function MonthView({ posts, startDate }: MonthViewProps) {
+export function MonthView({ posts, startDate, onSlotClick }: MonthViewProps) {
   const monthStart = startOfMonth(startDate)
   const monthEnd = endOfMonth(startDate)
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 })
@@ -70,10 +72,14 @@ export function MonthView({ posts, startDate }: MonthViewProps) {
               const dayNumber = date.getDate()
               const isToday = key === today
 
+              const isEmpty = dayPosts.length === 0
+
               return (
                 <DroppableSlot
                   key={key}
                   slotId={key}
+                  isEmpty={isEmpty}
+                  onSlotClick={onSlotClick}
                   className={cn(
                     'min-h-[80px] rounded-md border border-border p-1 transition-colors',
                     !isCurrentMonth && 'opacity-50',

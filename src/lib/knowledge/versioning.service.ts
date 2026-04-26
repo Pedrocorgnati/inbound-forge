@@ -9,6 +9,36 @@ const MODEL_MAP: Record<KbEntryType, string> = {
   objection: 'objection',
 }
 
+/**
+ * Numero maximo de versoes mantidas por entrada da base de conhecimento.
+ * Versoes alem desse limite sao podadas (mais antigas primeiro) apos cada novo snapshot.
+ * Why: tabela KnowledgeEntryVersion cresce linearmente sem retencao — em uso prolongado
+ * pode atingir centenas de milhares de linhas. 50 versoes cobrem o uso real do operador
+ * (restore historico) sem inflar o banco.
+ */
+export const MAX_VERSIONS_PER_ENTRY = 50
+
+async function pruneOldVersions(type: KbEntryType, entryId: string): Promise<number> {
+  const total = await prisma.knowledgeEntryVersion.count({
+    where: { entryType: type, entryId },
+  })
+  if (total <= MAX_VERSIONS_PER_ENTRY) return 0
+
+  const excess = total - MAX_VERSIONS_PER_ENTRY
+  const toDelete = await prisma.knowledgeEntryVersion.findMany({
+    where: { entryType: type, entryId },
+    orderBy: { version: 'asc' },
+    take: excess,
+    select: { id: true },
+  })
+  if (toDelete.length === 0) return 0
+
+  const result = await prisma.knowledgeEntryVersion.deleteMany({
+    where: { id: { in: toDelete.map(v => v.id) } },
+  })
+  return result.count
+}
+
 async function loadEntry(type: KbEntryType, entryId: string): Promise<Record<string, unknown> | null> {
   const model = (prisma as unknown as Record<string, { findUnique: (args: unknown) => Promise<unknown> }>)[
     MODEL_MAP[type]
@@ -47,6 +77,9 @@ export async function createSnapshot(input: {
       changeSummary: input.changeSummary ?? null,
     },
   })
+
+  await pruneOldVersions(input.type, input.entryId)
+
   return { id: created.id, version: created.version }
 }
 

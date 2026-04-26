@@ -7,11 +7,13 @@ import type { PublishingPost } from '@/types/publishing'
 interface WeekViewProps {
   posts: Record<string, PublishingPost[]>
   startDate: Date
+  /** TASK-11 ST005 — propaga clique em slot vazio. */
+  onSlotClick?: (slotId: string) => void
 }
 
 const DAY_HEADERS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
 
-export function WeekView({ posts, startDate }: WeekViewProps) {
+export function WeekView({ posts, startDate, onSlotClick }: WeekViewProps) {
   const today = format(new Date(), 'yyyy-MM-dd')
   const currentMonth = new Date().getMonth()
 
@@ -42,6 +44,7 @@ export function WeekView({ posts, startDate }: WeekViewProps) {
               posts={posts[key] ?? []}
               isToday={key === today}
               isCurrentMonth={date.getMonth() === currentMonth}
+              onSlotClick={onSlotClick}
             />
           )
         })}

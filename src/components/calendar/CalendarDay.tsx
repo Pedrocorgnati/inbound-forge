@@ -15,6 +15,8 @@ interface CalendarDayProps {
   isDropTarget?: boolean
   droppableRef?: (el: HTMLElement | null) => void
   droppableProps?: Record<string, unknown>
+  /** TASK-11 ST005 — clique em dia vazio abre PostFormDrawer (M11.4 / G-001). */
+  onSlotClick?: (slotId: string) => void
 }
 
 const MONTH_NAMES = [
@@ -30,15 +32,19 @@ export function CalendarDay({
   isDropTarget = false,
   droppableRef,
   droppableProps,
+  onSlotClick,
 }: CalendarDayProps) {
   const dayNumber = date.getDate()
   const monthName = MONTH_NAMES[date.getMonth()]
   const postCountLabel = posts.length > 0 ? `, ${posts.length} post${posts.length > 1 ? 's' : ''}` : ''
   const slotId = format(date, 'yyyy-MM-dd')
+  const isEmpty = posts.length === 0
 
   return (
     <DroppableSlot
       slotId={slotId}
+      isEmpty={isEmpty}
+      onSlotClick={onSlotClick}
       className={cn(
         'min-h-[100px] rounded-md border border-border p-1.5 transition-colors',
         !isCurrentMonth && 'opacity-50',

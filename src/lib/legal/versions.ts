@@ -1,7 +1,7 @@
 // Intake-Review TASK-21 ST006 (CL-OP-028): versioning explicito de Terms/Privacy.
 // Futuro: comparar com `user.acceptedTermsVersion` em middleware/layout e pedir re-aceite.
 
-export type LegalDoc = 'terms' | 'privacy'
+export type LegalDoc = 'terms' | 'privacy' | 'cookies'
 
 export interface LegalVersion {
   version: string
@@ -15,6 +15,10 @@ export const LEGAL_VERSIONS: Record<LegalDoc, LegalVersion> = {
     lastUpdated: '2026-04-24',
   },
   privacy: {
+    version: '1.0.0',
+    lastUpdated: '2026-04-24',
+  },
+  cookies: {
     version: '1.0.0',
     lastUpdated: '2026-04-24',
   },

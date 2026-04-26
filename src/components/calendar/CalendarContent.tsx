@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
+import { toast } from 'sonner'
 import {
   startOfWeek,
   endOfWeek,
@@ -11,7 +12,10 @@ import {
   subWeeks,
   addMonths,
   subMonths,
+  parseISO,
+  format,
 } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { LayoutList, LayoutGrid } from 'lucide-react'
 import { useCalendarPosts } from '@/hooks/useCalendarPosts'
 import { useDragReschedule } from '@/hooks/useDragReschedule'
@@ -19,6 +23,7 @@ import { CalendarGrid } from './CalendarGrid'
 import { CalendarListView } from './CalendarListView'
 import { CalendarFilters } from './CalendarFilters'
 import { PostRescheduleModal } from './PostRescheduleModal'
+import { PostFormDrawer } from './PostFormDrawer'
 import { CalendarDragProvider } from './CalendarDragContext'
 import type { PublishingPost } from '@/types/publishing'
 import { STORAGE_KEYS } from '@/constants/storage-keys'
@@ -48,6 +53,8 @@ export function CalendarContent() {
     statuses: ALL_STATUSES,
   })
   const [reschedulePost, setReschedulePost] = useState<PublishingPost | null>(null)
+  // TASK-11 ST004 (M11.4 / G-001) — slot selecionado abre PostFormDrawer
+  const [selectedSlot, setSelectedSlot] = useState<Date | null>(null)
 
   // Mobile detection — default to week view on small screens
   const [isMobile, setIsMobile] = useState(false)
@@ -186,6 +193,23 @@ export function CalendarContent() {
     setReschedulePost(null)
   }, [handleDragEnd])
 
+  // TASK-11 ST004 (M11.4 / G-001) — abre drawer com a data clicada.
+  const handleSlotClick = useCallback((slotId: string) => {
+    // slotId esta no formato 'yyyy-MM-dd'. Mantem horario padrao 09:00 local.
+    const base = parseISO(slotId)
+    if (Number.isNaN(base.getTime())) return
+    base.setHours(9, 0, 0, 0)
+    setSelectedSlot(base)
+  }, [])
+
+  const handlePostCreated = useCallback(() => {
+    if (selectedSlot) {
+      const dateLabel = format(selectedSlot, "dd 'de' MMMM", { locale: ptBR })
+      toast.success(`Post criado para ${dateLabel}`)
+    }
+    refetch()
+  }, [selectedSlot, refetch])
+
   return (
     <CalendarDragProvider onDragEnd={handleDragEnd}>
     <div data-testid="calendar-content" className="space-y-6">
@@ -235,6 +259,7 @@ export function CalendarContent() {
           currentDate={currentDate}
           onPeriodChange={handleListPeriodChange}
           onReschedule={setReschedulePost}
+          onSlotClick={handleSlotClick}
           isLoading={isLoading}
         />
       ) : (
@@ -246,6 +271,7 @@ export function CalendarContent() {
           view={view}
           onViewChange={handleViewChange}
           onPeriodChange={handlePeriodChange}
+          onSlotClick={handleSlotClick}
           isLoading={isLoading}
         />
       )}
@@ -256,6 +282,14 @@ export function CalendarContent() {
         open={reschedulePost !== null}
         onClose={() => setReschedulePost(null)}
         onReschedule={handleReschedule}
+      />
+
+      {/* TASK-11 ST004 — Drawer de criacao acionado por clique em data vazia */}
+      <PostFormDrawer
+        open={selectedSlot !== null}
+        defaultDate={selectedSlot ?? undefined}
+        onClose={() => setSelectedSlot(null)}
+        onCreated={handlePostCreated}
       />
     </div>
     </CalendarDragProvider>

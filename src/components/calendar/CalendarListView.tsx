@@ -15,6 +15,12 @@ interface CalendarListViewProps {
   currentDate: Date
   onPeriodChange: (direction: 'prev' | 'next' | 'today') => void
   onReschedule: (post: PublishingPost) => void
+  /**
+   * TASK-11 ST005 — propaga clique em data vazia para abrir PostFormDrawer.
+   * Em list-view, e exposto via botao "Criar post para hoje" no empty state
+   * (UX expandida por TASK-14 / G-004 — empty state contextual).
+   */
+  onSlotClick?: (slotId: string) => void
   isLoading?: boolean
 }
 
@@ -42,6 +48,7 @@ export function CalendarListView({
   currentDate,
   onPeriodChange,
   onReschedule,
+  onSlotClick,
   isLoading = false,
 }: CalendarListViewProps) {
   const sortedDates = Object.keys(posts).sort()
@@ -93,6 +100,15 @@ export function CalendarListView({
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <Calendar className="mb-4 h-12 w-12 text-muted-foreground/30" aria-hidden />
           <p className="text-sm text-muted-foreground">Nenhum post agendado neste período</p>
+          {onSlotClick && (
+            <button
+              type="button"
+              onClick={() => onSlotClick(format(new Date(), 'yyyy-MM-dd'))}
+              className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            >
+              Criar post para hoje
+            </button>
+          )}
         </div>
       ) : (
         <div className="space-y-6">

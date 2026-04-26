@@ -17,6 +17,8 @@ interface CalendarGridProps {
   view: CalendarViewType
   onViewChange: (view: CalendarViewType) => void
   onPeriodChange: (direction: 'prev' | 'next' | 'today') => void
+  /** TASK-11 ST005 — clique em data vazia abre PostFormDrawer no caller. */
+  onSlotClick?: (slotId: string) => void
   isLoading: boolean
 }
 
@@ -49,6 +51,7 @@ export function CalendarGrid({
   view,
   onViewChange,
   onPeriodChange,
+  onSlotClick,
   isLoading,
 }: CalendarGridProps) {
   const hasPosts = Object.keys(posts).length > 0
@@ -128,9 +131,9 @@ export function CalendarGrid({
       ) : !hasPosts ? (
         <EmptyCalendar />
       ) : view === 'week' ? (
-        <WeekView posts={posts} startDate={startDate} />
+        <WeekView posts={posts} startDate={startDate} onSlotClick={onSlotClick} />
       ) : (
-        <MonthView posts={posts} startDate={startDate} />
+        <MonthView posts={posts} startDate={startDate} onSlotClick={onSlotClick} />
       )}
     </div>
   )

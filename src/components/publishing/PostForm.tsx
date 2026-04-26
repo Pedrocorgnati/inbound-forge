@@ -11,15 +11,37 @@ import { PUBLISHING_CHANNELS } from '@/lib/constants/publishing'
 
 interface PostFormProps {
   onSuccess?: () => void
+  /**
+   * Data sugerida para o agendamento (usada por PostFormDrawer ao abrir
+   * a partir de uma data vazia no calendario). Se ausente, comportamento
+   * preservado (campo de data inicia vazio).
+   */
+  defaultDate?: Date
 }
 
 type ChannelKey = keyof typeof PUBLISHING_CHANNELS
 
-export function PostForm({ onSuccess }: PostFormProps) {
+/**
+ * Converte um Date para o formato aceito por <input type="datetime-local">
+ * (`YYYY-MM-DDTHH:mm`) preservando o horario local. Retorna `undefined`
+ * para entradas invalidas.
+ */
+function toDateTimeLocalValue(date?: Date): string | undefined {
+  if (!date || Number.isNaN(date.getTime())) return undefined
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  )
+}
+
+export function PostForm({ onSuccess, defaultDate }: PostFormProps) {
   const formId = useId()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const initialScheduledAt = toDateTimeLocalValue(defaultDate)
 
   const {
     register,
@@ -39,7 +61,7 @@ export function PostForm({ onSuccess }: PostFormProps) {
       ctaText: '',
       ctaUrl: '',
       imageUrl: '',
-      scheduledAt: undefined,
+      scheduledAt: initialScheduledAt as CreatePostInput['scheduledAt'],
     },
   })
 
