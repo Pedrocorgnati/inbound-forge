@@ -152,9 +152,9 @@
       "FAILED": "Failed"
     },
     "angle": {
-      "AGGRESSIVE": "Aggressive — Amplifies pain and urgency",
-      "CONSULTIVE": "Consultive — Educates and demonstrates expertise",
-      "AUTHORIAL": "Authorial — Success case and social proof"
+      "AGGRESSIVE": "Direct",
+      "CONSULTIVE": "Consultative",
+      "AUTHORIAL": "Authorial"
     },
     "channel": {
       "INSTAGRAM": "Instagram",
@@ -165,6 +165,10 @@
     "regenerate": "Regenerate",
     "approve": "Approve",
     "reject": "Reject",
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject"
+    },
     "generating": "Generating content...",
     "approveSuccess": "Content approved successfully!",
     "rejectSuccess": "Content rejected.",
@@ -374,7 +378,28 @@
     "ERR-500": "Internal server error",
     "generic": "Something went wrong. Please try again.",
     "networkError": "Connection error. Check your internet connection.",
-    "externalServiceDown": "{service} unavailable — try again in {retryAfter}s"
+    "externalServiceDown": "{service} unavailable — try again in {retryAfter}s",
+    "content": {
+      "CONTENT_001": "Access denied. You don't have permission for this resource.",
+      "CONTENT_002": "Content not found.",
+      "CONTENT_050": "Invalid operation for the current content state.",
+      "CONTENT_051": "Add at least one pain point or success story to the theme before generating angles.",
+      "CONTENT_052": "The AI service returned an error. Please try again shortly.",
+      "CONTENT_053": "The AI response came in an invalid format. Please try again.",
+      "CONTENT_060": "This content has already been approved.",
+      "CONTENT_061": "Select an angle before approving.",
+      "CONTENT_062": "The rejection reason must be at least 10 characters long.",
+      "CONTENT_063": "Could not analyze rejection patterns.",
+      "CONTENT_070": "You've reached the daily adaptation limit.",
+      "CONTENT_071": "Adaptation service temporarily unavailable. Please try again soon.",
+      "CONTENT_072": "The adapted text was truncated to fit the channel limit.",
+      "CONTENT_080": "No content found for this theme.",
+      "CONTENT_090": "Angle not found.",
+      "CONTENT_091": "Version not found.",
+      "CONTENT_092": "You can't restore the current version.",
+      "SYS_001": "AI service temporarily unavailable. Please try again soon.",
+      "DB_002": "Operation failed. Please try again."
+    }
   },
   "empty": {
     "noContent": "No content yet",
@@ -402,7 +427,15 @@
   },
   "calendar": {
     "title": "Editorial Calendar",
-    "description": "Plan and schedule your publications"
+    "description": "Plan and schedule your publications",
+    "empty": {
+      "week": "No posts scheduled this week. Why not create the first one?",
+      "month": "No posts scheduled this month.",
+      "list": "Your list is empty.",
+      "filtered": "No posts match the current filters ({channels}).",
+      "cta": "Create first post",
+      "clearFilters": "Clear filters"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -556,5 +589,63 @@
     "blocked": "Regeneration cap reached",
     "success": "Theme regenerated",
     "error": "Failed to regenerate"
+  },
+  "utm": {
+    "title": "UTM Links",
+    "subtitle": "UTM link management for conversion tracking",
+    "channel": "Channel",
+    "generate": "Generate UTM",
+    "generating": "Generating UTM link...",
+    "retry": "Try again",
+    "copiedSuccess": "UTM link generated and copied!",
+    "copyError": "Error copying link",
+    "generateError": "Error generating UTM link",
+    "urlLabel": "Generated UTM URL",
+    "copyLabel": "Copy UTM link",
+    "generateLabel": "Generate UTM link",
+    "retryLabel": "Try generating UTM again",
+    "channelSelect": "Select UTM channel"
+  },
+  "conversions": {
+    "type": "Conversion type",
+    "typeRequired": "Please select a conversion type.",
+    "dateLabel": "Date",
+    "dateRequired": "Date is required.",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Conversion details (optional)",
+    "notesMaxLength": "Maximum 500 characters.",
+    "submitting": "Registering...",
+    "submit": "Register Conversion",
+    "successToast": "Conversion registered!",
+    "errorToast": "Error registering conversion",
+    "options": {
+      "CONVERSATION": "Conversation",
+      "MEETING": "Meeting",
+      "PROPOSAL": "Proposal"
+    }
+  },
+  "attribution": {
+    "title": "Attribution",
+    "loadError": "Could not load attribution.",
+    "fetchError": "Failed to load attribution",
+    "empty": "Attribution not determined — no UTM link",
+    "inferred": "(estimated)",
+    "inferredTitle": "Attribution estimated by channel and time window correlation",
+    "channel": "Channel",
+    "campaign": "Campaign",
+    "confidence": "Confidence",
+    "confidenceLabel": "{percent}% confidence",
+    "assistedTouches": "Assisted Touches",
+    "recalculate": "Recalculate",
+    "recalculating": "Recalculating...",
+    "recalculateSuccess": "Attribution recalculated",
+    "recalculateError": "Error recalculating attribution",
+    "recalculateFailure": "Failed to recalculate",
+    "typeLabel": "Attribution type: {label}",
+    "types": {
+      "FIRST_TOUCH": "First Touch",
+      "ASSISTED_TOUCH": "Assisted",
+      "INFERRED": "Inferred"
+    }
   }
 }

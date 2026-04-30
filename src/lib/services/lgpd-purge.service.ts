@@ -7,11 +7,15 @@
  * consolidado com contagens; nao grava por-lead para evitar audit bloat
  * (o lead em si deixa de existir e a decisao de purga vale para o batch).
  *
- * Divergencia com src/lib/lgpd/retention.ts:
- *   - retention.ts anonimiza Leads (contactInfo=null) ao expirar updatedAt
- *   - este servico DELETA Leads ao expirar createdAt (spec TASK-1)
- *   - retention.ts continua responsavel por AlertLog/ApiUsageLog (fora do escopo)
- * Ver RUNBOOK-LGPD.md secao "Convivencia com retention.ts".
+ * Politica consolidada (PA-02):
+ *   - retention.ts: anonimiza contactInfo quando updatedAt > 2 anos ("ultimo contato") — operacao soft
+ *   - este servico: hard delete de Leads onde createdAt > 2 anos E contactInfo ja eh null
+ *     Usar createdAt como anchor evita o problema de updatedAt ser renovado pela propria
+ *     anonimizacao de retention.ts (Prisma @updatedAt toca o campo em qualquer update).
+ *   - Gate contactInfo: null garante que so registros ja anonimizados sao deletados.
+ *     NOTA: o hard delete remove o registro inteiro (incl. name, company, notes, contactHash)
+ *     satisfazendo LGPD art. 16 eliminacao total de PII.
+ *   - Sequencia: retention.ts roda diariamente (anonimiza); purge roda semanalmente (deleta).
  */
 import 'server-only'
 import { prisma } from '@/lib/prisma'
@@ -45,8 +49,11 @@ export async function purgeExpiredLeads(opts: PurgeOptions = {}): Promise<PurgeR
   const now = new Date()
   const cutoff = new Date(now.getTime() - cutoffYears * 365 * 24 * 60 * 60 * 1000)
 
+  // PA-02: leads com mais de N anos (createdAt < cutoff = "mais antigos que N anos")
+  // + contactInfo nulo (ja anonimizados pelo retention.ts) — hard delete total do registro
   const leadWhere = {
     createdAt: { lt: cutoff },
+    contactInfo: null,
     status: { notIn: ['LEGAL_HOLD' as const] },
   }
   const scrapedWhere = {

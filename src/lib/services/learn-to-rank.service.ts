@@ -82,7 +82,7 @@ export async function calculateLtrScores(): Promise<ThemeScoreUpdate[]> {
   const themes = await (prisma as any).theme.findMany({
     select: {
       id: true,
-      conversionScore: true,
+      priorityScore: true,
       contentPieces: {
         select: {
           posts: {
@@ -132,7 +132,7 @@ export async function calculateLtrScores(): Promise<ThemeScoreUpdate[]> {
     const themeConversionRate = posts > 0 ? conversions / posts : 0
 
     let adjustment = 1.0
-    let newScore = theme.conversionScore
+    let newScore = theme.priorityScore
 
     if (posts >= LTR_THRESHOLDS.minPostsPerTheme) {
       if (conversions === 0) {
@@ -142,12 +142,12 @@ export async function calculateLtrScores(): Promise<ThemeScoreUpdate[]> {
         // Boost: tema acima da média de conversão
         adjustment = LTR_THRESHOLDS.boostMultiplier
       }
-      newScore = Math.min(100, Math.max(0, Math.round(theme.conversionScore * adjustment)))
+      newScore = Math.min(100, Math.max(0, Math.round(theme.priorityScore * adjustment)))
     }
 
     updates.push({
       themeId: theme.id,
-      previousScore: theme.conversionScore,
+      previousScore: theme.priorityScore,
       newScore,
       adjustment,
       postsCount: posts,
@@ -168,7 +168,8 @@ export async function applyLtrScores(updates: ThemeScoreUpdate[]): Promise<void>
       .map((u) =>
         prisma.theme.update({
           where: { id: u.themeId },
-          data: { conversionScore: u.newScore },
+          // MS13-B002: LTR ajusta o score composto.
+          data: { priorityScore: u.newScore },
         })
       )
   )

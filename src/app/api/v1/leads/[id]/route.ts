@@ -3,13 +3,14 @@
  * PATCH  /api/v1/leads/[id] — Atualizar lead (re-criptografa contactInfo se alterado)
  * DELETE /api/v1/leads/[id] — Deletar lead com auditLog
  */
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession, ok, notFound, validationError, internalError } from '@/lib/api-auth'
 import { UpdateLeadSchema } from '@/schemas/lead.schema'
 import { encryptPII, decryptPII } from '@/lib/crypto'
 import { auditLog } from '@/lib/audit'
 import { updateThemeConversionScore } from '@/lib/conversion-score'
+import { hashContactInfo, parseContactInfo } from '@/lib/leads/contact-hash'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -69,10 +70,23 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const existing = await prisma.lead.findUnique({ where: { id } })
     if (!existing) return notFound('Lead não encontrado')
 
-    // Re-criptografar contactInfo se fornecido (COMP-002)
+    // Re-criptografar contactInfo e recalcular hash (COMP-002, anti-duplicata)
     let contactInfo: string | null | undefined = undefined
+    let contactHash: string | null | undefined = undefined
     if (parsed.data.contactInfo !== undefined) {
-      contactInfo = parsed.data.contactInfo ? encryptPII(parsed.data.contactInfo) : null
+      if (parsed.data.contactInfo) {
+        contactInfo = encryptPII(parsed.data.contactInfo)
+        const parts = parseContactInfo(parsed.data.contactInfo)
+        contactHash = hashContactInfo(parts)
+        // Verificar se o novo hash colide com outro lead (exceto o próprio)
+        const duplicate = await prisma.lead.findUnique({ where: { contactHash }, select: { id: true } })
+        if (duplicate && duplicate.id !== id) {
+          return NextResponse.json({ error: 'DUPLICATE', existingLeadId: duplicate.id }, { status: 409 })
+        }
+      } else {
+        contactInfo = null
+        contactHash = null
+      }
     }
 
     const statusChanged =
@@ -82,7 +96,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       where: { id },
       data: {
         ...parsed.data,
-        ...(contactInfo !== undefined ? { contactInfo } : {}),
+        ...(contactInfo !== undefined ? { contactInfo, contactHash } : {}),
         ...(statusChanged ? { statusUpdatedAt: new Date() } : {}),
       },
     })

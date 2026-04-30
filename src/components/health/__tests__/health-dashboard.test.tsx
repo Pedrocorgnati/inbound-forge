@@ -40,6 +40,10 @@ vi.mock('@/components/health/HealthCard', () => ({
   ),
 }))
 
+vi.mock('@/components/health/RateLimitPanel', () => ({
+  RateLimitPanel: () => <div data-testid="rate-limit-panel" />,
+}))
+
 import { HealthDashboard } from '../HealthDashboard'
 import { useHealthPolling } from '@/hooks/useHealthPolling'
 

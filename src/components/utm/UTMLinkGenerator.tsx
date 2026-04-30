@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Copy, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,6 +27,7 @@ const MEDIUM_OPTIONS = [
 ]
 
 export function UTMLinkGenerator({ postId, themeSlug, onGenerated }: UTMLinkGeneratorProps) {
+  const t = useTranslations('utm')
   const [state, setState] = useState<GeneratorState>('idle')
   const [medium, setMedium] = useState<MediumValue>(UTM_MEDIUMS.WHATSAPP)
   const [generatedUrl, setGeneratedUrl] = useState('')
@@ -47,7 +49,7 @@ export function UTMLinkGenerator({ postId, themeSlug, onGenerated }: UTMLinkGene
 
       if (!res.ok) {
         const data = await res.json().catch(() => null)
-        throw new Error(data?.error ?? 'Erro ao gerar UTM link')
+        throw new Error(data?.error ?? t('generateError'))
       }
 
       const result = await res.json()
@@ -57,34 +59,34 @@ export function UTMLinkGenerator({ postId, themeSlug, onGenerated }: UTMLinkGene
       onGenerated?.({ id: link.id, fullUrl: link.fullUrl, medium })
     } catch (err) {
       setState('error')
-      toast.error(err instanceof Error ? err.message : 'Erro ao gerar UTM link')
+      toast.error(err instanceof Error ? err.message : t('generateError'))
     }
   }
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(generatedUrl)
-      toast.success('UTM link gerado e copiado!')
+      toast.success(t('copiedSuccess'))
     } catch {
-      toast.error('Erro ao copiar link')
+      toast.error(t('copyError'))
     }
   }
 
   return (
     <div data-testid="utm-link-generator" className="space-y-4">
       <Select
-        label="Canal"
+        label={t('channel')}
         options={MEDIUM_OPTIONS}
         value={medium}
         onChange={(e) => setMedium(e.target.value as MediumValue)}
-        aria-label="Selecionar canal UTM"
+        aria-label={t('channelSelect')}
         data-testid="utm-channel-select"
       />
 
       {state === 'generating' && (
-        <div role="status" aria-label="Gerando UTM link..." data-testid="utm-skeleton-loader">
+        <div role="status" aria-label={t('generating')} data-testid="utm-skeleton-loader">
           <Skeleton variant="rectangle" className="h-11 w-full" />
-          <span className="sr-only">Gerando UTM link...</span>
+          <span className="sr-only">{t('generating')}</span>
         </div>
       )}
 
@@ -93,14 +95,14 @@ export function UTMLinkGenerator({ postId, themeSlug, onGenerated }: UTMLinkGene
           <Input
             value={generatedUrl}
             readOnly
-            aria-label="URL UTM gerada"
+            aria-label={t('urlLabel')}
             data-testid="utm-url-input"
           />
           <Button
             variant="outline"
             size="icon"
             onClick={handleCopy}
-            aria-label="Copiar link UTM"
+            aria-label={t('copyLabel')}
             data-testid="utm-copy-button"
           >
             <Copy className="h-4 w-4" aria-hidden />
@@ -112,10 +114,10 @@ export function UTMLinkGenerator({ postId, themeSlug, onGenerated }: UTMLinkGene
         <Button
           onClick={handleGenerate}
           data-testid="utm-generate-button"
-          aria-label="Gerar link UTM"
+          aria-label={t('generateLabel')}
         >
           <Link2 className="h-4 w-4" aria-hidden />
-          Gerar UTM
+          {t('generate')}
         </Button>
       )}
 
@@ -124,10 +126,10 @@ export function UTMLinkGenerator({ postId, themeSlug, onGenerated }: UTMLinkGene
           variant="outline"
           onClick={handleGenerate}
           data-testid="utm-retry-button"
-          aria-label="Tentar gerar UTM novamente"
+          aria-label={t('retryLabel')}
         >
           <Link2 className="h-4 w-4" aria-hidden />
-          Tentar novamente
+          {t('retry')}
         </Button>
       )}
     </div>

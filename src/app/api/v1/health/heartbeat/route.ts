@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireWorkerToken } from '@/lib/api-auth'
 import { HeartbeatSchema } from '@/schemas/health.schema'
+import { sendHealthDegradedEmail } from '@/lib/notifications/health-degraded.email'
 
 export const runtime = 'nodejs'
 
@@ -30,6 +31,16 @@ export async function POST(request: NextRequest) {
     update: { status, lastHeartbeat: new Date(), errorMessage: errorMessage ?? null },
     create: { type, status, lastHeartbeat: new Date(), errorMessage: errorMessage ?? null },
   })
+
+  // TASK-9/ST002 F-026: email assíncrono quando worker em ERROR (catch silencioso)
+  if (status === 'ERROR') {
+    void sendHealthDegradedEmail({
+      workerType: type,
+      status,
+      lastHeartbeat: new Date(),
+      errorMessage: errorMessage ?? null,
+    }).catch(() => void 0)
+  }
 
   return NextResponse.json({ success: true, message: 'Heartbeat registrado' })
 }

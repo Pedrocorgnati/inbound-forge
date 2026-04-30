@@ -15,8 +15,17 @@ vi.mock('@/lib/prisma', () => ({
 }))
 
 // Mock fetch global para simular Resend API
+// vi.stubGlobal em beforeEach garante que o mock substitui o interceptor do MSW
+// (que é instalado via server.listen() no beforeAll do vitest.setup.ts)
 const mockFetch = vi.fn()
-global.fetch = mockFetch
+
+beforeEach(() => {
+  vi.stubGlobal('fetch', mockFetch)
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('sendAlertEmail — sem configuração de email', () => {
   beforeEach(() => {

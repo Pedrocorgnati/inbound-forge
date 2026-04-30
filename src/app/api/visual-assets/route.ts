@@ -13,10 +13,25 @@ import { visualAssetService } from '@/lib/services/visual-asset.service'
 import { listAssetsSchema, uploadAssetSchema } from '@/lib/validators/visual-asset'
 import { ASSET_UPLOAD_CONFIG } from '@/lib/constants/asset-library'
 
+// REMEDIATION M9-G-005: magic-byte detection para prevenir MIME spoof no endpoint canonico
+function detectMime(buffer: Buffer): string | null {
+  if (buffer.length >= 8 &&
+      buffer[0] === 0x89 && buffer[1] === 0x50 &&
+      buffer[2] === 0x4e && buffer[3] === 0x47) return 'image/png'
+  if (buffer.length >= 3 &&
+      buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'image/jpeg'
+  if (buffer.length >= 12 &&
+      buffer.slice(0, 4).toString() === 'RIFF' &&
+      buffer.slice(8, 12).toString() === 'WEBP') return 'image/webp'
+  const head = buffer.slice(0, 512).toString('utf8').trimStart()
+  if (head.startsWith('<?xml') || head.startsWith('<svg')) return 'image/svg+xml'
+  return null
+}
+
 // ─── GET /api/visual-assets ────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
-  const { response: authResponse } = await requireSession()
+  const { user, response: authResponse } = await requireSession()
   if (authResponse) return authResponse
 
   const { searchParams } = request.nextUrl
@@ -31,7 +46,7 @@ export async function GET(request: NextRequest) {
     return validationError(parsed.error)
   }
 
-  const result = await visualAssetService.list(parsed.data)
+  const result = await visualAssetService.list({ ...parsed.data, uploadedBy: user!.id })
   return okPaginated(result.items, {
     page:  result.page,
     limit: parsed.data.limit,
@@ -42,7 +57,16 @@ export async function GET(request: NextRequest) {
 // ─── POST /api/visual-assets ───────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
-  const { response: authResponse } = await requireSession()
+  // Content-Length pre-check — rejeita antes de ler o body para evitar memory exhaustion
+  const contentLength = parseInt(request.headers.get('content-length') ?? '0', 10)
+  if (contentLength > ASSET_UPLOAD_CONFIG.maxFileSizeBytes * 1.15) {
+    return NextResponse.json(
+      { error: { code: 'VAL_003', message: 'Requisição excede tamanho máximo permitido (5MB).' } },
+      { status: 413 }
+    )
+  }
+
+  const { user, response: authResponse } = await requireSession()
   if (authResponse) return authResponse
 
   let formData: FormData
@@ -85,6 +109,16 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // VAL_004 — magic-byte verification (anti MIME spoof)
+  const fileBuffer = Buffer.from(await file.arrayBuffer())
+  const detectedMime = detectMime(fileBuffer)
+  if (detectedMime && detectedMime !== file.type) {
+    return NextResponse.json(
+      { error: { code: 'VAL_004', message: 'Tipo do arquivo não corresponde ao conteúdo real.' } },
+      { status: 400 }
+    )
+  }
+
   // Validação Zod completa
   const parsed = uploadAssetSchema.safeParse({ file, altText })
   if (!parsed.success) {
@@ -92,7 +126,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const asset = await visualAssetService.upload(file, altText)
+    const asset = await visualAssetService.upload(file, user!.id, altText)
     return ok(asset, 201)
   } catch (err) {
     console.error('[POST /api/visual-assets] Erro no upload:', err)

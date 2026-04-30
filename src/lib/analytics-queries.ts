@@ -87,13 +87,18 @@ export async function getFunnelMetrics(period: unknown, userId: string): Promise
 }
 
 /**
- * Ranking de temas por conversionScore.
- * Inclui trend (últimos 7 dias) e channelBreakdown.
- * SEC-008: sem PII — apenas IDs e contagens
+ * Ranking de temas com taxa de conversão real do período.
+ * MS13-B001/B002: payload separa `realConversionRate` (CX-01) de `priorityScore` (composto).
+ * - sortBy=realConversionRate: ordena por taxa real calculada do período
+ * - sortBy=priorityScore: ordena por score composto persistido em Theme.priorityScore
+ * - sortBy=leadsCount: ordena por número de leads no período
+ *
+ * Trend: contagens semanais reais de conversões nos últimos 7 buckets de 7 dias.
+ * SEC-008: sem PII — apenas IDs e contagens.
  */
 export async function getThemeRanking(
   userId: string,
-  sortBy: 'conversionScore' | 'leadsCount' = 'conversionScore',
+  sortBy: 'realConversionRate' | 'priorityScore' | 'leadsCount' | 'conversionScore' = 'realConversionRate',
   page = 1,
   limit = 20,
   period: unknown = '30d',
@@ -101,20 +106,36 @@ export async function getThemeRanking(
 ): Promise<{ items: ThemeRanking[]; total: number }> {
   const validPeriod = validatePeriod(period)
   const from = periodStartDate(validPeriod)
-  const cacheKey = `analytics:themes:${validPeriod}:${sortBy}:${sortDir}:${page}:${limit}:${userId}`
+  // MS13-B001: aceita "conversionScore" como alias legado de realConversionRate.
+  const normalizedSort: 'realConversionRate' | 'priorityScore' | 'leadsCount' =
+    sortBy === 'conversionScore' ? 'realConversionRate' : sortBy
+  const cacheKey = `analytics:themes:v2:${validPeriod}:${normalizedSort}:${sortDir}:${page}:${limit}:${userId}`
 
   return getCachedAnalytics(cacheKey, ANALYTICS_CACHE_TTL.themeRanking, async () => {
+    // MS13-B001: realConversionRate exige cálculo do período → não há ORDER BY direto
+    // no banco para esse campo. Estratégia: ordenar no banco por priorityScore/leads quando
+    // possível, e fazer a ordenação final em memória quando o sort for por taxa real.
+    const dbOrderBy =
+      normalizedSort === 'priorityScore'
+        ? { priorityScore: sortDir }
+        : normalizedSort === 'leadsCount'
+        ? { firstTouchLeads: { _count: sortDir } }
+        : { priorityScore: sortDir as 'asc' | 'desc' } // pré-ordem coerente com priority enquanto recalculamos
+
+    // Quando ordenando por realConversionRate, paginação ocorre após ordenação em memória.
+    const skipAtDb = normalizedSort === 'realConversionRate' ? 0 : (page - 1) * limit
+    const takeAtDb = normalizedSort === 'realConversionRate' ? Math.max(limit * 5, 100) : limit
+
     const [themes, total] = await Promise.all([
       prisma.theme.findMany({
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: sortBy === 'conversionScore'
-          ? { conversionScore: sortDir }
-          : { firstTouchLeads: { _count: sortDir } },
+        skip: skipAtDb,
+        take: takeAtDb,
+        orderBy: dbOrderBy,
         select: {
           id: true,
           title: true,
           conversionScore: true,
+          priorityScore: true,
           firstTouchLeads: {
             where: { createdAt: { gte: from } },
             select: {
@@ -128,11 +149,14 @@ export async function getThemeRanking(
       prisma.theme.count(),
     ])
 
-    const items: ThemeRanking[] = themes.map((theme) => {
+    let mapped: ThemeRanking[] = themes.map((theme) => {
       const leadsCount = theme.firstTouchLeads.length
       const conversionsCount = theme.firstTouchLeads.reduce(
         (acc, lead) => acc + lead.conversionEvents.length, 0
       )
+      const realConversionRate = leadsCount > 0
+        ? Math.round((conversionsCount / leadsCount) * 100)
+        : 0
 
       // Channel breakdown
       const channelMap = new Map<string, number>()
@@ -149,13 +173,28 @@ export async function getThemeRanking(
       return {
         themeId: theme.id,
         themeName: theme.title,
-        conversionScore: theme.conversionScore,
+        realConversionRate,
+        priorityScore: theme.priorityScore,
+        // Compat: clientes legados leem o mesmo campo "conversionScore" como taxa real.
+        conversionScore: realConversionRate,
         leadsCount,
         conversionsCount,
-        trend: [] as number[], // populated below
+        trend: [] as number[],
         channelBreakdown,
       }
     })
+
+    // MS13-B001: ordenação em memória quando o sort é por taxa real do período.
+    if (normalizedSort === 'realConversionRate') {
+      mapped.sort((a, b) =>
+        sortDir === 'asc'
+          ? a.realConversionRate - b.realConversionRate
+          : b.realConversionRate - a.realConversionRate
+      )
+      mapped = mapped.slice((page - 1) * limit, (page - 1) * limit + limit)
+    }
+
+    const items = mapped
 
     // Trend: weekly conversion counts for last 7 weeks per theme
     const themeIds = items.map((i) => i.themeId)
@@ -206,34 +245,36 @@ export async function getChannelPerformance(
   const cacheKey = `analytics:channel:${validPeriod}:${userId}`
 
   return getCachedAnalytics(cacheKey, ANALYTICS_CACHE_TTL.channelPerformance, async () => {
-    const leads = await prisma.lead.groupBy({
-      by: ['channel'],
+    // MS13-B005: Single query elimina N+1. Carrega leads do período com seus conversionEvents
+    // em uma única roundtrip e agrega em memória.
+    const leadsWithEvents = await prisma.lead.findMany({
       where: { channel: { not: null }, createdAt: { gte: from } },
-      _count: { id: true },
+      select: {
+        channel: true,
+        conversionEvents: {
+          where: { occurredAt: { gte: from } },
+          select: { id: true },
+        },
+      },
     })
 
-    const results: ChannelPerformance[] = []
-
-    for (const group of leads) {
-      if (!group.channel) continue
-      const leadsCount = group._count.id
-      const conversionsCount = await prisma.conversionEvent.count({
-        where: {
-          lead: { channel: group.channel, createdAt: { gte: from } },
-          occurredAt: { gte: from },
-        },
-      })
-      const conversionRate = leadsCount > 0
-        ? Math.round((conversionsCount / leadsCount) * 100)
-        : 0
-
-      results.push({
-        channel: group.channel,
-        leadsCount,
-        conversionsCount,
-        conversionRate,
-      })
+    const channelMap = new Map<string, { leadsCount: number; conversionsCount: number }>()
+    for (const lead of leadsWithEvents) {
+      if (!lead.channel) continue
+      const cur = channelMap.get(lead.channel) ?? { leadsCount: 0, conversionsCount: 0 }
+      cur.leadsCount += 1
+      cur.conversionsCount += lead.conversionEvents.length
+      channelMap.set(lead.channel, cur)
     }
+
+    const results: ChannelPerformance[] = Array.from(channelMap.entries()).map(([channel, agg]) => ({
+      channel: channel as ChannelPerformance['channel'],
+      leadsCount: agg.leadsCount,
+      conversionsCount: agg.conversionsCount,
+      conversionRate: agg.leadsCount > 0
+        ? Math.round((agg.conversionsCount / agg.leadsCount) * 100)
+        : 0,
+    }))
 
     return results
   })

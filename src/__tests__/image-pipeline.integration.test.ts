@@ -7,28 +7,40 @@ import { generateBackground } from '@/lib/image-pipeline'
 import * as ideogramModule from '@/lib/ai/ideogram'
 import * as fluxModule from '@/lib/ai/flux'
 
-jest.mock('@/lib/ai/ideogram')
-jest.mock('@/lib/ai/flux')
+vi.mock('@/lib/ai/ideogram')
+vi.mock('@/lib/ai/flux')
 
-const mockIdeogramGenerate = jest.spyOn(ideogramModule, 'generateWithIdeogram')
-const mockFluxGenerate = jest.spyOn(fluxModule, 'generateWithFlux')
+const mockIdeogramGenerate = vi.spyOn(ideogramModule, 'generateWithIdeogram')
+const mockFluxGenerate = vi.spyOn(fluxModule, 'generateWithFlux')
 
-// Mock fetch for image download
-global.fetch = jest.fn()
-
-const mockImageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47]) // fake PNG header
+// Minimal valid 1x1 white PNG (67 bytes) — sharp can process this
+const mockImageBuffer = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk' +
+  'YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  'base64'
+)
 
 beforeEach(() => {
-  jest.clearAllMocks()
+  vi.clearAllMocks()
+  // vi.stubGlobal em beforeEach (após server.listen() do MSW no beforeAll) garante
+  // que o mock substitui o interceptor do MSW, evitando chamada com Request object
+  vi.stubGlobal('fetch', vi.fn())
   process.env['IDEOGRAM_API_KEY'] = 'test-ideogram-key'
   process.env['FAL_API_KEY'] = 'test-flux-key'
 
-  // Default: successful image download
-  ;(global.fetch as jest.Mock).mockResolvedValue({
+  // Default: successful image download — use slice to get exact bytes (avoids Node buffer pool issue)
+  ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
     ok: true,
-    arrayBuffer: async () => mockImageBuffer.buffer,
+    arrayBuffer: async () => mockImageBuffer.buffer.slice(
+      mockImageBuffer.byteOffset,
+      mockImageBuffer.byteOffset + mockImageBuffer.byteLength
+    ),
     status: 200,
   })
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
 })
 
 describe('generateBackground fallback chain', () => {
@@ -52,7 +64,7 @@ describe('generateBackground fallback chain', () => {
       seed: 42,
       prompt: 'abstract background',
     })
-    jest.spyOn(fluxModule, 'extractFluxImageUrl').mockReturnValue('https://fal.ai/image.jpg')
+    vi.spyOn(fluxModule, 'extractFluxImageUrl').mockReturnValue('https://fal.ai/image.jpg')
 
     const result = await generateBackground({ prompt: 'abstract background', width: 1200, height: 630 })
 
@@ -90,7 +102,7 @@ describe('generateBackground fallback chain', () => {
       seed: 1,
       prompt: 'test',
     })
-    jest.spyOn(fluxModule, 'extractFluxImageUrl').mockReturnValue('https://fal.ai/img.jpg')
+    vi.spyOn(fluxModule, 'extractFluxImageUrl').mockReturnValue('https://fal.ai/img.jpg')
 
     const result = await generateBackground({ prompt: 'test' })
     expect(result.provider).toBe('flux')

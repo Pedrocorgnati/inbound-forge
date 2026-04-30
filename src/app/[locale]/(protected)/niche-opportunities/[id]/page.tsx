@@ -21,10 +21,12 @@ export default async function NicheOpportunityDetailPage({ params }: PageProps) 
           id: true,
           title: true,
           status: true,
-          conversionScore: true,
+          conversionScore: true, // taxa real (CX-01)
+          priorityScore: true,   // composto (MS13-B002)
           lastPublishedAt: true,
         },
-        orderBy: { conversionScore: 'desc' },
+        // MS13-B002: priorização operativa usa o composto.
+        orderBy: { priorityScore: 'desc' },
         take: 20,
       },
     },
@@ -95,7 +97,7 @@ export default async function NicheOpportunityDetailPage({ params }: PageProps) 
                     </Link>
                   </td>
                   <td className="px-2 py-1 text-muted-foreground">{t.status}</td>
-                  <td className="px-2 py-1 tabular-nums">{t.conversionScore}</td>
+                  <td className="px-2 py-1 tabular-nums">{t.priorityScore}</td>
                   <td className="px-2 py-1 text-xs text-muted-foreground">
                     {t.lastPublishedAt
                       ? new Date(t.lastPublishedAt).toLocaleDateString()

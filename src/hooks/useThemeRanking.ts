@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { AnalyticsPeriod, ThemeRanking } from '@/types/analytics'
 
-type SortBy = 'conversionScore' | 'leadsCount'
+// MS13-B001: SortBy alinhado com a separação semântica entre taxa real e composto.
+type SortBy = 'realConversionRate' | 'priorityScore' | 'leadsCount'
 type SortDir = 'asc' | 'desc'
 
 interface UseThemeRankingResult {
@@ -17,7 +18,7 @@ interface UseThemeRankingResult {
 
 export function useThemeRanking(
   period: AnalyticsPeriod,
-  sortBy: SortBy = 'conversionScore',
+  sortBy: SortBy = 'realConversionRate',
   page = 1,
   limit = 20,
   sortDir: SortDir = 'desc'

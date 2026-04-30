@@ -27,7 +27,7 @@ export function OnboardingProgress({
       {Array.from({ length: totalSteps }, (_, i) => {
         const stepId = i + 1
         const isCompleted = completedSteps.includes(stepId)
-        const isCurrent = stepId === currentStep
+        const isCurrent = stepId === currentStep && !isCompleted
         const isPending = !isCompleted && !isCurrent
 
         return (

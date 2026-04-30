@@ -126,7 +126,10 @@ export async function POST(request: NextRequest) {
         thumbnailUrl: asset.thumbnailUrl,
         fileSize:     asset.fileSizeBytes,
       },
-      { status: 201 },
+      {
+        status: 201,
+        headers: { 'X-Deprecated': 'Use /api/visual-assets instead', 'Deprecation': 'true' },
+      },
     )
   } catch (err) {
     // rollback de storage se o INSERT falhou apos upload

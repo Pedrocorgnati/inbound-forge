@@ -7,9 +7,9 @@ import path from 'path'
  * Usa banco de dados de teste separado — NUNCA mock de banco.
  *
  * Para executar:
- *   bun run test:integration
+ *   npm run test:integration
  *   # ou com env local:
- *   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/inbound_forge_test bun run test:integration
+ *   DATABASE_URL=postgresql://postgres:postgres@localhost:5432/inbound_forge_test npm run test:integration
  *
  * Requer:
  *   .env.test configurado com DATABASE_URL apontando para banco de teste
@@ -24,13 +24,10 @@ export default defineConfig(({ mode }) => {
       environment: 'node',
       include: ['tests/integration/**/*.test.ts'],
       setupFiles: ['tests/integration/setup.ts'],
-      // Sequencial — testes de integração compartilham banco
+      // Sequencial — testes de integração compartilham banco (Vitest 4: poolOptions
+      // foi removido; usamos fileParallelism=false para forçar execução sequencial).
       pool: 'forks',
-      poolOptions: {
-        forks: {
-          singleFork: true,
-        },
-      },
+      fileParallelism: false,
       testTimeout: 30_000,
       hookTimeout: 30_000,
       reporters: ['verbose'],

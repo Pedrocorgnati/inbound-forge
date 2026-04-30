@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { LeadsList } from '@/components/leads/LeadsList'
+import { LeadsLayoutClient } from '@/components/leads/LeadsLayoutClient'
 import { LeadExportButton } from '@/components/leads/LeadExportButton'
 
 export const metadata: Metadata = {
@@ -28,7 +28,7 @@ export default async function LeadsPage({ params }: LeadsPageProps) {
         <LeadExportButton />
       </div>
 
-      <LeadsList locale={locale} />
+      <LeadsLayoutClient locale={locale} />
     </div>
   )
 }

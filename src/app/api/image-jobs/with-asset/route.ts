@@ -24,9 +24,14 @@ import { IMAGE_JOB_STATUS }           from '@/constants/status'
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
+const TEMPLATE_TYPES = [
+  'CAROUSEL', 'STATIC_LANDSCAPE', 'STATIC_PORTRAIT',
+  'VIDEO_COVER', 'BEFORE_AFTER', 'ERROR_CARD', 'SOLUTION_CARD', 'BACKSTAGE_CARD',
+] as const
+
 const WithAssetSchema = z.object({
   contentPieceId: z.string().uuid({ message: 'contentPieceId deve ser UUID válido.' }),
-  templateId:     z.string().uuid({ message: 'templateId deve ser UUID válido.' }),
+  templateType:   z.enum(TEMPLATE_TYPES, { message: 'templateType inválido.' }),
   assetId:        z.string().uuid({ message: 'ID de asset inválido.' }),          // VAL_002
   templateProps:  z.record(z.unknown()).optional().default({}),                    // Props dinâmicas para o template
 })
@@ -57,7 +62,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { contentPieceId, templateId, assetId, templateProps } = parsed.data
+  const { contentPieceId, templateType, assetId, templateProps } = parsed.data
 
   // Verificar ContentPiece existe
   const piece = await prisma.contentPiece.findUnique({ where: { id: contentPieceId } })
@@ -82,24 +87,14 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Buscar template para obter templateType
-  const template = await prisma.imageTemplate.findUnique({ where: { id: templateId } })
-  if (!template) {
-    return NextResponse.json(
-      { error: { code: 'VAL_001', message: 'Template não encontrado.' } },
-      { status: 404 }
-    )
-  }
-
   // Criar ImageJob com status PROCESSING
   const job = await prisma.imageJob.create({
     data: {
       contentPieceId,
-      templateId,
-      templateType: template.imageType,
-      provider:     'operator-asset',
-      status:       IMAGE_JOB_STATUS.PROCESSING,
-      retryCount:   0,
+      templateType,
+      provider:   'operator-asset',
+      status:     IMAGE_JOB_STATUS.PROCESSING,
+      retryCount: 0,
     },
   })
 
@@ -107,7 +102,7 @@ export async function POST(request: NextRequest) {
   try {
     const result = await assetComposeService.composeWithAsset({
       jobId:         job.id,
-      templateType:  template.templateType as Parameters<typeof assetComposeService.composeWithAsset>[0]['templateType'],
+      templateType,
       templateProps,
       assetId,
     })

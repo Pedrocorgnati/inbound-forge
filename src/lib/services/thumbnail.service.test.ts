@@ -84,13 +84,14 @@ describe('thumbnailService', () => {
         Buffer.from('fake-png'),
         'image/png',
         '1234567890-abc123.png',
+        'user-abc123',
         supabase,
         'bucket'
       )
 
       expect(result).toContain('thumbnails/')
       expect(mockStorageUpload).toHaveBeenCalledWith(
-        'visual-assets/thumbnails/1234567890-abc123.webp',
+        'user-abc123/thumbnails/1234567890-abc123.webp',
         expect.any(Buffer),
         expect.objectContaining({ contentType: 'image/webp' })
       )
@@ -104,6 +105,7 @@ describe('thumbnailService', () => {
         Buffer.from('fake-png'),
         'image/png',
         'test.png',
+        'user-abc123',
         supabase,
         'bucket'
       )

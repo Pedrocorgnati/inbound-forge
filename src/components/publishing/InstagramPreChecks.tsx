@@ -53,7 +53,31 @@ export function InstagramPreChecks({
         const res = await fetch('/api/instagram/status')
         if (!res.ok) throw new Error('Erro ao verificar status')
         const json = await res.json()
-        setStatus(json.data ?? json)
+        const raw = json.data ?? json
+        // Mapper: traduz contrato da API (`/api/instagram/status` → InstagramService.getStatus)
+        // para o shape esperado pelo componente. API retorna
+        // { configured, accountOk, tokenExpiry, rateLimitRemaining, postsToday },
+        // componente espera { canPublish, tokenValid, requestsUsed, tokenExpiresSoon, tokenExpiresAt }.
+        const tokenExpiry = raw.tokenExpiry ?? null
+        const configured = !!raw.configured
+        const rateLimitRemaining = Number(raw.rateLimitRemaining ?? 0)
+        const isExpired = !!tokenExpiry?.isExpired
+        const daysUntilExpiry = Number(tokenExpiry?.daysUntilExpiry ?? Infinity)
+        // TokenStatus nao expoe expiresAt — derivamos a partir de daysUntilExpiry.
+        const computedExpiresAt = Number.isFinite(daysUntilExpiry)
+          ? new Date(Date.now() + daysUntilExpiry * 86_400_000).toISOString()
+          : null
+        const mapped: InstagramStatus = {
+          canPublish: Boolean(configured && raw.accountOk && rateLimitRemaining > 0 && !isExpired),
+          requestsUsed: Math.max(0, 200 - rateLimitRemaining),
+          postsToday: Number(raw.postsToday ?? 0),
+          // Token so e considerado valido se a integracao esta configurada — evita
+          // falso-positivo "token OK" quando nao ha credenciais.
+          tokenValid: configured && !isExpired,
+          tokenExpiresSoon: configured && daysUntilExpiry <= 30,
+          tokenExpiresAt: computedExpiresAt,
+        }
+        setStatus(mapped)
       } catch {
         setStatus(null)
       } finally {

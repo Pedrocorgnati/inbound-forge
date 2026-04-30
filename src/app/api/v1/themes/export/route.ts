@@ -58,7 +58,8 @@ export async function GET(request: NextRequest) {
     const scoreRange: Record<string, number> = {}
     if (scoreGte !== undefined) scoreRange.gte = scoreGte
     if (filters.scoreMax !== undefined) scoreRange.lte = filters.scoreMax
-    if (Object.keys(scoreRange).length > 0) where.conversionScore = scoreRange
+    // MS13-B002: filtros do export operativo de temas usam o composto.
+    if (Object.keys(scoreRange).length > 0) where.priorityScore = scoreRange
 
     if (filters.painCategory) {
       where.nicheOpportunity = {
@@ -88,7 +89,8 @@ export async function GET(request: NextRequest) {
         for (let i = 0; i < pages; i++) {
           const batch = await prisma.theme.findMany({
             where,
-            orderBy: { conversionScore: 'desc' },
+            // MS13-B002: export operativo ordena por composto (priorityScore).
+            orderBy: { priorityScore: 'desc' },
             skip: i * PAGE_SIZE,
             take: PAGE_SIZE,
             select: {

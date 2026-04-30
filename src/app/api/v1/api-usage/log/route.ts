@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { requireSession, ok, validationError, internalError } from '@/lib/api-auth'
+import { requireSession, ok, validationError, badRequest, internalError } from '@/lib/api-auth'
 import { trackApiUsage } from '@/lib/api-usage-tracker'
 import { ApiUsageLogBodySchema } from '@/schemas/health.schema'
 
@@ -12,9 +12,9 @@ export async function POST(request: NextRequest) {
   const { user, response } = await requireSession()
   if (response) return response
 
-  // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para input inválido
+  // RESOLVED: G007 — 400 para JSON inválido (sintaxe), 422 para schema inválido (semântica)
   let body: unknown
-  try { body = await request.json() } catch { return validationError(new Error('Body inválido')) }
+  try { body = await request.json() } catch { return badRequest('Body inválido') }
 
   const parsed = ApiUsageLogBodySchema.safeParse(body)
   if (!parsed.success) return validationError(parsed.error)

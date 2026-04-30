@@ -126,19 +126,44 @@ components:
 
     LeadInput:
       type: object
-      required: [contactInfo, lgpdConsent, funnelStage]
+      required: [name, contactInfo, lgpdConsent]
       properties:
-        themeId:
+        name:
           type: string
+          maxLength: 255
+          description: "Nome do lead (obrigatório)"
+        company:
+          type: string
+          maxLength: 255
         contactInfo:
           type: string
-          description: "Será criptografado AES-256-GCM (COMP-002)"
+          description: "Email/telefone — criptografado AES-256-GCM antes de persistir (COMP-002)"
         lgpdConsent:
           type: boolean
-          description: "LGPD: deve ser true. Retorna VAL_001 se false."
+          description: "LGPD: deve ser true. Retorna 422 se false (VAL_001)."
+        lgpdConsentAt:
+          type: string
+          format: date-time
+        channel:
+          type: string
+          enum: [BLOG, LINKEDIN, INSTAGRAM]
         funnelStage:
           type: string
           enum: [AWARENESS, CONSIDERATION, DECISION]
+        firstTouchAt:
+          type: string
+          format: date-time
+        firstTouchPostId:
+          type: string
+          format: uuid
+          description: "Opcional — inferido do primeiro post do operador se omitido"
+        firstTouchThemeId:
+          type: string
+          format: uuid
+          description: "Opcional — inferido do primeiro tema do operador se omitido"
+        notes:
+          type: string
+          maxLength: 5000
 
     HealthResponse:
       type: object
@@ -1241,6 +1266,53 @@ paths:
           description: Post not found
 
   # ─── Leads (extended) ──────────────────────────────────────────────────
+  /api/v1/leads/{id}/journey:
+    get:
+      tags: [Leads]
+      summary: "Get lead journey timeline (module-13) — PA-01"
+      description: |
+        Retorna lista cronológica de eventos do lead:
+        - `post-view`: primeiro contato com o conteúdo (inferido de firstTouchAt)
+        - `utm-click`: clique no link UTM do post de first-touch (inferido se UTMLink existe)
+        - `form-submit`: submissão do formulário (inferido de createdAt)
+        - `conversion`: eventos de conversão registrados manualmente
+        - `email-open`: requer infraestrutura de webhook de email (fora do escopo M12)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Lista de eventos de jornada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, type, occurredAt]
+                      properties:
+                        id:
+                          type: string
+                        type:
+                          type: string
+                          enum: [post-view, utm-click, form-submit, conversion, email-open]
+                        occurredAt:
+                          type: string
+                          format: date-time
+        "401":
+          $ref: '#/components/responses/Unauthorized'
+        "404":
+          description: Lead não encontrado
+
   /api/v1/leads/{id}/conversions:
     get:
       tags: [Leads]

@@ -70,6 +70,8 @@ export async function listPublished(
 
 /**
  * Retorna artigo PUBLISHED por slug para rota pública.
+ * Tenta primeiro pelo slug principal (BlogArticle.slug), depois pelo slug traduzido
+ * (BlogArticleTranslation.slug com status APPROVED) — suporta hreflang com slugs distintos por locale.
  * Retorna null se não existir ou não for PUBLISHED (BLOG_080).
  */
 export async function findBySlug(slug: string): Promise<BlogArticle | null> {
@@ -77,9 +79,26 @@ export async function findBySlug(slug: string): Promise<BlogArticle | null> {
     where: { slug, status: 'PUBLISHED' },
     select: publicFullSelect,
   })
-  if (!article) return null
-  // hreflang: JsonValue no Prisma → HreflangConfig na interface de domínio
-  return { ...article, hreflang: article.hreflang as HreflangConfig | null }
+  if (article) return { ...article, hreflang: article.hreflang as HreflangConfig | null }
+
+  // Fallback: slug pode pertencer a uma tradução aprovada (M10.15 — hreflang com slug próprio)
+  const translation = await (prisma as unknown as {
+    blogArticleTranslation: {
+      findFirst: (args: unknown) => Promise<{ articleId: string } | null>
+    }
+  }).blogArticleTranslation.findFirst({
+    where: { slug, status: 'APPROVED' },
+    select: { articleId: true },
+  }).catch(() => null)
+
+  if (!translation?.articleId) return null
+
+  const parent = await prisma.blogArticle.findFirst({
+    where: { id: translation.articleId, status: 'PUBLISHED' },
+    select: publicFullSelect,
+  })
+  if (!parent) return null
+  return { ...parent, hreflang: parent.hreflang as HreflangConfig | null }
 }
 
 /**

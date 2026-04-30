@@ -21,7 +21,8 @@
     "test:state-machines": "vitest run src/lib/state-machines/__tests__",
     "test:integration": "vitest run --config vitest.integration.config.ts --reporter=verbose",
     "test:integration:watch": "vitest --config vitest.integration.config.ts",
-    "test:all": "vitest run && vitest run --config vitest.integration.config.ts",
+    "test:perf": "vitest run --config vitest.perf.config.ts",
+    "test:all": "vitest run && vitest run --config vitest.integration.config.ts && vitest run --config vitest.perf.config.ts",
     "validate:i18n": "npx ts-node scripts/validate-i18n.ts",
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",
@@ -108,6 +109,7 @@
     "lodash": "4.18.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.2",
     "@next/bundle-analyzer": "^14.2.21",
     "@playwright/test": "^1.59.1",
     "@stryker-mutator/core": "^9.6.0",
@@ -127,6 +129,7 @@
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.21",
     "jest-axe": "^10.0.0",
+    "msw": "^2.13.6",
     "postcss": "^8.5.1",
     "tailwindcss": "^3.4.17",
     "ts-node": "^10.9.2",

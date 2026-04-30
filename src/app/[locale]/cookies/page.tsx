@@ -91,7 +91,7 @@ export default async function CookiesPage({ params }: CookiesPageProps) {
                   <td className="py-2">Sessao</td>
                 </tr>
                 <tr className="border-b border-border/50">
-                  <td className="py-2 pr-4 font-mono text-xs">if_consent</td>
+                  <td className="py-2 pr-4 font-mono text-xs">lgpd_consent</td>
                   <td className="py-2 pr-4">Funcional</td>
                   <td className="py-2 pr-4">Armazenar preferencias de consentimento</td>
                   <td className="py-2">12 meses</td>

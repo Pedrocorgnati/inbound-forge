@@ -95,10 +95,12 @@ export class ThemeScoringService {
       breakdown.finalScore * (1 + asovBonus) * (1 + geoBonus.totalBonus) * ltrMultiplier,
     )
 
+    // MS13-B002: composto vai para priorityScore. conversionScore fica reservado
+    // para taxa real (CX-01), atualizada por updateThemeConversionScore().
     await prisma.theme.update({
       where: { id: themeId },
       data: {
-        conversionScore: finalScoreWithAsov,
+        priorityScore: finalScoreWithAsov,
         painRelevanceScore: breakdown.painRelevance,
         caseStrengthScore: breakdown.caseStrength,
         geoMultiplier: breakdown.geoMultiplier,
@@ -168,10 +170,11 @@ export class ThemeScoringService {
       const multiplier = conversionMultiplier(conversions, publishedPosts)
       const finalScore = Math.min(1, baseScore * multiplier)
 
+      // MS13-B002: composto vai para priorityScore.
       return prisma.theme.update({
         where: { id: theme.id },
         data: {
-          conversionScore: finalScore,
+          priorityScore: finalScore,
           painRelevanceScore: breakdown.painRelevance,
           caseStrengthScore: breakdown.caseStrength,
           geoMultiplier: breakdown.geoMultiplier,

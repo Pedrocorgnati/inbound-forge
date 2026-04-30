@@ -3,6 +3,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -25,17 +26,13 @@ interface ConversionFormProps {
   onSuccess?: () => void
 }
 
-const CONVERSION_OPTIONS = [
-  { value: 'CONVERSATION', label: 'Conversa' },
-  { value: 'MEETING', label: 'Reuniao' },
-  { value: 'PROPOSAL', label: 'Proposta' },
-] as const
 
 function getTodayString(): string {
   return new Date().toISOString().split('T')[0]
 }
 
 export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormProps) {
+  const t = useTranslations('conversions')
   const {
     register,
     handleSubmit,
@@ -56,6 +53,12 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
   const selectedType = watch('conversionType')
   const notesValue = watch('notes') ?? ''
 
+  const conversionOptions = [
+    { value: 'CONVERSATION' as const, label: t('options.CONVERSATION') },
+    { value: 'MEETING' as const, label: t('options.MEETING') },
+    { value: 'PROPOSAL' as const, label: t('options.PROPOSAL') },
+  ]
+
   async function onSubmit(data: ConversionFormData) {
     const res = await fetch('/api/v1/conversions', {
       method: 'POST',
@@ -71,11 +74,11 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
 
     if (!res.ok) {
       const json = await res.json().catch(() => null)
-      toast.error(json?.error ?? 'Erro ao registrar conversao')
+      toast.error(json?.error ?? t('errorToast'))
       return
     }
 
-    toast.success('Conversao registrada!')
+    toast.success(t('successToast'))
     onSuccess?.()
   }
 
@@ -91,7 +94,7 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
 
       {/* Tipo de conversao */}
       <fieldset className="flex flex-col gap-1">
-        <legend className="mb-1 text-sm font-medium text-foreground">Tipo de conversao</legend>
+        <legend className="mb-1 text-sm font-medium text-foreground">{t('type')}</legend>
         <RadioGroup
           value={selectedType}
           onValueChange={(val) =>
@@ -102,7 +105,7 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
           aria-describedby={errors.conversionType ? 'conversion-type-error' : undefined}
           data-testid="conversion-field-type"
         >
-          {CONVERSION_OPTIONS.map((opt) => (
+          {conversionOptions.map((opt) => (
             <RadioGroupItem
               key={opt.value}
               value={opt.value}
@@ -121,7 +124,7 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
 
       {/* Data */}
       <div className="flex flex-col gap-1">
-        <Label htmlFor="conversion-occurred-at">Data</Label>
+        <Label htmlFor="conversion-occurred-at">{t('dateLabel')}</Label>
         <input
           type="date"
           id="conversion-occurred-at"
@@ -141,11 +144,11 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
 
       {/* Observacoes */}
       <div className="flex flex-col gap-1">
-        <Label htmlFor="conversion-notes">Observacoes</Label>
+        <Label htmlFor="conversion-notes">{t('notesLabel')}</Label>
         <textarea
           id="conversion-notes"
           className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground transition-colors duration-[150ms] hover:border-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0 focus-visible:border-primary"
-          placeholder="Detalhes sobre a conversao (opcional)"
+          placeholder={t('notesPlaceholder')}
           maxLength={500}
           {...register('notes')}
           data-testid="conversion-field-notes"
@@ -160,10 +163,10 @@ export function ConversionForm({ leadId, themeId, onSuccess }: ConversionFormPro
         <Button
           type="submit"
           isLoading={isSubmitting}
-          loadingText="Registrando..."
+          loadingText={t('submitting')}
           data-testid="conversion-submit"
         >
-          Registrar Conversão
+          {t('submit')}
         </Button>
       </div>
     </form>

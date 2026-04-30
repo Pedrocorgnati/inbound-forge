@@ -35,6 +35,7 @@ export function ExampleTooltip({ exampleText, title, screenshotUrl }: Props) {
             {title && <p className="mb-1 text-sm font-medium">{title}</p>}
             <p className="whitespace-pre-line leading-relaxed">{exampleText}</p>
             {screenshotUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={screenshotUrl}
                 alt={title ?? 'Exemplo'}

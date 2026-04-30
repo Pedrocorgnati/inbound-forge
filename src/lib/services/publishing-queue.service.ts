@@ -208,9 +208,38 @@ export class PublishingQueueService {
 
     let processed = 0
     let failed = 0
-    const skipped = 0
+    let skipped = 0
+
+    // TASK-12 ST002 (G-002): kill-switch INSTAGRAM_PUBLISHING_LIVE.
+    // Avalia 1x por batch para minimizar chamadas ao PostHog. Se desligado,
+    // items Instagram permanecem PENDING com lastError sem consumir attempts.
+    const { isFeatureEnabled, FeatureFlags } = await import('@/lib/feature-flags')
+    const { logPublishAttempt } = await import('@/lib/audit/publish-audit')
+    const instagramLive = await isFeatureEnabled(FeatureFlags.INSTAGRAM_PUBLISHING_LIVE)
 
     for (const item of dueItems) {
+      // Skip Instagram items quando kill-switch ativo. Mantem status PENDING +
+      // agenda nextAttemptAt = now + 5min para permitir retomada quando flag voltar.
+      const channelLower = String(item.post.channel ?? '').toLowerCase()
+      if (!instagramLive && channelLower === 'instagram') {
+        await prisma.publishingQueue.update({
+          where: { postId: item.postId },
+          data: {
+            lastError: 'kill_switch_on (INSTAGRAM_PUBLISHING_LIVE=false)',
+            nextAttemptAt: new Date(Date.now() + 5 * 60 * 1000),
+            updatedAt: new Date(),
+          },
+        }).catch(() => {})
+        await logPublishAttempt({
+          postId: item.postId,
+          action: 'publish_blocked_kill_switch',
+          result: 'failure',
+          errorMessage: 'kill_switch_on',
+        }).catch(() => {})
+        skipped++
+        continue
+      }
+
       // Marcar como PROCESSING
       await prisma.publishingQueue.update({
         where: { postId: item.postId },
@@ -230,10 +259,11 @@ export class PublishingQueueService {
           data: { status: ContentStatus.SCHEDULED },
         })
 
-        await prisma.publishingQueue.update({
-          where: { postId: item.postId },
-          data: { status: QueueStatus.DONE, updatedAt: new Date() },
-        })
+        // RS-3: queue permanece PROCESSING ate o worker confirmar publish.
+        // Antes: status=DONE era setado aqui (no enfileiramento), criando
+        // ambiguidade entre "claim no Redis" vs "publicacao real concluida".
+        // Agora: PROCESSING -> DONE so apos o worker chamar a Graph API
+        // com sucesso. Falha do worker transiciona para FAILED via handleFailure.
 
         processed++
       } catch (err) {

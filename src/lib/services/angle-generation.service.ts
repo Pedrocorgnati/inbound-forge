@@ -17,6 +17,7 @@ import { CLAUDE_MODELS, CLAUDE_TIMEOUTS } from '@/lib/constants/content.constant
 import type { GenerateAnglesInput } from '@/lib/dtos/content-piece.dto'
 import type { GeneratedAngle } from '@/lib/types/content-generation.types'
 import { captureException } from '@/lib/sentry'
+import * as Sentry from '@sentry/nextjs'
 import { isServiceAvailable, ExternalService } from '@/lib/services/service-health'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -110,6 +111,7 @@ export class AngleGenerationService {
     const timeout = setTimeout(() => controller.abort(), CLAUDE_TIMEOUTS.ANGLE_GENERATION_MS)
 
     let claudeResponse
+    const t0 = performance.now()
     try {
       claudeResponse = await anthropic.messages.create(
         {
@@ -119,14 +121,40 @@ export class AngleGenerationService {
         },
         { signal: controller.signal as AbortSignal }
       )
+      const durationMs = Math.round(performance.now() - t0)
+      Sentry.addBreadcrumb({
+        category: 'claude.angle-generation',
+        message: 'angle-generation',
+        level: 'info',
+        data: {
+          model: CLAUDE_MODELS.ANGLE_GENERATION,
+          duration_ms: durationMs,
+          theme_id: themeId,
+          success: true,
+        },
+      })
     } catch (error) {
       clearTimeout(timeout)
+      const durationMs = Math.round(performance.now() - t0)
+      Sentry.addBreadcrumb({
+        category: 'claude.angle-generation',
+        message: 'angle-generation',
+        level: 'error',
+        data: {
+          model: CLAUDE_MODELS.ANGLE_GENERATION,
+          duration_ms: durationMs,
+          theme_id: themeId,
+          success: false,
+          error_class: error instanceof Error ? (error.constructor?.name ?? 'Error') : 'Unknown',
+        },
+      })
       if (error instanceof Error && (error.name === 'AbortError' || error.message.includes('abort'))) {
         throw new ContentBusinessRuleError('SYS_001', 'Serviço Claude temporariamente indisponível (timeout)')
       }
       throw new ContentBusinessRuleError('CONTENT_052', 'Serviço Claude retornou erro — tente novamente em instantes')
     }
     clearTimeout(timeout)
+    const claudeDurationMs = Math.round(performance.now() - t0)
 
     // Parse response
     const rawText = claudeResponse.content[0].type === 'text' ? claudeResponse.content[0].text : ''
@@ -197,10 +225,10 @@ export class AngleGenerationService {
     const outputTokens = claudeResponse.usage.output_tokens
     await Promise.all([
       prisma.apiUsageLog.create({
-        data: { service: 'anthropic', metric: 'input_tokens', value: inputTokens, cost: inputTokens * 0.000003 },
+        data: { service: 'anthropic', metric: 'input_tokens', value: inputTokens, cost: inputTokens * 0.000003, durationMs: claudeDurationMs },
       }),
       prisma.apiUsageLog.create({
-        data: { service: 'anthropic', metric: 'output_tokens', value: outputTokens, cost: outputTokens * 0.000015 },
+        data: { service: 'anthropic', metric: 'output_tokens', value: outputTokens, cost: outputTokens * 0.000015, durationMs: claudeDurationMs },
       }),
     ])
 

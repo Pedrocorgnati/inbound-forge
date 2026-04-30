@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { AlertCircle } from 'lucide-react'
-import { Modal } from '@/components/ui/modal'
+import { ResponsiveSheet } from '@/components/ui/responsive-sheet'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from '@/components/ui/toast'
@@ -145,7 +145,7 @@ export function ObjectionForm({
   }
 
   return (
-    <Modal
+    <ResponsiveSheet
       open={isOpen}
       onClose={handleClose}
       title={mode === 'create' ? 'Nova Objeção' : 'Editar Objeção'}
@@ -239,6 +239,6 @@ export function ObjectionForm({
           )}
         </fieldset>
       </div>
-    </Modal>
+    </ResponsiveSheet>
   )
 }

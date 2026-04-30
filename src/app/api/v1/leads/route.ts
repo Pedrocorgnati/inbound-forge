@@ -16,6 +16,9 @@ import { auditLog } from '@/lib/audit'
 import { hashContactInfo, parseContactInfo } from '@/lib/leads/contact-hash'
 import { buildSearchWhere } from '@/lib/search/text-search'
 import { NextResponse } from 'next/server'
+import { sendLeadCapturedEmail } from '@/lib/notifications/lead-captured.email'
+import { trackServerEvent } from '@/lib/ga4-measurement-protocol'
+import { GA4_EVENTS } from '@/constants/ga4-events'
 
 // GET /api/v1/leads
 export async function GET(request: NextRequest) {
@@ -95,10 +98,39 @@ export async function POST(request: NextRequest) {
   const parsed = CreateLeadSchema.safeParse(body)
   if (!parsed.success) return validationError(parsed.error)
 
-  // Verificar post de first-touch existe (SEC-007)
-  const post = await prisma.post.findUnique({ where: { id: parsed.data.firstTouchPostId } })
-  if (!post) {
-    return validationError(new Error('Post de first-touch não encontrado'))
+  // Resolver firstTouchPostId/ThemeId: preserva valores explícitos, infere apenas o que falta
+  let resolvedPostId = parsed.data.firstTouchPostId
+  let resolvedThemeId = parsed.data.firstTouchThemeId
+
+  if (!resolvedPostId || !resolvedThemeId) {
+    const defaultTheme = await prisma.theme.findFirst({
+      orderBy: { createdAt: 'asc' },
+      select: { id: true },
+    })
+    if (!defaultTheme) {
+      return validationError(new Error('Crie um tema antes de registrar leads'))
+    }
+    if (!resolvedThemeId) resolvedThemeId = defaultTheme.id
+
+    if (!resolvedPostId) {
+      const defaultPost = await prisma.post.findFirst({
+        where: { themeId: defaultTheme.id },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true },
+      })
+      if (!defaultPost) {
+        return validationError(new Error('Crie uma publicação antes de registrar leads'))
+      }
+      resolvedPostId = defaultPost.id
+    }
+  }
+
+  if (resolvedPostId && parsed.data.firstTouchPostId === resolvedPostId) {
+    // Verificar post fornecido explicitamente existe (SEC-007)
+    const post = await prisma.post.findUnique({ where: { id: resolvedPostId } })
+    if (!post) {
+      return validationError(new Error('Post de first-touch não encontrado'))
+    }
   }
 
   try {
@@ -128,8 +160,8 @@ export async function POST(request: NextRequest) {
 
     const lead = await prisma.lead.create({
       data: {
-        firstTouchPostId: parsed.data.firstTouchPostId,
-        firstTouchThemeId: parsed.data.firstTouchThemeId,
+        firstTouchPostId: resolvedPostId!,
+        firstTouchThemeId: resolvedThemeId!,
         name: parsed.data.name,
         company: parsed.data.company ?? null,
         contactInfo: encryptedContact,  // AES-256 encrypted — COMP-002
@@ -157,6 +189,32 @@ export async function POST(request: NextRequest) {
         firstTouchThemeId: lead.firstTouchThemeId,
       },
     })
+
+    // PA-04: incrementar UTMLink.clicks apenas quando postId veio explícito no payload
+    // (não quando foi resolvido por fallback) — evita inflate de métricas
+    if (parsed.data.firstTouchPostId) {
+      void prisma.uTMLink.updateMany({
+        where: { postId: resolvedPostId! },
+        data: { clicks: { increment: 1 } },
+      }).catch(() => void 0)
+    }
+
+    // TASK-9/ST002 F-026: email assíncrono sem PII (SEC-008)
+    void sendLeadCapturedEmail({
+      leadSource: lead.channel ?? null,
+      utmCampaign: null,
+      capturedAt: lead.firstTouchAt ?? new Date(),
+    }).catch(() => void 0)
+
+    // MS13-B006: GA4 Measurement Protocol server-side. SEC-008: sem PII (apenas channel, funnelStage, themeId).
+    void trackServerEvent({
+      name: GA4_EVENTS.LEAD_CREATED,
+      params: {
+        channel: lead.channel ?? 'unknown',
+        funnel_stage: lead.funnelStage ?? 'unknown',
+        theme_id: lead.firstTouchThemeId ?? '',
+      },
+    }).catch(() => void 0)
 
     // Retornar lead sem contactInfo descriptografado
     return ok({ ...lead, contactInfo: lead.contactInfo ? '●●●●●●' : null }, 201)

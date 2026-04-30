@@ -1,11 +1,12 @@
 'use client'
 
-import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { WeekView } from './WeekView'
 import { MonthView } from './MonthView'
+import { CalendarEmptyState } from './CalendarEmptyState'
 import type { PublishingPost } from '@/types/publishing'
 
 type CalendarViewType = 'week' | 'month'
@@ -19,6 +20,10 @@ interface CalendarGridProps {
   onPeriodChange: (direction: 'prev' | 'next' | 'today') => void
   /** TASK-11 ST005 — clique em data vazia abre PostFormDrawer no caller. */
   onSlotClick?: (slotId: string) => void
+  /** TASK-14 ST002 (G-004) — filtros ativos para empty state contextual. */
+  activeFilters?: string[]
+  /** TASK-14 ST002 — callback para limpar filtros do empty state filtrado. */
+  onClearFilters?: () => void
   isLoading: boolean
 }
 
@@ -35,15 +40,6 @@ function SkeletonGrid() {
   )
 }
 
-function EmptyCalendar() {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <Calendar className="mb-4 h-12 w-12 text-muted-foreground/40" />
-      <p className="text-sm text-muted-foreground">Nenhum post agendado neste periodo</p>
-    </div>
-  )
-}
-
 export function CalendarGrid({
   posts,
   startDate,
@@ -52,6 +48,8 @@ export function CalendarGrid({
   onViewChange,
   onPeriodChange,
   onSlotClick,
+  activeFilters,
+  onClearFilters,
   isLoading,
 }: CalendarGridProps) {
   const hasPosts = Object.keys(posts).length > 0
@@ -129,7 +127,12 @@ export function CalendarGrid({
       {isLoading ? (
         <SkeletonGrid />
       ) : !hasPosts ? (
-        <EmptyCalendar />
+        <CalendarEmptyState
+          variant={view}
+          activeFilters={activeFilters}
+          onClearFilters={onClearFilters}
+          onCreatePost={() => onSlotClick?.(format(new Date(), 'yyyy-MM-dd'))}
+        />
       ) : view === 'week' ? (
         <WeekView posts={posts} startDate={startDate} onSlotClick={onSlotClick} />
       ) : (

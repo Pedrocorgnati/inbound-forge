@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
 export const CreateLeadSchema = z.object({
-  firstTouchPostId: z.string().uuid(),
-  firstTouchThemeId: z.string().uuid(),
+  firstTouchPostId: z.string().uuid().optional(),
+  firstTouchThemeId: z.string().uuid().optional(),
   name: z.string().min(1, 'Nome obrigatório'),
   company: z.string().min(1).max(255).optional(),
   contactInfo: z

@@ -12,11 +12,10 @@ export interface SelectProviderInput {
   templateType?: string
 }
 
-const OVERRIDE_ENV = process.env.FORCE_PROVIDER
-
 export function selectBackgroundProvider(input: SelectProviderInput): BackgroundProvider {
-  if (OVERRIDE_ENV === 'IDEOGRAM' || OVERRIDE_ENV === 'FLUX') {
-    return OVERRIDE_ENV
+  const override = process.env.FORCE_PROVIDER
+  if (override === 'IDEOGRAM' || override === 'FLUX') {
+    return override
   }
   return input.needsText ? 'IDEOGRAM' : 'FLUX'
 }

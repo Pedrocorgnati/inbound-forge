@@ -114,9 +114,20 @@ export async function createLead(formData: CreateLeadInput): Promise<ActionResul
 
     const parsed = CreateLeadSchema.parse(formData)
 
-    // Verificar post de first-touch (SEC-007)
-    const post = await prisma.post.findUnique({ where: { id: parsed.firstTouchPostId } })
-    if (!post) return actionError('Post de first-touch não encontrado')
+    // Resolver firstTouchPostId/ThemeId
+    let resolvedPostId = parsed.firstTouchPostId
+    let resolvedThemeId = parsed.firstTouchThemeId
+    if (!resolvedPostId || !resolvedThemeId) {
+      const defaultTheme = await prisma.theme.findFirst({ orderBy: { createdAt: 'asc' }, select: { id: true } })
+      if (!defaultTheme) return actionError('Crie um tema antes de registrar leads')
+      resolvedThemeId = defaultTheme.id
+      const defaultPost = await prisma.post.findFirst({ where: { themeId: defaultTheme.id }, orderBy: { createdAt: 'asc' }, select: { id: true } })
+      if (!defaultPost) return actionError('Crie uma publicação antes de registrar leads')
+      resolvedPostId = defaultPost.id
+    } else {
+      const post = await prisma.post.findUnique({ where: { id: resolvedPostId } })
+      if (!post) return actionError('Post de first-touch não encontrado')
+    }
 
     // Criptografar contactInfo (COMP-002)
     let encryptedContact: string | null = null
@@ -126,8 +137,8 @@ export async function createLead(formData: CreateLeadInput): Promise<ActionResul
 
     const lead = await prisma.lead.create({
       data: {
-        firstTouchPostId: parsed.firstTouchPostId,
-        firstTouchThemeId: parsed.firstTouchThemeId,
+        firstTouchPostId: resolvedPostId,
+        firstTouchThemeId: resolvedThemeId,
         name: parsed.name ?? null,
         company: parsed.company ?? null,
         contactInfo: encryptedContact,

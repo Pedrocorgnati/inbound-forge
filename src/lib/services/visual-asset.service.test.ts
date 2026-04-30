@@ -5,24 +5,29 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────
 
-const mockPrisma = {
-  visualAsset: {
-    findMany:   vi.fn(),
-    count:      vi.fn(),
-    findFirst:  vi.fn(),
-    findUnique: vi.fn(),
-    create:     vi.fn(),
-    update:     vi.fn(),
+// vi.hoisted garante que mockPrisma e inicializado antes do hoisting do vi.mock
+const { mockPrisma } = vi.hoisted(() => ({
+  mockPrisma: {
+    visualAsset: {
+      findMany:   vi.fn(),
+      count:      vi.fn(),
+      findFirst:  vi.fn(),
+      findUnique: vi.fn(),
+      create:     vi.fn(),
+      update:     vi.fn(),
+    },
   },
-}
+}))
 
 vi.mock('@/lib/prisma', () => ({
   prisma: mockPrisma,
 }))
 
-const mockStorageUpload    = vi.fn()
-const mockStorageGetPublic = vi.fn()
-const mockStorageRemove    = vi.fn()
+const { mockStorageUpload, mockStorageGetPublic, mockStorageRemove } = vi.hoisted(() => ({
+  mockStorageUpload:    vi.fn(),
+  mockStorageGetPublic: vi.fn(),
+  mockStorageRemove:    vi.fn(),
+}))
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
@@ -36,7 +41,9 @@ vi.mock('@supabase/supabase-js', () => ({
   })),
 }))
 
-const mockSharpMetadata = vi.fn()
+const { mockSharpMetadata } = vi.hoisted(() => ({
+  mockSharpMetadata: vi.fn(),
+}))
 
 vi.mock('sharp', () => ({
   default: vi.fn(() => ({
@@ -44,7 +51,9 @@ vi.mock('sharp', () => ({
   })),
 }))
 
-const mockGenerateAndUpload = vi.fn()
+const { mockGenerateAndUpload } = vi.hoisted(() => ({
+  mockGenerateAndUpload: vi.fn(),
+}))
 
 vi.mock('./thumbnail.service', () => ({
   thumbnailService: {
@@ -88,12 +97,13 @@ function makePrismaAsset(overrides: Record<string, unknown> = {}) {
     fileSizeBytes: 1024,
     widthPx:       800,
     heightPx:      600,
-    storageUrl:    'https://example.supabase.co/storage/v1/object/public/bucket/visual-assets/1234567890-abc123.png',
-    thumbnailUrl:  'https://example.supabase.co/storage/v1/object/public/bucket/visual-assets/thumbnails/1234567890-abc123.webp',
+    storageUrl:    'https://example.supabase.co/storage/v1/object/public/bucket/user-test-123/1234567890-abc123.png',
+    thumbnailUrl:  'https://example.supabase.co/storage/v1/object/public/bucket/user-test-123/thumbnails/1234567890-abc123.webp',
     altText:       null,
     tags:          [],
     usedInJobs:    [],
     isActive:      true,
+    uploadedBy:    'user-test-123',
     createdAt:     new Date(),
     updatedAt:     new Date(),
     ...overrides,
@@ -132,7 +142,7 @@ describe('visualAssetService', () => {
       mockPrisma.visualAsset.findMany.mockResolvedValue(items)
       mockPrisma.visualAsset.count.mockResolvedValue(50)
 
-      const result = await visualAssetService.list({ page: 2, limit: 24 })
+      const result = await visualAssetService.list({ page: 2, limit: 24, uploadedBy: 'user-test-123' })
 
       expect(result.items).toHaveLength(2)
       expect(result.total).toBe(50)
@@ -147,7 +157,7 @@ describe('visualAssetService', () => {
       mockPrisma.visualAsset.findMany.mockResolvedValue([])
       mockPrisma.visualAsset.count.mockResolvedValue(0)
 
-      await visualAssetService.list({ page: 1, limit: 24, fileType: 'image/svg+xml' })
+      await visualAssetService.list({ page: 1, limit: 24, fileType: 'image/svg+xml', uploadedBy: 'user-test-123' })
 
       expect(mockPrisma.visualAsset.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -160,7 +170,7 @@ describe('visualAssetService', () => {
       mockPrisma.visualAsset.findMany.mockResolvedValue([])
       mockPrisma.visualAsset.count.mockResolvedValue(0)
 
-      await visualAssetService.list({ page: 1, limit: 24, tag: 'logo' })
+      await visualAssetService.list({ page: 1, limit: 24, tag: 'logo', uploadedBy: 'user-test-123' })
 
       expect(mockPrisma.visualAsset.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -178,16 +188,17 @@ describe('visualAssetService', () => {
       mockPrisma.visualAsset.create.mockResolvedValue(created)
 
       const file   = createMockFile('logo.png', 'image/png')
-      const result = await visualAssetService.upload(file, 'Alt text')
+      const result = await visualAssetService.upload(file, 'user-test-123', 'Alt text')
 
       expect(result.storageUrl).toBeTruthy()
       expect(result.thumbnailUrl).toBeTruthy()
       expect(mockPrisma.visualAsset.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            fileType: 'image/png',
-            altText:  'Alt text',
-            isActive: true,
+            fileType:   'image/png',
+            altText:    'Alt text',
+            isActive:   true,
+            uploadedBy: 'user-test-123',
           }),
         })
       )
@@ -199,7 +210,7 @@ describe('visualAssetService', () => {
       mockPrisma.visualAsset.create.mockResolvedValue(created)
 
       const file   = createMockFile('icon.svg', 'image/svg+xml')
-      const result = await visualAssetService.upload(file)
+      const result = await visualAssetService.upload(file, 'user-test-123')
 
       expect(result.thumbnailUrl).toBeNull()
     })
@@ -211,7 +222,7 @@ describe('visualAssetService', () => {
       )
 
       const file = createMockFile('photo.png', 'image/png')
-      await visualAssetService.upload(file)
+      await visualAssetService.upload(file, 'user-test-123')
 
       expect(mockPrisma.visualAsset.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -226,7 +237,7 @@ describe('visualAssetService', () => {
       mockPrisma.visualAsset.create.mockResolvedValue(created)
 
       const file   = createMockFile('photo.png', 'image/png')
-      const result = await visualAssetService.upload(file)
+      const result = await visualAssetService.upload(file, 'user-test-123')
 
       // Upload still succeeds, thumbnailUrl is null
       expect(result).toBeDefined()
@@ -272,11 +283,10 @@ describe('visualAssetService', () => {
         data:  { isActive: false },
       })
 
-      // Storage removal
+      // Storage removal — paths now use uid prefix (user-test-123/)
       expect(mockStorageRemove).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.stringContaining('visual-assets/'),
-          expect.stringContaining('visual-assets/thumbnails/'),
+          expect.stringContaining('user-test-123/'),
         ])
       )
     })

@@ -40,6 +40,7 @@ export function ContentVersionHistory({ pieceId, onRestore }: Props) {
 
   useEffect(() => {
     void load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pieceId])
 
   async function performRestore(id: string) {

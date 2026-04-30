@@ -7,6 +7,23 @@
  *
  * IMPORTANTE: Para sistema single-user, o distinctId é sempre "operator-pedro".
  * Fail-safe: feature desabilitada se PostHog indisponível.
+ *
+ * --- TASK-15 / G-006 (canary feature flags) ---
+ * O requisito M11.14 (rollout progressivo / canary) e PROVIDED-BY-POSTHOG:
+ * o PostHog gerencia rollout percentual, segmentacao por `personProperties`
+ * e variantes A/B nativamente via dashboard. NAO duplicar essa logica em
+ * Prisma — a configuracao de canary deve ser feita em
+ *   https://app.posthog.com → Feature Flags → {flag} → Release conditions.
+ *
+ * Capacidades nativas do PostHog usadas:
+ *   - `release_conditions`: rollout percentual + filtros por property
+ *   - `multivariate`: A/B/n testing
+ *   - `prerequisites`: dependencia entre flags (ex: BLOG_PUBLIC_ROUTES exige
+ *     CONTENT_GENERATION_LIVE)
+ *
+ * Override local de emergencia: se PostHog estiver fora ou em incidente,
+ * a `ENV` var `FEATURE_FLAGS_FORCE_OFF` (CSV) desabilita flags listadas
+ * imediatamente (kill-switch). Implementacao no helper abaixo.
  */
 
 import { PostHog } from 'posthog-node'
@@ -96,6 +113,17 @@ export async function isFeatureEnabled(
   flagKey: FeatureFlagKey,
   properties?: Record<string, string | boolean | number>
 ): Promise<boolean> {
+  // TASK-15 / G-006: kill-switch local de emergencia. Lista CSV de flags
+  // desligadas independentemente do PostHog (deploy hotfix sem mexer no SaaS).
+  const forceOff = (process.env.FEATURE_FLAGS_FORCE_OFF ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  if (forceOff.includes(flagKey)) {
+    logger.warn('feature-flags', `Flag "${flagKey}" forcada desligada via FEATURE_FLAGS_FORCE_OFF`)
+    return false
+  }
+
   try {
     const client = getPostHogClient()
     const result = await client.isFeatureEnabled(flagKey, OPERATOR_DISTINCT_ID, {

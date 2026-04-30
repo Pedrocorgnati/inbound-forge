@@ -6,7 +6,12 @@
  */
 import { prisma } from '@/lib/prisma'
 import { getInstagramConfig } from '@/lib/instagram-client'
-import { TOKEN_EXPIRY_WARNING_DAYS, TOKEN_REFRESH_THRESHOLD_DAYS } from '@/lib/constants/publishing'
+import {
+  TOKEN_EXPIRY_WARNING_DAYS,
+  TOKEN_REFRESH_THRESHOLD_DAYS,
+  TOKEN_ALERT_THRESHOLDS,
+  type TokenAlertSeverity,
+} from '@/lib/constants/publishing'
 import { createInstagramClient } from './instagram-client'
 
 export interface StoredToken {
@@ -18,8 +23,23 @@ export interface TokenStatus {
   daysUntilExpiry: number
   isExpired: boolean
   needsRefresh: boolean
+  /** TASK-13 ST002 (G-003) — severity tiered (info/warning/critical/none). */
+  severity: TokenAlertSeverity
+  /** Backwards-compatible: equivale a severity !== 'none' && !isExpired. */
   hasWarning: boolean
   warningMessage: string | null
+}
+
+/**
+ * TASK-13 ST002 (G-003) — calcula severity tiered baseado em
+ * TOKEN_ALERT_THRESHOLDS (info=30 / warning=15 / critical=7 dias).
+ */
+export function computeTokenSeverity(daysUntilExpiry: number, isExpired: boolean): TokenAlertSeverity {
+  if (isExpired) return 'critical'
+  if (daysUntilExpiry <= TOKEN_ALERT_THRESHOLDS.critical) return 'critical'
+  if (daysUntilExpiry <= TOKEN_ALERT_THRESHOLDS.warning) return 'warning'
+  if (daysUntilExpiry <= TOKEN_ALERT_THRESHOLDS.info) return 'info'
+  return 'none'
 }
 
 /**
@@ -120,6 +140,7 @@ export async function getTokenStatus(): Promise<TokenStatus> {
       daysUntilExpiry: 0,
       isExpired: true,
       needsRefresh: false,
+      severity: 'critical',
       hasWarning: false,
       warningMessage: 'Token não configurado',
     }
@@ -128,17 +149,27 @@ export async function getTokenStatus(): Promise<TokenStatus> {
   const daysUntilExpiry = Math.floor((stored.expiresAt.getTime() - Date.now()) / 86_400_000)
   const isExpired = daysUntilExpiry <= 0
   const needsRefresh = daysUntilExpiry <= TOKEN_REFRESH_THRESHOLD_DAYS && !isExpired
+  // hasWarning preserva semantica original (<=7 dias) para callers existentes.
   const hasWarning = daysUntilExpiry <= TOKEN_EXPIRY_WARNING_DAYS && !isExpired
+  const severity = computeTokenSeverity(daysUntilExpiry, isExpired)
+
+  let warningMessage: string | null = null
+  if (isExpired) {
+    warningMessage = 'Token Instagram expirado. Reconectar conta no painel.'
+  } else if (severity === 'critical') {
+    warningMessage = `URGENTE: Token Instagram expira em ${daysUntilExpiry} dias. Refresh agora.`
+  } else if (severity === 'warning') {
+    warningMessage = `Token Instagram expira em ${daysUntilExpiry} dias. Refresh recomendado hoje.`
+  } else if (severity === 'info') {
+    warningMessage = `Token Instagram expira em ${daysUntilExpiry} dias. Agende o refresh.`
+  }
 
   return {
     daysUntilExpiry: Math.max(0, daysUntilExpiry),
     isExpired,
     needsRefresh,
+    severity,
     hasWarning,
-    warningMessage: isExpired
-      ? 'Token Instagram expirado. Reconectar conta no painel.'
-      : hasWarning
-        ? `Token Instagram expira em ${daysUntilExpiry} dias. Reconecte a conta em breve.`
-        : null,
+    warningMessage,
   }
 }

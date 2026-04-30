@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
     const scoreRange: Record<string, number> = {}
     if (scoreGte !== undefined) scoreRange.gte = scoreGte
     if (parsed.scoreMax !== undefined) scoreRange.lte = parsed.scoreMax
-    if (Object.keys(scoreRange).length > 0) where.conversionScore = scoreRange
+    // MS13-B002: filtros de score na listagem operativa de temas usam o composto.
+    if (Object.keys(scoreRange).length > 0) where.priorityScore = scoreRange
 
     if (parsed.painCategory) {
       where.contentPieces = {
@@ -59,7 +60,8 @@ export async function GET(request: NextRequest) {
     const [data, total] = await Promise.all([
       prisma.theme.findMany({
         where,
-        orderBy: { conversionScore: 'desc' },
+        // MS13-B002: ranking operativo de temas usa o composto (priorityScore).
+        orderBy: { priorityScore: 'desc' },
         skip: (parsed.page - 1) * parsed.limit,
         take: parsed.limit,
         include: {

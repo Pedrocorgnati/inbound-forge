@@ -3,9 +3,12 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const mockCreate = vi.fn()
-const mockUpdate = vi.fn()
-const mockFindUnique = vi.fn()
+// vi.hoisted garante que os mocks estejam disponíveis quando vi.mock (hoisted) executar
+const { mockCreate, mockUpdate, mockFindUnique } = vi.hoisted(() => ({
+  mockCreate: vi.fn(),
+  mockUpdate: vi.fn(),
+  mockFindUnique: vi.fn(),
+}))
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {

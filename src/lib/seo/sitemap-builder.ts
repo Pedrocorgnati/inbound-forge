@@ -34,7 +34,7 @@ export async function buildSitemap(siteUrl: string): Promise<MetadataRoute.Sitem
   try {
     const rows = await prisma.blogArticle.findMany({
       where: { status: 'PUBLISHED' as never },
-      select: { slug: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true },
     })
     const translations = await (prisma as unknown as {
       blogArticleTranslation: {
@@ -55,7 +55,7 @@ export async function buildSitemap(siteUrl: string): Promise<MetadataRoute.Sitem
     articles = rows.map((r) => ({
       slug: r.slug,
       updatedAt: r.updatedAt,
-      translations: byArticle.get((r as unknown as { id: string }).id) || [],
+      translations: byArticle.get(r.id) || [],
     }))
   } catch (err) {
     console.error('[sitemap] db unavailable', err)

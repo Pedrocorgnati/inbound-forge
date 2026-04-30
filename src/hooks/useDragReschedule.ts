@@ -119,10 +119,14 @@ export function useDragReschedule({
           throw new Error(err.error ?? 'Falha ao reagendar')
         }
 
-        const formattedDate = format(newScheduledAt, "dd 'de' MMMM", {
+        // RS-2: comunica explicitamente que o horario original foi preservado.
+        // Usuario que quiser ajustar a hora deve usar o modal de reagendamento.
+        const formattedDateTime = format(newScheduledAt, "dd 'de' MMMM 'às' HH:mm", {
           locale: ptBR,
         })
-        toast.success(`Post reagendado para ${formattedDate}`)
+        toast.success(`Post reagendado para ${formattedDateTime}`, {
+          description: 'Horário preservado. Use o botão de reagendar para alterar a hora.',
+        })
       } catch (e) {
         onOptimisticUpdate(prevPosts)
         toast.error(e instanceof Error ? e.message : 'Erro ao reagendar post')

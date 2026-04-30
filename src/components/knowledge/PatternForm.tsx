@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
-import { Modal } from '@/components/ui/modal'
+import { ResponsiveSheet } from '@/components/ui/responsive-sheet'
 import { toast } from '@/components/ui/toast'
 import { AlertCircle } from 'lucide-react'
 import { useKnowledgeAutosave } from '@/hooks/useKnowledgeAutosave'
@@ -191,7 +191,7 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
   ]
 
   return (
-    <Modal
+    <ResponsiveSheet
       open={isOpen}
       onClose={onClose}
       title={mode === 'create' ? 'Novo Padrão' : 'Editar Padrão'}
@@ -290,6 +290,6 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
           </Button>
         </div>
       </form>
-    </Modal>
+    </ResponsiveSheet>
   )
 }

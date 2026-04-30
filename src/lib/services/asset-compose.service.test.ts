@@ -5,18 +5,23 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────
 
-const mockPrisma = {
-  imageJob: {
-    update: vi.fn(),
+// vi.hoisted garante que mockPrisma e inicializado antes do hoisting do vi.mock
+const { mockPrisma } = vi.hoisted(() => ({
+  mockPrisma: {
+    imageJob: {
+      update: vi.fn(),
+    },
   },
-}
+}))
 
 vi.mock('@/lib/prisma', () => ({
   prisma: mockPrisma,
 }))
 
-const mockFindById        = vi.fn()
-const mockRecordJobUsage  = vi.fn()
+const { mockFindById, mockRecordJobUsage } = vi.hoisted(() => ({
+  mockFindById:       vi.fn(),
+  mockRecordJobUsage: vi.fn(),
+}))
 
 vi.mock('./visual-asset.service', () => ({
   visualAssetService: {
@@ -25,8 +30,10 @@ vi.mock('./visual-asset.service', () => ({
   },
 }))
 
-const mockRenderTemplate     = vi.fn()
-const mockComposeFinalImage  = vi.fn()
+const { mockRenderTemplate, mockComposeFinalImage } = vi.hoisted(() => ({
+  mockRenderTemplate:    vi.fn(),
+  mockComposeFinalImage: vi.fn(),
+}))
 
 vi.mock('@/lib/image-pipeline', () => ({
   renderTemplate:     mockRenderTemplate,
@@ -46,9 +53,11 @@ vi.mock('@/lib/constants/image-worker', () => ({
   },
 }))
 
-const mockStorageUpload    = vi.fn()
-const mockStorageGetPublic = vi.fn()
-const mockStorageDownload  = vi.fn()
+const { mockStorageUpload, mockStorageGetPublic, mockStorageDownload } = vi.hoisted(() => ({
+  mockStorageUpload:    vi.fn(),
+  mockStorageGetPublic: vi.fn(),
+  mockStorageDownload:  vi.fn(),
+}))
 
 vi.mock('@/lib/sentry', () => ({
   captureException: vi.fn(),

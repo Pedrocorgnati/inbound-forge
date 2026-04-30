@@ -9,7 +9,8 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { useLeadStatusMutation } from '@/hooks/useLeadStatusMutation'
 
-export type LeadStatus = 'NEW' | 'QUALIFIED' | 'NEGOTIATING' | 'WON' | 'LOST'
+import type { LeadStatus } from '@/types/enums'
+export type { LeadStatus }
 
 interface LeadCardData {
   id: string
@@ -25,7 +26,17 @@ interface PipelineBoardProps {
   columns?: LeadStatus[]
 }
 
-const DEFAULT_COLUMNS: LeadStatus[] = ['NEW', 'QUALIFIED', 'NEGOTIATING', 'WON', 'LOST']
+const DEFAULT_COLUMNS: LeadStatus[] = ['NEW', 'MQL', 'SQL', 'OPPORTUNITY', 'CUSTOMER', 'LOST']
+
+const COLUMN_LABELS: Record<string, string> = {
+  NEW: 'Novo',
+  MQL: 'MQL',
+  SQL: 'SQL',
+  OPPORTUNITY: 'Oportunidade',
+  CUSTOMER: 'Cliente',
+  LOST: 'Perdido',
+  LEGAL_HOLD: 'Hold',
+}
 
 export function PipelineBoard({
   leads,
@@ -76,8 +87,8 @@ export function PipelineBoard({
         role="status"
         aria-live="polite"
       />
-      {/* TASK-4 ST003 (CL-145): scroll horizontal com snap no mobile, grid 5-col no desktop */}
-      <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory md:grid md:grid-cols-5 md:overflow-visible md:snap-none">
+      {/* TASK-4 ST003 (CL-145): scroll horizontal com snap no mobile, grid no desktop */}
+      <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory md:grid md:grid-cols-6 md:overflow-visible md:snap-none">
         {columns.map((status) => {
           const columnLeads = leads.filter((l) => l.status === status)
           return (
@@ -89,7 +100,7 @@ export function PipelineBoard({
               className="min-h-[300px] min-w-[80vw] snap-start rounded-lg border border-border bg-muted/20 p-2 md:min-w-0"
             >
               <h3 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-                {status} ({columnLeads.length})
+                {COLUMN_LABELS[status] ?? status} ({columnLeads.length})
               </h3>
               <ul className="space-y-2">
                 {columnLeads.map((lead) => {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Modal } from '@/components/ui/modal'
+import { ResponsiveSheet } from '@/components/ui/responsive-sheet'
 
 interface ContentRejectModalProps {
   open: boolean
@@ -23,7 +23,7 @@ export function ContentRejectModal({ open, onClose, onConfirm }: ContentRejectMo
   }
 
   return (
-    <Modal
+    <ResponsiveSheet
       open={open}
       onClose={() => {
         setReason('')
@@ -57,6 +57,6 @@ export function ContentRejectModal({ open, onClose, onConfirm }: ContentRejectMo
           )}
         </div>
       </div>
-    </Modal>
+    </ResponsiveSheet>
   )
 }

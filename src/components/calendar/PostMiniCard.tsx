@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import Image from 'next/image'
 import { MoreHorizontal, GripVertical, Instagram, Linkedin, Pause, Play, Download, Trash2 } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -10,7 +10,12 @@ import { useFormatters } from '@/lib/i18n/formatters'
 import { ChannelBadge } from '@/components/publishing/ChannelBadge'
 import { QueueStatusBadge } from '@/components/publishing/QueueStatusBadge'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import { PostHoverPreview } from './PostHoverPreview'
 import type { PublishingPost } from '@/types/publishing'
+
+// TASK-14 ST005 (M11.15 / G-005) — preview expandido on hover/focus.
+const HOVER_OPEN_DELAY_MS = 300
+const HOVER_CLOSE_DELAY_MS = 120
 
 interface PostMiniCardProps {
   post: PublishingPost
@@ -44,6 +49,70 @@ export function PostMiniCard({
   const [busy, setBusy] = useState(false)
   const isPaused = post.queueStatus === 'PAUSED'
   const canAct = Boolean(post.queueId) && post.status !== 'PUBLISHED'
+
+  // TASK-14 ST005 (G-005) — controle do hover preview com debounce.
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [previewMode, setPreviewMode] = useState<'hover' | 'touch'>('hover')
+  const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // RS-4: long-press para abrir preview em mobile/touch.
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const LONG_PRESS_MS = 500
+
+  // Cleanup timers ao desmontar para evitar setState em componente unmounted.
+  useEffect(() => {
+    return () => {
+      if (openTimerRef.current) clearTimeout(openTimerRef.current)
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
+    }
+  }, [])
+
+  const openPreview = useCallback(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+    if (previewOpen) return
+    setPreviewMode('hover')
+    openTimerRef.current = setTimeout(() => setPreviewOpen(true), HOVER_OPEN_DELAY_MS)
+  }, [previewOpen])
+
+  const closePreview = useCallback(() => {
+    if (openTimerRef.current) {
+      clearTimeout(openTimerRef.current)
+      openTimerRef.current = null
+    }
+    closeTimerRef.current = setTimeout(() => setPreviewOpen(false), HOVER_CLOSE_DELAY_MS)
+  }, [])
+
+  // RS-4 long-press handlers para abrir preview em touch.
+  const handleTouchStart = useCallback(() => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current)
+    longPressTimerRef.current = setTimeout(() => {
+      setPreviewMode('touch')
+      setPreviewOpen(true)
+    }, LONG_PRESS_MS)
+  }, [])
+
+  const handleTouchEndOrCancel = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }, [])
+
+  const closePreviewImmediate = useCallback(() => {
+    if (openTimerRef.current) {
+      clearTimeout(openTimerRef.current)
+      openTimerRef.current = null
+    }
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+    setPreviewOpen(false)
+  }, [])
 
   async function togglePause() {
     if (!post.queueId) return
@@ -97,12 +166,64 @@ export function PostMiniCard({
     <div
       role="article"
       aria-label={`Post: ${post.caption}, Canal: ${post.channel}, Status: ${post.status}`}
+      onMouseEnter={openPreview}
+      onMouseLeave={closePreview}
+      onFocusCapture={openPreview}
+      onBlurCapture={(e) => {
+        // Fechar apenas quando o foco saiu do card por completo (incluindo descendants).
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          closePreview()
+        }
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEndOrCancel}
+      onTouchCancel={handleTouchEndOrCancel}
+      onTouchMove={handleTouchEndOrCancel}
       className={cn(
         'group relative flex min-h-[44px] items-start gap-2 rounded-md border border-border bg-card p-2 shadow-sm transition-shadow hover:shadow-md',
         isDragging && 'opacity-50',
         compact && 'p-1.5 text-xs',
       )}
     >
+      {/* TASK-14 ST005 (G-005) — preview expandido on hover/focus (desktop) */}
+      {previewOpen && !isDragging && previewMode === 'hover' && (
+        <div
+          className="absolute left-full top-0 z-50 ml-2 hidden sm:block"
+          onMouseEnter={() => {
+            if (closeTimerRef.current) {
+              clearTimeout(closeTimerRef.current)
+              closeTimerRef.current = null
+            }
+          }}
+          onMouseLeave={closePreview}
+        >
+          <PostHoverPreview post={post} />
+        </div>
+      )}
+      {/* RS-4 — preview em sheet centralizada para mobile/touch (long-press) */}
+      {previewOpen && !isDragging && previewMode === 'touch' && (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center"
+          onClick={closePreviewImmediate}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="m-4 max-w-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <PostHoverPreview post={post} />
+            <button
+              type="button"
+              onClick={closePreviewImmediate}
+              className="mt-2 w-full rounded-md border border-input bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
       {/* Drag handle */}
       <button
         type="button"

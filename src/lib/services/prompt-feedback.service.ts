@@ -75,7 +75,7 @@ const REJECTION_PATTERNS: Array<{
   },
 ]
 
-const ACTIONABLE_THRESHOLD = 3 // Número mínimo de rejeições para pattern virar actionable
+const ACTIONABLE_THRESHOLD = 2 // Número mínimo de rejeições para pattern virar actionable
 
 export class PromptFeedbackService {
   /**

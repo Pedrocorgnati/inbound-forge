@@ -132,14 +132,14 @@ describe('PATCH /api/v1/onboarding/progress', () => {
     expect(res.status).toBe(401)
   })
 
-  it('retorna 400 com corpo JSON inválido', async () => {
+  it('retorna 422 com corpo JSON inválido', async () => {
     const req = new NextRequest('http://localhost/api/v1/onboarding/progress', {
       method: 'PATCH',
       body: 'invalid-json',
       headers: { 'Content-Type': 'application/json' },
     })
     const res = await PATCH(req)
-    expect(res.status).toBe(400)
+    expect(res.status).toBe(422)
   })
 
   it('retorna 422 em falha de validação Zod', async () => {

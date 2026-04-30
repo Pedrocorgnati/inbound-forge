@@ -17,9 +17,9 @@ const LeadEditSchema = z.object({
     .max(512)
     .optional()
     .or(z.literal('')),
-  funnelStage: z.enum(['VISITOR', 'LEAD', 'MQL', 'SQL', 'CUSTOMER']).optional(),
+  funnelStage: z.enum(['AWARENESS', 'CONSIDERATION', 'DECISION']).optional(),
   channel: z
-    .enum(['ORGANIC', 'DIRECT', 'REFERRAL', 'SOCIAL', 'EMAIL', 'PAID', 'OTHER'])
+    .enum(['BLOG', 'LINKEDIN', 'INSTAGRAM'])
     .optional(),
   notes: z.string().max(5_000).optional().or(z.literal('')),
 })
@@ -100,9 +100,11 @@ export function LeadEditForm({ leadId, initial }: Props) {
           {...register('contactInfo')}
           className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         />
-        <p className="mt-1 text-xs text-muted-foreground">
-          Armazenado de forma criptografada (LGPD).
-        </p>
+        {errors.contactInfo ? (
+          <p className="mt-1 text-xs text-destructive">{errors.contactInfo.message}</p>
+        ) : (
+          <p className="mt-1 text-xs text-muted-foreground">Armazenado de forma criptografada (LGPD).</p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -116,12 +118,13 @@ export function LeadEditForm({ leadId, initial }: Props) {
             className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
           >
             <option value="">—</option>
-            <option value="VISITOR">Visitante</option>
-            <option value="LEAD">Lead</option>
-            <option value="MQL">MQL</option>
-            <option value="SQL">SQL</option>
-            <option value="CUSTOMER">Cliente</option>
+            <option value="AWARENESS">Descoberta</option>
+            <option value="CONSIDERATION">Consideração</option>
+            <option value="DECISION">Decisão</option>
           </select>
+          {errors.funnelStage && (
+            <p className="mt-1 text-xs text-destructive">{errors.funnelStage.message}</p>
+          )}
         </div>
         <div>
           <label htmlFor="lead-channel" className="block text-xs font-medium text-muted-foreground">
@@ -133,14 +136,13 @@ export function LeadEditForm({ leadId, initial }: Props) {
             className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
           >
             <option value="">—</option>
-            <option value="ORGANIC">Orgânico</option>
-            <option value="DIRECT">Direto</option>
-            <option value="REFERRAL">Referral</option>
-            <option value="SOCIAL">Social</option>
-            <option value="EMAIL">E-mail</option>
-            <option value="PAID">Pago</option>
-            <option value="OTHER">Outro</option>
+            <option value="BLOG">Blog</option>
+            <option value="LINKEDIN">LinkedIn</option>
+            <option value="INSTAGRAM">Instagram</option>
           </select>
+          {errors.channel && (
+            <p className="mt-1 text-xs text-destructive">{errors.channel.message}</p>
+          )}
         </div>
       </div>
 
@@ -154,6 +156,9 @@ export function LeadEditForm({ leadId, initial }: Props) {
           {...register('notes')}
           className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
         />
+        {errors.notes && (
+          <p className="mt-1 text-xs text-destructive">{errors.notes.message}</p>
+        )}
       </div>
 
       <div className="flex justify-end">

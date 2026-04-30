@@ -43,9 +43,26 @@ vi.mock('sonner', () => ({
   },
 }))
 
-// Mock next-intl
+// Mock next-intl com traduções reais do namespace auth
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => key,
+  useTranslations: (ns: string) => {
+    const messages: Record<string, Record<string, string>> = {
+      auth: {
+        email: 'E-mail',
+        password: 'Senha',
+        formLabel: 'Formulário de login',
+        loginButton: 'Entrar',
+        loginLoading: 'Entrando...',
+        showPassword: 'Mostrar senha',
+        hidePassword: 'Ocultar senha',
+        emailPlaceholder: 'seu@email.com',
+        submitting: 'Enviando formulário...',
+        emailInvalid: 'E-mail inválido',
+        passwordMin: 'Senha deve ter no mínimo 8 caracteres',
+      },
+    }
+    return (key: string) => messages[ns]?.[key] ?? key
+  },
   useLocale: () => 'pt-BR',
 }))
 
@@ -71,7 +88,7 @@ describe('LoginForm - Acessibilidade (A11Y-001)', () => {
 
   it('deve ter label associado ao input de senha', () => {
     const { getByLabelText } = render(<LoginForm locale="pt-BR" />)
-    expect(getByLabelText(/senha/i)).toBeDefined()
+    expect(getByLabelText(/^senha$/i)).toBeDefined()
   })
 
   it('deve ter botão de submit identificado', () => {
@@ -88,7 +105,7 @@ describe('LoginForm - Acessibilidade (A11Y-001)', () => {
   it('deve ter aria-busy no form', () => {
     const { container } = render(<LoginForm locale="pt-BR" />)
     const form = container.querySelector('form')
-    expect(form).toHaveAttribute('aria-busy')
+    expect(form?.hasAttribute('aria-busy')).toBe(true)
   })
 
   it('deve ter aria-live region para anúncios', () => {

@@ -88,27 +88,18 @@ export function TemplateAssetPreview({
         body: JSON.stringify({
           templateType: tType,
           assetId: aId,
-          templateProps: props,
+          props,
         }),
         signal: controller.signal,
       })
         .then((res) => {
           if (!res.ok) throw new Error('Falha ao gerar preview')
-          return res.blob()
+          return res.json() as Promise<{ preview: string; warning?: string }>
         })
-        .then((blob) => {
-          const url = URL.createObjectURL(blob)
-          setPreviewUrl(url)
+        .then(({ preview }) => {
+          setPreviewUrl(preview)
           setIsLoading(false)
-
-          // Convert to data URL for cache
-          const reader = new FileReader()
-          reader.onloadend = () => {
-            if (typeof reader.result === 'string') {
-              setCachedPreview(tType, aId, reader.result)
-            }
-          }
-          reader.readAsDataURL(blob)
+          setCachedPreview(tType, aId, preview)
         })
         .catch((err) => {
           if (err instanceof DOMException && err.name === 'AbortError') return

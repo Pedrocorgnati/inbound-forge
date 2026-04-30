@@ -5,9 +5,10 @@
 
 import { format, isToday, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Calendar, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PostMiniCard } from './PostMiniCard'
+import { CalendarEmptyState } from './CalendarEmptyState'
 import type { PublishingPost } from '@/types/publishing'
 
 interface CalendarListViewProps {
@@ -21,6 +22,10 @@ interface CalendarListViewProps {
    * (UX expandida por TASK-14 / G-004 — empty state contextual).
    */
   onSlotClick?: (slotId: string) => void
+  /** TASK-14 ST002 (G-004) — filtros ativos para empty state contextual. */
+  activeFilters?: string[]
+  /** TASK-14 ST002 — callback para limpar filtros. */
+  onClearFilters?: () => void
   isLoading?: boolean
 }
 
@@ -49,6 +54,8 @@ export function CalendarListView({
   onPeriodChange,
   onReschedule,
   onSlotClick,
+  activeFilters,
+  onClearFilters,
   isLoading = false,
 }: CalendarListViewProps) {
   const sortedDates = Object.keys(posts).sort()
@@ -97,19 +104,12 @@ export function CalendarListView({
       {isLoading ? (
         <SkeletonList />
       ) : !hasPosts ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <Calendar className="mb-4 h-12 w-12 text-muted-foreground/30" aria-hidden />
-          <p className="text-sm text-muted-foreground">Nenhum post agendado neste período</p>
-          {onSlotClick && (
-            <button
-              type="button"
-              onClick={() => onSlotClick(format(new Date(), 'yyyy-MM-dd'))}
-              className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            >
-              Criar post para hoje
-            </button>
-          )}
-        </div>
+        <CalendarEmptyState
+          variant="list"
+          activeFilters={activeFilters}
+          onClearFilters={onClearFilters}
+          onCreatePost={() => onSlotClick?.(format(new Date(), 'yyyy-MM-dd'))}
+        />
       ) : (
         <div className="space-y-6">
           {sortedDates.map((dateKey) => {

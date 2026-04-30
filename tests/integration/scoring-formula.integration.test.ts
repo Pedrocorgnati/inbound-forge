@@ -1,7 +1,7 @@
 // Integration Tests — Scoring Formula (TASK-2/ST005)
 // Módulo: module-7-theme-scoring-engine
 // Valida a fórmula completa em cenários E2E com banco de dados real.
-// Execute: npx vitest run src/__tests__/integration/scoring-formula.integration.test.ts
+// Execute: npm run test:integration -- tests/integration/scoring-formula.integration.test.ts
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { prisma } from '@/lib/prisma'

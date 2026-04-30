@@ -5,24 +5,24 @@ import { uploadToBucket, sha256 } from '@/lib/storage/supabase-storage'
 import { auditLog } from '@/lib/audit'
 import { buildSearchWhere, sanitizeSearchTerm } from '@/lib/search/text-search'
 
-// GET /api/v1/assets
+const DEPRECATED_HEADER = { 'X-Deprecated': 'Use /api/visual-assets instead', 'Deprecation': 'true' }
+
+// GET /api/v1/assets — DEPRECATED: use /api/visual-assets
 // Intake-Review TASK-22 ST004 (CL-CG-037): ?search= em fileName/originalName + tags array.
 export async function GET(request: NextRequest) {
-  const { response } = await requireSession()
+  const { user, response } = await requireSession()
   if (response) return response
 
   try {
     const { searchParams } = new URL(request.url)
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20')))
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '24')))
     const rawSearch = searchParams.get('search') ?? undefined
 
-    const where: Record<string, unknown> = {}
+    const where: Record<string, unknown> = { uploadedBy: user!.id }
     const searchWhere = buildSearchWhere(rawSearch, ['fileName', 'originalName'] as const)
     const term = sanitizeSearchTerm(rawSearch)
     if (term) {
-      // Tag match via hasSome (split por whitespace, lowercase nao aplica em array; tags
-      // ja armazenadas conforme entrada do usuario). Combina OR entre ILIKE e tags.
       const terms = term.split(/\s+/).filter((t) => t.length >= 2)
       const tagClause = terms.length > 0 ? { tags: { hasSome: terms } } : null
       where.OR = [
@@ -41,7 +41,9 @@ export async function GET(request: NextRequest) {
       prisma.visualAsset.count({ where }),
     ])
 
-    return okPaginated(data, { page, limit, total })
+    const res = okPaginated(data, { page, limit, total })
+    Object.entries(DEPRECATED_HEADER).forEach(([k, v]) => res.headers.set(k, v))
+    return res
   } catch {
     return internalError()
   }
@@ -55,7 +57,8 @@ const EXT_BY_MIME: Record<string, string> = {
   'image/webp': 'webp',
 }
 
-// TASK-4 ST002 (CL-256): POST /api/v1/assets — upload multipart para bucket.
+// POST /api/v1/assets — DEPRECATED: use /api/visual-assets
+// TASK-4 ST002 (CL-256): upload multipart para bucket.
 export async function POST(request: NextRequest) {
   const { user, response } = await requireSession()
   if (response) return response
@@ -112,7 +115,9 @@ export async function POST(request: NextRequest) {
       }).catch(() => undefined)
     }
 
-    return ok({ id: asset.id, url: asset.storageUrl, contentHash, reused: false }, 201)
+    const res = ok({ id: asset.id, url: asset.storageUrl, contentHash, reused: false }, 201)
+    Object.entries(DEPRECATED_HEADER).forEach(([k, v]) => res.headers.set(k, v))
+    return res
   } catch {
     return internalError()
   }

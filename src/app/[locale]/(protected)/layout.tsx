@@ -11,6 +11,7 @@ import { GA4Script } from '@/components/analytics/GA4Script'
 import { KeyboardShortcutsProvider } from '@/components/ux/KeyboardShortcutsProvider'
 import { DegradedBanner } from '@/components/shared/degraded-banner'
 import { SeedIncompleteBanner } from '@/components/onboarding/SeedIncompleteBanner'
+import { TokenExpiryAlert } from '@/components/publishing/TokenExpiryAlert'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { getDegradedServiceNames } from '@/lib/services/service-health'
 import { getActivationForOperator } from '@/lib/onboarding/activation-event'
@@ -98,6 +99,10 @@ export default async function ProtectedLayout({ children, params }: ProtectedLay
             <DegradedBanner services={degradedServices} />
           </div>
         )}
+        {/* TASK-13 ST005 (M11.7 / G-003) — alerta tiered de expiracao do token Instagram */}
+        <div className="px-4 pt-4">
+          <TokenExpiryAlert />
+        </div>
         <AppShell
           userName={userName}
           workers={workers}

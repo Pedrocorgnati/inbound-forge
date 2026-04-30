@@ -17,4 +17,5 @@ export {
   CTADestination,
   ObjectionType,
   QueueStatus,
+  LeadStatus,
 } from '@prisma/client'

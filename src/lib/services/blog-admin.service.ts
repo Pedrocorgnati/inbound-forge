@@ -9,6 +9,7 @@ import type { BlogArticle, HreflangConfig, PaginatedArticles } from '@/types/blo
 import type { CreateArticleInput, UpdateArticleInput, ApproveArticleInput, ListArticlesInput } from '@/lib/validators/blog-article'
 import { blogVersionService } from './blog-version.service'
 import { BLOG_STATUS } from '@/constants/status'
+import { SUPPORTED_LOCALES } from '@/types'
 import { buildSearchWhere } from '@/lib/search/text-search'
 
 /**
@@ -213,9 +214,11 @@ export async function publishArticle(id: string): Promise<BlogArticle> {
     },
   })
 
-  // ISR: revalidar rotas públicas (NEXT-002)
-  revalidatePath('/blog')
-  revalidatePath(`/blog/${published.slug}`)
+  // ISR: revalidar rotas públicas com prefixo de locale (NEXT-002)
+  for (const locale of SUPPORTED_LOCALES) {
+    revalidatePath(`/${locale}/blog`)
+    revalidatePath(`/${locale}/blog/${published.slug}`)
+  }
   revalidatePath('/sitemap.xml')
 
   return mapBlogArticle(published)

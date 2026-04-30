@@ -26,14 +26,15 @@ const FUNNEL_OPTIONS = [
 ]
 
 const LeadFormSchema = z.object({
-  company: z.string().min(1, 'Empresa é obrigatório').max(255),
+  name: z.string().min(1, 'Nome é obrigatório').max(255),
+  company: z.string().max(255).optional().or(z.literal('')),
   contactInfo: z.string().min(1, 'Informações de contato é obrigatório'),
   channel: z.enum(['BLOG', 'LINKEDIN', 'INSTAGRAM'], {
     errorMap: () => ({ message: 'Selecione um canal' }),
-  }),
+  }).optional().or(z.literal('')),
   funnelStage: z.enum(['AWARENESS', 'CONSIDERATION', 'DECISION'], {
     errorMap: () => ({ message: 'Selecione um estágio' }),
-  }),
+  }).optional().or(z.literal('')),
   firstTouchAt: z.string().min(1, 'Data de primeiro contato é obrigatória'),
   lgpdConsent: z.literal(true, {
     errorMap: () => ({ message: 'Consentimento LGPD é obrigatório' }),
@@ -54,6 +55,7 @@ export function LeadForm({ locale, onSuccess, defaultValues, themeId, postId }: 
   const router = useRouter()
 
   const [form, setForm] = useState({
+    name: defaultValues?.name ?? '',
     company: defaultValues?.company ?? '',
     contactInfo: defaultValues?.contactInfo ?? '',
     channel: defaultValues?.channel ?? '',
@@ -100,17 +102,18 @@ export function LeadForm({ locale, onSuccess, defaultValues, themeId, postId }: 
     setIsSubmitting(true)
 
     try {
-      const payload = {
-        company: form.company.trim(),
+      const payload: Record<string, unknown> = {
+        name: form.name.trim(),
+        company: form.company.trim() || undefined,
         contactInfo: form.contactInfo.trim(),
-        channel: form.channel,
-        funnelStage: form.funnelStage,
+        channel: form.channel || undefined,
+        funnelStage: form.funnelStage || undefined,
         firstTouchAt: new Date(form.firstTouchAt).toISOString(),
         lgpdConsent: form.lgpdConsent,
         lgpdConsentAt: new Date().toISOString(),
-        firstTouchThemeId: themeId ?? '00000000-0000-0000-0000-000000000000',
-        firstTouchPostId: postId ?? '00000000-0000-0000-0000-000000000000',
       }
+      if (themeId) payload.firstTouchThemeId = themeId
+      if (postId) payload.firstTouchPostId = postId
 
       const res = await fetch('/api/v1/leads', {
         method: 'POST',
@@ -141,8 +144,17 @@ export function LeadForm({ locale, onSuccess, defaultValues, themeId, postId }: 
     <form onSubmit={handleSubmit} data-testid="lead-form" className="mx-auto max-w-2xl space-y-6">
       <div className="space-y-4">
         <Input
+          label="Nome"
+          placeholder="Nome completo do lead"
+          value={form.name}
+          onChange={(e) => updateField('name', e.target.value)}
+          error={errors.name}
+          data-testid="lead-field-name"
+        />
+
+        <Input
           label="Empresa"
-          placeholder="Nome da empresa"
+          placeholder="Nome da empresa (opcional)"
           value={form.company}
           onChange={(e) => updateField('company', e.target.value)}
           error={errors.company}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { RefreshCw } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -22,6 +23,7 @@ interface AttributionResponse {
 }
 
 export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
+  const t = useTranslations('attribution')
   const [data, setData] = useState<AttributionResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -33,16 +35,16 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
 
     try {
       const res = await fetch(`/api/v1/attribution/${leadId}`)
-      if (!res.ok) throw new Error('Falha ao carregar atribuição')
+      if (!res.ok) throw new Error(t('fetchError'))
 
       const json = await res.json()
       setData(json.data)
     } catch {
-      setError('Não foi possível carregar a atribuição.')
+      setError(t('loadError'))
     } finally {
       setIsLoading(false)
     }
-  }, [leadId])
+  }, [leadId, t])
 
   useEffect(() => {
     fetchAttribution()
@@ -58,12 +60,12 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
         body: JSON.stringify({ themeId }),
       })
 
-      if (!res.ok) throw new Error('Falha ao recalcular')
+      if (!res.ok) throw new Error(t('recalculateFailure'))
 
-      toast.success('Atribuição recalculada')
+      toast.success(t('recalculateSuccess'))
       await fetchAttribution()
     } catch {
-      toast.error('Erro ao recalcular atribuição')
+      toast.error(t('recalculateError'))
     } finally {
       setIsRecalculating(false)
     }
@@ -74,7 +76,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
     return (
       <Card variant="elevated" data-testid="attribution-card-loading">
         <CardHeader>
-          <CardTitle className="text-base">Atribuição</CardTitle>
+          <CardTitle className="text-base">{t('title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <Skeleton variant="text" className="h-4 w-32" />
@@ -90,7 +92,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
     return (
       <Card variant="elevated" data-testid="attribution-card-error">
         <CardHeader>
-          <CardTitle className="text-base">Atribuição</CardTitle>
+          <CardTitle className="text-base">{t('title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">{error}</p>
@@ -108,15 +110,17 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
     return (
       <Card variant="elevated" data-testid="attribution-card-empty">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Atribuição</CardTitle>
+          <CardTitle className="text-base">{t('title')}</CardTitle>
           <RecalculateButton
             isRecalculating={isRecalculating}
             onClick={handleRecalculate}
+            label={t('recalculate')}
+            loadingText={t('recalculating')}
           />
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Atribuição não determinada — sem UTM link
+            {t('empty')}
           </p>
         </CardContent>
       </Card>
@@ -128,10 +132,12 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
   return (
     <Card variant="elevated" data-testid="attribution-card">
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Atribuição</CardTitle>
+        <CardTitle className="text-base">{t('title')}</CardTitle>
         <RecalculateButton
           isRecalculating={isRecalculating}
           onClick={handleRecalculate}
+          label={t('recalculate')}
+          loadingText={t('recalculating')}
         />
       </CardHeader>
       <CardContent className="space-y-4">
@@ -142,10 +148,10 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
             {firstTouch.inferred && (
               <span
                 className="text-xs text-muted-foreground italic"
-                title="Atribuição estimada por correlacao de canal e periodo"
+                title={t('inferredTitle')}
                 data-testid="attribution-inferred-hint"
               >
-                (estimada)
+                {t('inferred')}
               </span>
             )}
           </div>
@@ -154,7 +160,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
           {firstTouch.source && (
             <div data-testid="attribution-source">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Canal
+                {t('channel')}
               </span>
               <p className="text-sm text-foreground">{firstTouch.source}</p>
             </div>
@@ -163,7 +169,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
           {firstTouch.campaign && (
             <div data-testid="attribution-campaign">
               <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Campanha
+                {t('campaign')}
               </span>
               <p className="text-sm text-foreground">{firstTouch.campaign}</p>
             </div>
@@ -172,7 +178,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
           {/* Confidence bar */}
           <div data-testid="attribution-confidence">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Confianca
+              {t('confidence')}
             </span>
             <div className="mt-1 flex items-center gap-2">
               <div
@@ -181,7 +187,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
                 aria-valuenow={confidencePercent}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label={`${confidencePercent}% de confianca`}
+                aria-label={`${confidencePercent}%`}
               >
                 <div
                   className="h-full rounded-full bg-blue-600 transition-[width] duration-300"
@@ -199,7 +205,7 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
         {assisted.length > 0 && (
           <div className="space-y-2 border-t border-border pt-3" data-testid="attribution-assisted">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Toques Assistidos
+              {t('assistedTouches')}
             </span>
             <ul className="space-y-1">
               {assisted.map((a, i) => (
@@ -226,9 +232,13 @@ export function AttributionCard({ leadId, themeId }: AttributionCardProps) {
 function RecalculateButton({
   isRecalculating,
   onClick,
+  label,
+  loadingText,
 }: {
   isRecalculating: boolean
   onClick: () => void
+  label: string
+  loadingText: string
 }) {
   return (
     <Button
@@ -236,11 +246,11 @@ function RecalculateButton({
       size="sm"
       onClick={onClick}
       isLoading={isRecalculating}
-      loadingText="Recalculando..."
+      loadingText={loadingText}
       data-testid="attribution-recalculate"
     >
       <RefreshCw className="h-3.5 w-3.5" aria-hidden />
-      Recalcular
+      {label}
     </Button>
   )
 }

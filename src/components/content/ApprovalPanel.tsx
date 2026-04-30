@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ContentRejectModal } from './ContentRejectModal'
-import { StickyActionBar } from '@/components/mobile/StickyActionBar' // RESOLVED: FE-008 — StickyActionBar integrado em mobile
+import { StickyActionBar } from './StickyActionBar' // REMEDIATION-M7-G-002: StickyActionBar dedicado (mobile)
 import { APPROVABLE_CONTENT_STATUSES, CONTENT_STATUS } from '@/constants/status'
 import { UI_TIMING } from '@/constants/timing'
 
@@ -97,31 +97,13 @@ export function ApprovalPanel({
         )}
       </Card>
 
-      {/* Mobile: StickyActionBar (oculto em md+, mobileOnly padrão) */}
-      <StickyActionBar data-testid="approval-panel-mobile">
-        <Button
-          onClick={handleApprove}
-          disabled={!canApprove}
-          isLoading={isApproving}
-          loadingText="Aprovando..."
-          className="flex-1"
-          data-testid="approve-btn-mobile"
-        >
-          <CheckCircle className="h-4 w-4" />
-          Aprovar
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={() => setRejectOpen(true)}
-          disabled={!canApprove}
-          className="flex-1"
-          data-testid="reject-btn-mobile"
-        >
-          <XCircle className="h-4 w-4" />
-          Rejeitar
-        </Button>
-      </StickyActionBar>
+      {/* Mobile: StickyActionBar dedicado (md:hidden no proprio componente) */}
+      <StickyActionBar
+        onApprove={handleApprove}
+        onReject={() => setRejectOpen(true)}
+        disabled={!canApprove}
+        loading={isApproving}
+      />
 
       <ContentRejectModal
         open={rejectOpen}

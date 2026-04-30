@@ -19,10 +19,20 @@ export interface FunnelMetrics {
 export interface ThemeRanking {
   themeId: string
   themeName: string
+  /** MS13-B001: taxa real conversions/leads*100 calculada do período (CX-01). */
+  realConversionRate: number
+  /** MS13-B002: score composto persistido em Theme.priorityScore. */
+  priorityScore: number
+  /**
+   * @deprecated MS13-B001/B002. Mantido por compatibilidade com clientes legados que
+   * esperam o campo `conversionScore`. Reflete agora a taxa real (CX-01); novos clientes
+   * devem ler `realConversionRate`.
+   */
   conversionScore: number
   leadsCount: number
   conversionsCount: number
-  trend: number[]        // últimos 7 pontos de conversionScore
+  /** Tendência semanal: últimos 7 buckets de contagens de conversão. */
+  trend: number[]
   channelBreakdown: { channel: Channel; count: number }[]
 }
 

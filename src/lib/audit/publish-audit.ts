@@ -7,7 +7,15 @@ import { prisma } from '@/lib/prisma'
 
 export interface PublishAuditData {
   postId: string
-  action: 'publish_attempt' | 'publish_success' | 'publish_failure' | 'queue_retry' | 'permanent_fail' | 'approve'
+  action:
+    | 'publish_attempt'
+    | 'publish_success'
+    | 'publish_failure'
+    | 'queue_retry'
+    | 'permanent_fail'
+    | 'approve'
+    // TASK-12 / G-002 — kill-switch INSTAGRAM_PUBLISHING_LIVE bloqueou a publicacao.
+    | 'publish_blocked_kill_switch'
   result: 'success' | 'failure'
   platformPostId?: string
   errorMessage?: string

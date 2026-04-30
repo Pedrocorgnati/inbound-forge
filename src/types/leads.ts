@@ -2,7 +2,7 @@
  * Tipos do módulo de Leads e Conversões
  * Rastreabilidade: INT-024, INT-025, INT-029
  */
-import type { Channel, FunnelStage, ConversionType, AttributionType } from '@/types/enums'
+import type { Channel, FunnelStage, ConversionType, AttributionType, LeadStatus } from '@/types/enums'
 
 // ─── Lead ─────────────────────────────────────────────────────────────────────
 
@@ -17,6 +17,7 @@ export interface Lead {
   firstTouchThemeId: string
   channel: Channel | null
   funnelStage: FunnelStage | null
+  status: LeadStatus
   lgpdConsent: boolean
   lgpdConsentAt: Date | null
   firstTouchAt: Date | null

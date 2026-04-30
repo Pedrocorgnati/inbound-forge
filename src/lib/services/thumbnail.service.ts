@@ -47,6 +47,7 @@ export const thumbnailService = {
     buffer:     Buffer,
     mimeType:   string,
     assetFileName: string,  // ex: "1234567890-abc123.png" → thumbnail: "1234567890-abc123.webp"
+    userId:     string,
     supabase:   SupabaseClient,
     bucket:     string
   ): Promise<string | null> {
@@ -54,9 +55,10 @@ export const thumbnailService = {
     if (!thumbnailBuffer) return null
 
     // Usar mesmo base name do asset, sempre com extensão .webp
+    // REMEDIATION M9-G-002: path usa {userId}/thumbnails/ para compatibilidade com RLS
     const base          = assetFileName.replace(/\.[^.]+$/, '')
     const thumbFileName = `${base}.webp`
-    const thumbPath     = `${ASSET_UPLOAD_CONFIG.thumbnailPath}${thumbFileName}`
+    const thumbPath     = `${userId}/thumbnails/${thumbFileName}`
 
     const { error } = await supabase.storage
       .from(bucket)

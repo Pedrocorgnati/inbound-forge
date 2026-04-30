@@ -2,8 +2,9 @@
 // Módulo: module-7-theme-scoring-engine (TASK-0/ST004)
 // Requisito: calculateScoresForAll < 500ms para 100 temas
 //
-// Este teste requer banco de dados real.
-// Execute: npx vitest run src/__tests__/performance/scoring.perf.test.ts
+// Este teste requer banco de dados real e config dedicada (server-only stub).
+// Execute: npm run test:perf
+// (alias: npx vitest run --config vitest.perf.config.ts src/__tests__/performance/scoring.perf.test.ts)
 // Resultado medido: ~50-150ms (query + cálculo em memória + batch update)
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'

@@ -60,6 +60,22 @@ function extractLocale(pathname: string): string {
   return DEFAULT_LOCALE
 }
 
+export function shouldRedirectToOnboarding(
+  pathname: string,
+  onboardingCookie: string | undefined,
+  isDevMode: boolean,
+): boolean {
+  if (isDevMode) return false
+  const withoutLocale = pathname.replace(/^\/(pt-BR|en-US|it-IT|es-ES)/, '')
+  // Match exato ou com sub-path: /onboarding ou /onboarding/* (não /onboarding-fake)
+  const isOnboardingPath =
+    withoutLocale === ONBOARDING_PATH || withoutLocale.startsWith(`${ONBOARDING_PATH}/`)
+  if (isOnboardingPath) return false
+  const isApiPath = pathname.startsWith('/api/')
+  if (isApiPath) return false
+  return onboardingCookie !== '1'
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -184,13 +200,9 @@ export async function middleware(request: NextRequest) {
     }
 
     // Guard de onboarding: usuário autenticado mas não onboardado → /onboarding
-    const withoutLocale = pathname.replace(/^\/(pt-BR|en-US|it-IT|es-ES)/, '')
-    const isOnboardingPath = withoutLocale.startsWith(ONBOARDING_PATH)
-    const isApiPath = pathname.startsWith('/api/')
     const onboardingCookie = request.cookies.get('inbound_forge_onboarded')?.value
-
     const isDevMode = process.env.NODE_ENV === 'development'
-    if (!isDevMode && !isOnboardingPath && !isApiPath && onboardingCookie !== '1') {
+    if (shouldRedirectToOnboarding(pathname, onboardingCookie, isDevMode)) {
       // Sem cookie → redirecionar para onboarding (cookie será setado ao completar via PATCH)
       return NextResponse.redirect(new URL(`/${locale}${ONBOARDING_PATH}`, request.url))
     }

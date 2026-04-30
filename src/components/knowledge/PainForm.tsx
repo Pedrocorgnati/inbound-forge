@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Modal } from '@/components/ui/modal'
+import { ResponsiveSheet } from '@/components/ui/responsive-sheet'
 import { toast } from '@/components/ui/toast'
 import { AlertCircle } from 'lucide-react'
 import { useKnowledgeAutosave } from '@/hooks/useKnowledgeAutosave'
@@ -130,7 +130,7 @@ export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, locale
   }
 
   return (
-    <Modal
+    <ResponsiveSheet
       open={isOpen}
       onClose={onClose}
       title={mode === 'create' ? 'Nova Dor' : 'Editar Dor'}
@@ -228,6 +228,6 @@ export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, locale
           </Button>
         </div>
       </div>
-    </Modal>
+    </ResponsiveSheet>
   )
 }

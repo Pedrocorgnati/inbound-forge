@@ -31,7 +31,7 @@ const BONUS_COMPARISON = () => env('GEO_BONUS_COMPARISON', 0.10)
 const BONUS_CAP = () => env('GEO_BONUS_CAP', 0.25)
 
 const QUESTION_REGEX = /^(por que|porque|como|quando|onde|o que|quem|qual|quanto)\b/i
-const QUANTITATIVE_REGEX = /\b\d+([\.,]\d+)?\s?(%|mil|milho|bilho|pessoas|clientes|horas?|dias?|meses?|anos?|reais?|R\$|USD|\$|kg|km|tb|gb)\b|\b\d+x\b/i
+const QUANTITATIVE_REGEX = /\b\d+([\.,]\d+)?\s?(%|R\$|\$|mil|milho|bilho|pessoas|clientes|horas?|dias?|meses?|anos?|reais?|USD|kg|km|tb|gb)(?:\b|(?!\w))|\b\d+x\b/i
 const COMPARISON_KEYWORDS = /\b(vs\.?|versus|contra|comparado|melhor que|diferenca entre|x)\b/i
 
 export function isQuestionTitle(title: string): boolean {

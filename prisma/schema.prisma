@@ -29,6 +29,9 @@ enum ThemeStatus {
   REJECTED
 }
 
+/// Ângulos de conteúdo. Vocabulário canônico de persistência.
+/// Mapeamento triplo (BUDGET ↔ Prompt ↔ Enum ↔ i18n) em
+/// docs/ANGLE-MAPPING.md (output/docs/inbound-forge/project/ANGLE-MAPPING.md).
 enum ContentAngle {
   AGGRESSIVE
   CONSULTIVE
@@ -478,7 +481,13 @@ model Theme {
   nicheOpportunityId String?     @map("niche_opportunity_id")
 
   // Scoring fields (module-7)
-  conversionScore    Int   @default(0) @map("conversion_score") // CX-01: score final 0-100
+  // MS13-B001/B002: separação semântica entre TAXA REAL e SCORE COMPOSTO.
+  // - conversionScore: taxa real conversions/leads*100. Atualizado por
+  //   updateThemeConversionScore() em src/lib/conversion-score.ts (CX-01).
+  // - priorityScore: score composto (painRelevance + caseStrength + asov + geo + ltr).
+  //   Atualizado por ThemeScoringService.calculateScore() em src/lib/services/theme-scoring.service.ts.
+  conversionScore    Int   @default(0) @map("conversion_score") // taxa real (CX-01)
+  priorityScore      Int   @default(0) @map("priority_score")   // score composto (MS13-B002)
   painRelevanceScore Int   @default(0) @map("pain_relevance_score") // componente 0-100
   caseStrengthScore  Int   @default(0) @map("case_strength_score") // componente 0-100
   geoMultiplier      Float @default(1.0) @map("geo_multiplier") // 1.0 ou 1.2
@@ -1056,6 +1065,7 @@ model ApiUsageLog {
   metric     String   @db.VarChar(50)
   value      Float
   cost       Float    @default(0)
+  durationMs Int?     @map("duration_ms")
   recordedAt DateTime @default(now()) @map("recorded_at")
 
   @@index([service, recordedAt], name: "IDX_api_usage_logs_service")

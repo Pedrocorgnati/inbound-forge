@@ -20,7 +20,8 @@ export async function GET(_request: NextRequest) {
         id: true,
         title: true,
         opportunityScore: true,
-        conversionScore: true,
+        conversionScore: true, // taxa real (CX-01)
+        priorityScore: true,   // composto (MS13-B002)
         status: true,
         _count: { select: { contentPieces: true, firstTouchLeads: true } },
       },
@@ -34,7 +35,7 @@ export async function GET(_request: NextRequest) {
       })
     }
 
-    // LTR ativo: aplica ajustes calculados do learn-to-rank sobre conversionScore
+    // LTR ativo: aplica ajustes calculados do learn-to-rank sobre priorityScore (MS13-B002)
     const ltrUpdates = await calculateLtrScores()
     const adjustmentByTheme = new Map(ltrUpdates.map((u) => [u.themeId, u]))
 
@@ -43,7 +44,7 @@ export async function GET(_request: NextRequest) {
         const ltr = adjustmentByTheme.get(t.id)
         return {
           ...t,
-          ltrAdjustedScore: ltr?.newScore ?? t.conversionScore,
+          ltrAdjustedScore: ltr?.newScore ?? t.priorityScore,
           ltrAdjustment: ltr?.adjustment ?? 1.0,
         }
       })
@@ -51,7 +52,7 @@ export async function GET(_request: NextRequest) {
 
     return ok({
       rankingMode: 'ltr' as const,
-      reason: 'LTR ativo — ranking por conversionScore ajustado',
+      reason: 'LTR ativo — ranking por priorityScore ajustado',
       themes: ranked,
     })
   } catch {

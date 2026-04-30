@@ -1,13 +1,44 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Instagram, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { InstagramPreChecks } from '@/components/publishing/InstagramPreChecks'
 import { RetryPublishButton } from '@/components/publishing/RetryPublishButton'
+import { RateLimitCounter } from '@/components/publishing/RateLimitCounter'
 import { UI_TIMING } from '@/constants/timing'
+
+// TASK-12 ST004 (G-002) — consulta o kill-switch INSTAGRAM_PUBLISHING_LIVE
+// via endpoint server-side. Polling 30s + chamada inicial. Fail-safe: erro =
+// false (botao desabilitado por seguranca).
+const KILL_SWITCH_POLL_MS = 30_000
+
+function useInstagramPublishingEnabled(): boolean {
+  const [enabled, setEnabled] = useState(true)
+  useEffect(() => {
+    let cancelled = false
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/instagram/publishing-enabled', { cache: 'no-store' })
+        if (!res.ok) return
+        const body = await res.json().catch(() => null)
+        const next = !!(body?.data?.enabled ?? body?.enabled)
+        if (!cancelled) setEnabled(next)
+      } catch {
+        if (!cancelled) setEnabled(false)
+      }
+    }
+    fetchStatus()
+    const id = window.setInterval(fetchStatus, KILL_SWITCH_POLL_MS)
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [])
+  return enabled
+}
 
 type ButtonState = 'idle' | 'pre-checks' | 'confirming' | 'publishing' | 'done' | 'error'
 
@@ -26,8 +57,16 @@ interface InstagramPublishButtonProps {
 
 export function InstagramPublishButton({ postId, post, onRetrySuccess }: InstagramPublishButtonProps) {
   const [state, setState] = useState<ButtonState>('idle')
+  // TASK-15 ST006 (G-007) — bloqueia botao quando rate-limit Instagram saturou.
+  const [rateLimitBlocked, setRateLimitBlocked] = useState(false)
+  // TASK-12 ST004 (G-002) — kill-switch INSTAGRAM_PUBLISHING_LIVE.
+  const publishingEnabled = useInstagramPublishingEnabled()
 
-  const canOpen = !!post.approvedAt && post.channel === 'instagram'
+  const canOpen =
+    !!post.approvedAt &&
+    String(post.channel).toUpperCase() === 'INSTAGRAM' &&
+    !rateLimitBlocked &&
+    publishingEnabled
 
   const handleClick = useCallback(() => {
     if (!canOpen) return
@@ -93,25 +132,38 @@ export function InstagramPublishButton({ postId, post, onRetrySuccess }: Instagr
 
   return (
     <>
-      <Button
-        onClick={handleClick}
-        disabled={!canOpen || isDone || isPublishing}
-        variant={isDone ? 'outline' : 'default'}
-        isLoading={isPublishing}
-        loadingText="Publicando..."
-      >
-        {isDone ? (
-          <>
-            <Check className="h-4 w-4" />
-            Publicado
-          </>
-        ) : isPublishing ? null : (
-          <>
-            <Instagram className="h-4 w-4" />
-            Publicar no Instagram
-          </>
-        )}
-      </Button>
+      <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+        <Button
+          onClick={handleClick}
+          disabled={!canOpen || isDone || isPublishing}
+          variant={isDone ? 'outline' : 'default'}
+          isLoading={isPublishing}
+          loadingText="Publicando..."
+          title={
+            !publishingEnabled
+              ? 'Publicacao Instagram desativada pelo administrador (kill-switch ativo).'
+              : rateLimitBlocked
+                ? 'Limite de requisicoes Instagram atingido. Aguarde o reset.'
+                : undefined
+          }
+        >
+          {isDone ? (
+            <>
+              <Check className="h-4 w-4" />
+              Publicado
+            </>
+          ) : isPublishing ? null : (
+            <>
+              <Instagram className="h-4 w-4" />
+              Publicar no Instagram
+            </>
+          )}
+        </Button>
+        {/* TASK-15 ST006 (G-007) — contador visivel de rate-limit. */}
+        <RateLimitCounter
+          onChange={({ canPublish }) => setRateLimitBlocked(!canPublish)}
+        />
+      </div>
 
       {/* Pre-checks modal */}
       <InstagramPreChecks

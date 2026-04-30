@@ -19,7 +19,9 @@ interface ThemeRankingTableProps {
   period: AnalyticsPeriod
 }
 
-type SortBy = 'conversionScore' | 'leadsCount'
+// MS13-B001/B003: SortBy expressa explicitamente que o ordenamento padrão é a TAXA REAL
+// de conversão calculada do período (CX-01), e não o score composto.
+type SortBy = 'realConversionRate' | 'priorityScore' | 'leadsCount'
 type SortDir = 'asc' | 'desc'
 
 function SortIcon({ field, current, dir }: { field: SortBy; current: SortBy; dir: SortDir }) {
@@ -31,7 +33,7 @@ const LIMIT = 20
 
 function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
   const fmt = useFormatters()
-  const [sortBy, setSortBy] = useState<SortBy>('conversionScore')
+  const [sortBy, setSortBy] = useState<SortBy>('realConversionRate')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [page, setPage] = useState(1)
 
@@ -58,7 +60,7 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
   }, [sortBy])
 
   const handleRetry = useCallback(() => refetch(), [refetch])
-  const handleSortConversion = useCallback(() => handleSort('conversionScore'), [handleSort])
+  const handleSortConversion = useCallback(() => handleSort('realConversionRate'), [handleSort])
   const handleSortLeads = useCallback(() => handleSort('leadsCount'), [handleSort])
   const handlePrevPage = useCallback(() => setPage((p) => p - 1), [])
   const handleNextPage = useCallback(() => setPage((p) => p + 1), [])
@@ -70,7 +72,7 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
         <table className="w-full text-sm" aria-busy="true" aria-label="Carregando ranking...">
           <thead className="bg-muted/50">
             <tr>
-              {['#', 'Tema', 'Score', 'Leads', 'Conversões', 'Tendência', 'Canais'].map((h) => (
+              {['#', 'Tema', 'Taxa de Conversão', 'Leads', 'Conversões', 'Tendência', 'Canais'].map((h) => (
                 <th key={h} className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">{h}</th>
               ))}
             </tr>
@@ -121,20 +123,31 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm" aria-label="Ranking de temas por conversão">
           <caption className="sr-only">
-            Ranking de temas ordenados por {sortBy === 'conversionScore' ? 'score de conversão' : 'número de leads'}
+            Ranking de temas ordenados por {
+              sortBy === 'realConversionRate'
+                ? 'taxa real de conversão do período'
+                : sortBy === 'priorityScore'
+                ? 'score composto de priorização'
+                : 'número de leads'
+            }
           </caption>
           <thead className="bg-muted/50">
             <tr>
               <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-muted-foreground w-8">#</th>
               <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Tema</th>
-              <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
+              <th
+                scope="col"
+                className="px-3 py-2 text-left text-xs font-medium text-muted-foreground"
+                title="% de leads convertidos no período selecionado (taxa real)"
+              >
                 <button
                   type="button"
                   onClick={handleSortConversion}
                   disabled={isSortPending}
+                  aria-label="Ordenar por taxa real de conversão"
                   className="flex items-center gap-1 hover:text-foreground transition-colors disabled:opacity-60"
                 >
-                  Score <SortIcon field="conversionScore" current={sortBy} dir={sortDir} />
+                  Taxa de Conversão <SortIcon field="realConversionRate" current={sortBy} dir={sortDir} />
                 </button>
               </th>
               <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">
@@ -162,7 +175,12 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
                   {item.themeName}
                 </td>
                 <td className="px-3 py-2">
-                  <span className="tabular-nums">{item.conversionScore}%</span>
+                  <span
+                    className="tabular-nums"
+                    title="Taxa real: conversões / leads * 100 no período selecionado"
+                  >
+                    {item.realConversionRate}%
+                  </span>
                 </td>
                 <td className="px-3 py-2 tabular-nums">{fmt.number(item.leadsCount)}</td>
                 <td className="px-3 py-2 tabular-nums">{fmt.number(item.conversionsCount)}</td>

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // TASK-4 ST001/ST002 — useRovingTabIndex
 import { describe, it, expect } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
@@ -30,8 +31,8 @@ function Grid({ count = 6, columns = 3 }: { count?: number; columns?: number }) 
 describe('useRovingTabIndex', () => {
   it('initial focus is on first item', () => {
     render(<Grid />)
-    expect(screen.getByTestId('cell-0')).toHaveAttribute('tabindex', '0')
-    expect(screen.getByTestId('cell-1')).toHaveAttribute('tabindex', '-1')
+    expect(screen.getByTestId('cell-0').getAttribute('tabindex')).toBe('0')
+    expect(screen.getByTestId('cell-1').getAttribute('tabindex')).toBe('-1')
   })
 
   it('ArrowRight moves focus to next item', () => {
@@ -39,7 +40,7 @@ describe('useRovingTabIndex', () => {
     const first = screen.getByTestId('cell-0')
     first.focus()
     fireEvent.keyDown(first, { key: 'ArrowRight' })
-    expect(screen.getByTestId('cell-1')).toHaveAttribute('tabindex', '0')
+    expect(screen.getByTestId('cell-1').getAttribute('tabindex')).toBe('0')
   })
 
   it('ArrowDown jumps by columns', () => {
@@ -47,7 +48,7 @@ describe('useRovingTabIndex', () => {
     const first = screen.getByTestId('cell-0')
     first.focus()
     fireEvent.keyDown(first, { key: 'ArrowDown' })
-    expect(screen.getByTestId('cell-3')).toHaveAttribute('tabindex', '0')
+    expect(screen.getByTestId('cell-3').getAttribute('tabindex')).toBe('0')
   })
 
   it('Home goes to first, End to last', () => {
@@ -55,6 +56,6 @@ describe('useRovingTabIndex', () => {
     const cell = screen.getByTestId('cell-2')
     cell.focus()
     fireEvent.keyDown(cell, { key: 'End' })
-    expect(screen.getByTestId('cell-5')).toHaveAttribute('tabindex', '0')
+    expect(screen.getByTestId('cell-5').getAttribute('tabindex')).toBe('0')
   })
 })

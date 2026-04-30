@@ -14,9 +14,11 @@ import { ThemeRankingTable } from './ThemeRankingTable'
 import { ReconciliationPanel } from './ReconciliationPanel'
 import { ReconciliationBadge } from './ReconciliationBadge'
 import { KpiGoals } from './KpiGoals'
+import { ChannelPerformanceCard } from './ChannelPerformanceCard'
 import { ExportCSVButton } from './ExportCSVButton'
 import { useFunnelData } from '@/hooks/useFunnelData'
 import type { AnalyticsPeriod } from '@/types/analytics'
+import type { GA4ReconciliationReport } from '@/lib/analytics-reconciliation'
 
 export function AnalyticsDashboard() {
   const [period, setPeriod] = useState<AnalyticsPeriod>('30d')
@@ -24,6 +26,7 @@ export function AnalyticsDashboard() {
   const { data: funnelData, isLoading: funnelLoading, error: funnelError, refetch: refetchFunnel } = useFunnelData(period)
   const [reconciliationStats, setReconciliationStats] = useState({ postsWithoutConversion: 0, leadsWithoutPost: 0 })
   const [ga4Source, setGA4Source] = useState<'ga4' | 'internal' | null>(null)
+  const [ga4ReconReport, setGa4ReconReport] = useState<GA4ReconciliationReport | null>(null)
 
   useEffect(() => {
     trackEvent({ name: GA4_EVENTS.ANALYTICS_PAGE_VIEW })
@@ -70,6 +73,23 @@ export function AnalyticsDashboard() {
     loadGA4Source()
   }, [])
 
+  useEffect(() => {
+    async function loadGA4Reconciliation() {
+      try {
+        const res = await fetch('/api/v1/analytics/ga4-reconciliation')
+        if (!res.ok) return
+        const json = await res.json()
+        const report: GA4ReconciliationReport = json.data ?? json
+        if (report.ga4Available && report.hasDivergence) {
+          setGa4ReconReport(report)
+        }
+      } catch {
+        // silent — banner omitido em erro
+      }
+    }
+    loadGA4Reconciliation()
+  }, [])
+
   return (
     <div className="space-y-6">
       {/* Controles do período + badge de reconciliação (CL-091) */}
@@ -100,6 +120,49 @@ export function AnalyticsDashboard() {
           <ExportCSVButton period={period} />
         </div>
       </div>
+
+      {/* Banner de divergência GA4 vs interno — TASK-9 */}
+      {ga4ReconReport?.hasDivergence && (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm dark:border-amber-800/40 dark:bg-amber-900/20"
+        >
+          <svg
+            aria-hidden
+            className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <div>
+            <p className="font-medium text-amber-800 dark:text-amber-300">
+              Divergência detectada entre GA4 e analytics interno
+            </p>
+            <p className="mt-0.5 text-amber-700 dark:text-amber-400">
+              {ga4ReconReport.divergentCount}{' '}
+              {ga4ReconReport.divergentCount === 1 ? 'métrica diverge' : 'métricas divergem'} mais de
+              15%:{' '}
+              {ga4ReconReport.results
+                .filter((r) => r.status === 'DIVERGENT')
+                .map((r) => `${r.label} (GA4: ${r.ga4Value} / interno: ${r.internalValue})`)
+                .join(', ')}
+              . Adblockers e cookie consent podem causar divergências esperadas — veja{' '}
+              <a
+                href="/docs/ANALYTICS-RECONCILIATION.md"
+                className="underline hover:no-underline"
+              >
+                documentação
+              </a>
+              .
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Funil de conversão */}
       <section aria-labelledby="funnel-heading">
@@ -144,6 +207,14 @@ export function AnalyticsDashboard() {
         <ThemeRankingTable period={period} />
       </section>
 
+      {/* MS13-B004: Performance por Canal — cumpre P3 do BUDGET (visível na UI principal) */}
+      <section aria-labelledby="channel-performance-heading">
+        <h2 id="channel-performance-heading" className="text-base font-medium text-foreground mb-3">
+          Performance por Canal
+        </h2>
+        <ChannelPerformanceCard period={period} />
+      </section>
+
       {/* KPIs Operacionais — reunioes + custo (CL-128, CL-133) */}
       <section aria-labelledby="kpi-heading">
         <h2 id="kpi-heading" className="text-base font-medium text-foreground mb-3">
@@ -152,8 +223,8 @@ export function AnalyticsDashboard() {
         <KpiGoals />
       </section>
 
-      {/* Painel de reconciliação */}
-      <section aria-labelledby="reconciliation-heading">
+      {/* Painel de reconciliação — id=reconciliation para anchor do ReconciliationBadge */}
+      <section id="reconciliation" aria-labelledby="reconciliation-heading">
         <h2 id="reconciliation-heading" className="text-base font-medium text-foreground mb-3">
           Reconciliação de Dados
         </h2>

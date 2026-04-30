@@ -29,7 +29,7 @@ const LEADS_KEY = ['leads'] as const
 
 async function updateLeadStatus({ id, status }: LeadStatusMutationInput) {
   const res = await fetch(`/api/v1/leads/${id}`, {
-    method: 'PUT',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status }),
   })

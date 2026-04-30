@@ -1,7 +1,11 @@
 /**
- * Prompt de Geração de Ângulos — Inbound Forge
- * Módulo: module-8-content-generation (TASK-1/ST002)
+ * Geração de 3 ângulos de conteúdo via Claude API.
  *
+ * IMPORTANTE: O vocabulário desta camada (AGGRESSIVE/CONSULTIVE/AUTHORIAL)
+ * difere do enum Prisma e do BUDGET. Veja a tabela canônica em:
+ * docs/ANGLE-MAPPING.md (output/docs/inbound-forge/project/ANGLE-MAPPING.md)
+ *
+ * Módulo: module-8-content-generation (TASK-1/ST002)
  * Framework E-E-A-T para geração de 3 ângulos de conteúdo:
  * AGGRESSIVE (amplifica dor), CONSULTIVE (educa), AUTHORIAL (case/prova social)
  */

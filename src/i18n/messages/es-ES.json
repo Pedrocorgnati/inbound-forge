@@ -152,9 +152,9 @@
       "FAILED": "Fallido"
     },
     "angle": {
-      "AGGRESSIVE": "Agresivo — Amplifica dolor y urgencia",
-      "CONSULTIVE": "Consultivo — Educa y demuestra expertise",
-      "AUTHORIAL": "Autoral — Caso de éxito y prueba social"
+      "AGGRESSIVE": "Directo",
+      "CONSULTIVE": "Consultivo",
+      "AUTHORIAL": "Autoral"
     },
     "channel": {
       "INSTAGRAM": "Instagram",
@@ -165,6 +165,10 @@
     "regenerate": "Regenerar",
     "approve": "Aprobar",
     "reject": "Rechazar",
+    "actions": {
+      "approve": "Aprobar",
+      "reject": "Rechazar"
+    },
     "generating": "Generando contenido...",
     "approveSuccess": "¡Contenido aprobado con éxito!",
     "rejectSuccess": "Contenido rechazado.",
@@ -374,7 +378,28 @@
     "ERR-500": "Error interno del servidor",
     "generic": "Algo salió mal. Por favor, inténtalo de nuevo.",
     "networkError": "Error de conexión. Verifica tu conexión a internet.",
-    "externalServiceDown": "{service} no disponible — intenta de nuevo en {retryAfter}s"
+    "externalServiceDown": "{service} no disponible — intenta de nuevo en {retryAfter}s",
+    "content": {
+      "CONTENT_001": "Acceso denegado. No tienes permiso para este recurso.",
+      "CONTENT_002": "Contenido no encontrado.",
+      "CONTENT_050": "Operación no válida para el estado actual del contenido.",
+      "CONTENT_051": "Añade al menos un punto de dolor o caso de éxito al tema antes de generar ángulos.",
+      "CONTENT_052": "El servicio de IA devolvió un error. Inténtalo de nuevo en unos instantes.",
+      "CONTENT_053": "La respuesta de la IA llegó en un formato no válido. Inténtalo de nuevo.",
+      "CONTENT_060": "Este contenido ya ha sido aprobado.",
+      "CONTENT_061": "Selecciona un ángulo antes de aprobar.",
+      "CONTENT_062": "El motivo del rechazo debe tener al menos 10 caracteres.",
+      "CONTENT_063": "No se pudieron analizar los patrones de rechazo.",
+      "CONTENT_070": "Has alcanzado el límite diario de adaptaciones.",
+      "CONTENT_071": "Servicio de adaptación temporalmente no disponible. Inténtalo de nuevo pronto.",
+      "CONTENT_072": "El texto adaptado se truncó para ajustarse al límite del canal.",
+      "CONTENT_080": "No se encontró contenido para este tema.",
+      "CONTENT_090": "Ángulo no encontrado.",
+      "CONTENT_091": "Versión no encontrada.",
+      "CONTENT_092": "No puedes restaurar la versión actual.",
+      "SYS_001": "Servicio de IA temporalmente no disponible. Inténtalo de nuevo pronto.",
+      "DB_002": "Operación fallida. Inténtalo de nuevo."
+    }
   },
   "empty": {
     "noContent": "Aún no hay contenido",
@@ -402,7 +427,15 @@
   },
   "calendar": {
     "title": "Calendario Editorial",
-    "description": "Planificación y programación de publicaciones"
+    "description": "Planificación y programación de publicaciones",
+    "empty": {
+      "week": "Ningun post programado esta semana. Por que no crear el primero?",
+      "month": "Ningun post programado este mes.",
+      "list": "Tu lista esta vacia.",
+      "filtered": "Ningun post coincide con los filtros actuales ({channels}).",
+      "cta": "Crear primer post",
+      "clearFilters": "Limpiar filtros"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -556,5 +589,63 @@
     "blocked": "Límite de regeneraciones alcanzado",
     "success": "Tema regenerado",
     "error": "Error al regenerar"
+  },
+  "utm": {
+    "title": "UTM Links",
+    "subtitle": "Gestión de enlaces UTM para el seguimiento de conversiones",
+    "channel": "Canal",
+    "generate": "Generar UTM",
+    "generating": "Generando enlace UTM...",
+    "retry": "Intentar de nuevo",
+    "copiedSuccess": "¡Enlace UTM generado y copiado!",
+    "copyError": "Error al copiar el enlace",
+    "generateError": "Error al generar el enlace UTM",
+    "urlLabel": "URL UTM generada",
+    "copyLabel": "Copiar enlace UTM",
+    "generateLabel": "Generar enlace UTM",
+    "retryLabel": "Intentar generar UTM de nuevo",
+    "channelSelect": "Seleccionar canal UTM"
+  },
+  "conversions": {
+    "type": "Tipo de conversión",
+    "typeRequired": "Seleccione el tipo de conversión.",
+    "dateLabel": "Fecha",
+    "dateRequired": "La fecha es obligatoria.",
+    "notesLabel": "Observaciones",
+    "notesPlaceholder": "Detalles sobre la conversión (opcional)",
+    "notesMaxLength": "Máximo 500 caracteres.",
+    "submitting": "Registrando...",
+    "submit": "Registrar Conversión",
+    "successToast": "¡Conversión registrada!",
+    "errorToast": "Error al registrar la conversión",
+    "options": {
+      "CONVERSATION": "Conversación",
+      "MEETING": "Reunión",
+      "PROPOSAL": "Propuesta"
+    }
+  },
+  "attribution": {
+    "title": "Atribución",
+    "loadError": "No se pudo cargar la atribución.",
+    "fetchError": "Error al cargar la atribución",
+    "empty": "Atribución no determinada — sin enlace UTM",
+    "inferred": "(estimada)",
+    "inferredTitle": "Atribución estimada por correlación de canal y período de tiempo",
+    "channel": "Canal",
+    "campaign": "Campaña",
+    "confidence": "Confianza",
+    "confidenceLabel": "{percent}% de confianza",
+    "assistedTouches": "Toques Asistidos",
+    "recalculate": "Recalcular",
+    "recalculating": "Recalculando...",
+    "recalculateSuccess": "Atribución recalculada",
+    "recalculateError": "Error al recalcular la atribución",
+    "recalculateFailure": "Error al recalcular",
+    "typeLabel": "Tipo de atribución: {label}",
+    "types": {
+      "FIRST_TOUCH": "Primer Contacto",
+      "ASSISTED_TOUCH": "Asistida",
+      "INFERRED": "Inferida"
+    }
   }
 }

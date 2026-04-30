@@ -9,8 +9,9 @@ import sharp             from 'sharp'
 import { prisma }        from '@/lib/prisma'
 import { thumbnailService } from './thumbnail.service'
 import type { VisualAsset as PrismaVisualAsset } from '@prisma/client'
-import { ASSET_UPLOAD_CONFIG } from '@/lib/constants/asset-library'
 import type { UpdateAssetInput, ListAssetsInput } from '@/lib/validators/visual-asset'
+
+type ListAssetsParams = ListAssetsInput & { uploadedBy: string }
 import { captureException, captureMessage } from '@/lib/sentry'
 
 // ─── Supabase Storage Client (service role) ───────────────────────────────────
@@ -42,16 +43,17 @@ export const visualAssetService = {
    * Listagem paginada com filtros opcionais por tipo e tag.
    * PERF-002: 24 assets por página por default.
    */
-  async list(params: ListAssetsInput): Promise<{
+  async list(params: ListAssetsParams): Promise<{
     items:      PrismaVisualAsset[]
     total:      number
     page:       number
     totalPages: number
   }> {
-    const { page, limit, fileType, tag } = params
+    const { page, limit, fileType, tag, uploadedBy } = params
 
     const where = {
-      isActive: true,
+      isActive:   true,
+      uploadedBy,
       ...(fileType ? { fileType } : {}),
       ...(tag ? { tags: { has: tag } } : {}),
     }
@@ -75,11 +77,16 @@ export const visualAssetService = {
   },
 
   /**
-   * Busca um asset por ID. Retorna null se não encontrado ou inativo.
+   * Busca um asset por ID. Retorna null se não encontrado, inativo ou pertencente a outro tenant.
+   * uploadedBy opcional — quando fornecido, aplica tenant scoping.
    */
-  async findById(id: string): Promise<PrismaVisualAsset | null> {
+  async findById(id: string, uploadedBy?: string): Promise<PrismaVisualAsset | null> {
     return prisma.visualAsset.findFirst({
-      where: { id, isActive: true },
+      where: {
+        id,
+        isActive: true,
+        ...(uploadedBy ? { uploadedBy } : {}),
+      },
     })
   },
 
@@ -88,11 +95,12 @@ export const visualAssetService = {
    * Gera thumbnail WebP 200×200 automaticamente (exceto SVG).
    * PERF-003: valida tamanho e tipo antes do upload.
    */
-  async upload(file: File, altText?: string): Promise<PrismaVisualAsset> {
+  async upload(file: File, uploadedBy: string, altText?: string): Promise<PrismaVisualAsset> {
     const { client, bucket } = getStorageClient()
     const buffer      = Buffer.from(await file.arrayBuffer())
     const fileName    = generateFileName(file.name)
-    const storagePath = `${ASSET_UPLOAD_CONFIG.storagePath}${fileName}`
+    // REMEDIATION M9-G-002: path usa prefixo {uid}/ para compatibilidade com RLS policies
+    const storagePath = `${uploadedBy}/${fileName}`
 
     // Upload do arquivo original
     const { error: uploadError } = await client.storage
@@ -114,6 +122,7 @@ export const visualAssetService = {
         buffer,
         file.type,
         fileName,
+        uploadedBy,
         client,
         bucket
       )
@@ -145,10 +154,11 @@ export const visualAssetService = {
         heightPx,
         storageUrl,
         thumbnailUrl,
-        altText:    altText ?? null,
-        tags:       [],
-        usedInJobs: [],
-        isActive:   true,
+        altText:      altText ?? null,
+        tags:         [],
+        usedInJobs:   [],
+        isActive:     true,
+        uploadedBy:   uploadedBy,
       },
     })
   },
@@ -183,19 +193,28 @@ export const visualAssetService = {
     // Remover do Storage (best-effort)
     try {
       const { client, bucket } = getStorageClient()
-      const fileName = asset.storageUrl.split('/').pop()
+
+      // Extrair o path dentro do bucket a partir da URL publica
+      // Formato: https://{project}.supabase.co/storage/v1/object/public/{bucket}/{path}
+      const bucketPrefix = `/storage/v1/object/public/${bucket}/`
 
       const toDelete: string[] = []
 
-      if (fileName) {
-        toDelete.push(`${ASSET_UPLOAD_CONFIG.storagePath}${fileName}`)
+      const assetPath = asset.storageUrl.includes(bucketPrefix)
+        ? asset.storageUrl.split(bucketPrefix)[1]
+        : asset.storageUrl.split('/').pop() ?? null
+
+      if (assetPath) {
+        toDelete.push(assetPath)
       }
 
       // Remover thumbnail também
       if (asset.thumbnailUrl) {
-        const thumbName = asset.thumbnailUrl.split('/').pop()
-        if (thumbName) {
-          toDelete.push(`${ASSET_UPLOAD_CONFIG.thumbnailPath}${thumbName}`)
+        const thumbPath = asset.thumbnailUrl.includes(bucketPrefix)
+          ? asset.thumbnailUrl.split(bucketPrefix)[1]
+          : asset.thumbnailUrl.split('/').pop() ?? null
+        if (thumbPath) {
+          toDelete.push(thumbPath)
         }
       }
 

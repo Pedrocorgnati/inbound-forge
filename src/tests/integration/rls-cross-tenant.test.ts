@@ -16,6 +16,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL     = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 const SUPABASE_ANON    = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ''
+const BUCKET           = process.env.SUPABASE_STORAGE_BUCKET ?? 'inbound-forge-assets'
 const SHOULD_RUN = SUPABASE_URL && SUPABASE_ANON
   && process.env.TEST_RLS_USER_A_EMAIL && process.env.TEST_RLS_USER_A_PASSWORD
   && process.env.TEST_RLS_USER_B_EMAIL && process.env.TEST_RLS_USER_B_PASSWORD
@@ -27,7 +28,7 @@ async function login(email: string, password: string) {
   return { client, userId: data.user!.id }
 }
 
-describe.runIf(SHOULD_RUN)('RLS cross-tenant — visual-assets', () => {
+describe.runIf(SHOULD_RUN)(`RLS cross-tenant — ${BUCKET}`, () => {
   let clientA: ReturnType<typeof createClient>
   let userIdA: string
   let clientB: ReturnType<typeof createClient>
@@ -47,7 +48,7 @@ describe.runIf(SHOULD_RUN)('RLS cross-tenant — visual-assets', () => {
     assetPathA = `${userIdA}/rls-test-${Date.now()}.png`
 
     const { error: upErr } = await clientA.storage
-      .from('visual-assets')
+      .from(BUCKET)
       .upload(assetPathA, bytes, { contentType: 'image/png' })
     if (upErr) throw upErr
 
@@ -58,7 +59,7 @@ describe.runIf(SHOULD_RUN)('RLS cross-tenant — visual-assets', () => {
         original_name:   'rls-test.png',
         file_type:       'image/png',
         file_size_bytes: 8,
-        storage_url:     `${SUPABASE_URL}/storage/v1/object/public/visual-assets/${assetPathA}`,
+        storage_url:     `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${assetPathA}`,
         uploaded_by:     userIdA,
       })
       .select('id')
@@ -70,7 +71,7 @@ describe.runIf(SHOULD_RUN)('RLS cross-tenant — visual-assets', () => {
   afterAll(async () => {
     // cleanup
     await clientA.from('visual_assets').delete().eq('id', assetIdA)
-    await clientA.storage.from('visual-assets').remove([assetPathA])
+    await clientA.storage.from(BUCKET).remove([assetPathA])
   })
 
   it('user B nao consegue listar assets de user A via tabela', async () => {
@@ -79,7 +80,7 @@ describe.runIf(SHOULD_RUN)('RLS cross-tenant — visual-assets', () => {
   })
 
   it('user B nao consegue fazer SELECT direto no storage path de user A', async () => {
-    const { data } = await clientB.storage.from('visual-assets').download(assetPathA)
+    const { data } = await clientB.storage.from(BUCKET).download(assetPathA)
     expect(data).toBeNull()
   })
 
@@ -94,9 +95,9 @@ describe.runIf(SHOULD_RUN)('RLS cross-tenant — visual-assets', () => {
   it('user B consegue fazer upload para seu proprio path', async () => {
     const pathB = `${(await clientB.auth.getUser()).data.user!.id}/rls-selftest-${Date.now()}.png`
     const { error } = await clientB.storage
-      .from('visual-assets')
+      .from(BUCKET)
       .upload(pathB, new Uint8Array([0x89, 0x50, 0x4e, 0x47]), { contentType: 'image/png' })
     expect(error).toBeNull()
-    await clientB.storage.from('visual-assets').remove([pathB])
+    await clientB.storage.from(BUCKET).remove([pathB])
   })
 })

@@ -34,7 +34,7 @@ const WORKER_ADAPTERS: Record<string, WorkerChannelAdapter> = {
   },
   INSTAGRAM: {
     mode: 'auto',
-    route: (postId) => callInternalApi(`/api/v1/posts/${postId}/instagram-publish`, 'POST'),
+    route: (postId) => callInternalApi('/api/instagram/publish', 'POST', { postId }),
   },
   LINKEDIN: {
     mode: 'assisted',
@@ -81,9 +81,12 @@ export async function publishPost(
     await routeByChannel(postId, channel)
 
     await db.$transaction([
+      // RS-3: QueueStatus.DONE = publicacao concluida com sucesso.
+      // PostStatus.PUBLISHED = post publicado (terminal).
+      // Os dois enums sao distintos.
       db.publishingQueue.update({
         where: { postId },
-        data: { status: 'PUBLISHED', publishedAt: new Date() },
+        data: { status: 'DONE', publishedAt: new Date() },
       }),
       db.post.update({
         where: { id: postId },
@@ -104,17 +107,18 @@ async function routeByChannel(postId: string, channel: string): Promise<void> {
   await adapter.route(postId)
 }
 
-async function callInternalApi(path: string, method: string): Promise<void> {
+async function callInternalApi(path: string, method: string, body?: Record<string, unknown>): Promise<void> {
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
     headers: {
       'Authorization': `Bearer ${WORKER_AUTH_TOKEN}`,
       'Content-Type': 'application/json',
     },
+    body: body ? JSON.stringify(body) : undefined,
   })
   if (!res.ok) {
-    const body = await res.text().catch(() => '')
-    throw new Error(`API ${path} retornou ${res.status}: ${body}`)
+    const errBody = await res.text().catch(() => '')
+    throw new Error(`API ${path} retornou ${res.status}: ${errBody}`)
   }
 }
 

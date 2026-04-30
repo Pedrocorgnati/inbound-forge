@@ -11,7 +11,7 @@ import 'server-only'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { randomUUID } from 'node:crypto'
 
-const BUCKET = 'visual-assets'
+const BUCKET = process.env.SUPABASE_STORAGE_BUCKET ?? 'inbound-forge-assets'
 
 let cached: SupabaseClient | null = null
 
@@ -80,4 +80,4 @@ export async function uploadThumbnail(
   return client.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
 }
 
-export const VISUAL_ASSETS_BUCKET = BUCKET
+export { BUCKET as VISUAL_ASSETS_BUCKET }

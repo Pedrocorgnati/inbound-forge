@@ -47,13 +47,35 @@ export interface AuditLogInput {
   userId: string
   leadId?: string
   metadata?: Record<string, unknown>  // NEVER include contactInfo
+  /**
+   * PA-03: quando true, falha de audit propaga exceção para o caller
+   * em vez de engolir silenciosamente. Usar APENAS em operações onde
+   * o audit pode rodar ANTES ou DENTRO de uma transação (lgpd.purge,
+   * user.data_export). Ações pós-mutação (lead.created, lead.deleted)
+   * devem permanecer fire-and-forget para não gerar estado inconsistente.
+   */
+  critical?: boolean
 }
 
 /**
+ * Ações que obrigam audit log com `critical: true`.
+ * ATENÇÃO: incluir aqui apenas ações cuja falha de audit ocorre ANTES
+ * da mutação principal (ex: dentro de uma transação). Ações pós-mutação
+ * (lead.created, lead.deleted) devem permanecer fire-and-forget para evitar
+ * que falha de audit reverta operação já confirmada ao usuário.
+ */
+const CRITICAL_ACTIONS: ReadonlySet<string> = new Set([
+  'lgpd.purge',
+  'user.data_export',
+])
+
+/**
  * Persiste um registro de audit no banco.
- * Fire-and-forget — nunca bloqueia a operação principal.
+ * Fire-and-forget por padrão. Com `critical: true` (ou ação crítica),
+ * re-lança exceção para que a API possa retornar 500 em vez de silenciar.
  */
 export async function auditLog(input: AuditLogInput): Promise<void> {
+  const isCritical = input.critical === true || CRITICAL_ACTIONS.has(input.action)
   try {
     await prisma.auditLog.create({
       data: {
@@ -66,7 +88,10 @@ export async function auditLog(input: AuditLogInput): Promise<void> {
       },
     })
   } catch (err) {
-    // Audit log failure NUNCA bloqueia a operação principal
-    console.error('[COMP-001] auditLog failed:', err instanceof Error ? err.message : 'unknown')
+    const msg = err instanceof Error ? err.message : 'unknown'
+    console.error(`[COMP-001] auditLog failed (critical=${isCritical}):`, msg)
+    if (isCritical) {
+      throw new Error(`Audit log falhou para ação crítica "${input.action}": ${msg}`)
+    }
   }
 }

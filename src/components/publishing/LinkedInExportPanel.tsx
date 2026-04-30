@@ -60,11 +60,11 @@ export function LinkedInExportPanel({ postId }: LinkedInExportPanelProps) {
 
   const handleMarkPublished = useCallback(async () => {
     try {
-      const res = await fetch(`/api/posts/${postId}`, {
+      const res = await fetch(`/api/v1/posts/${postId}/publish`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: 'PUBLISHED',
+          publishedUrl: `https://www.linkedin.com/feed/update/${postId}`,
           publishedAt: new Date().toISOString(),
         }),
       })

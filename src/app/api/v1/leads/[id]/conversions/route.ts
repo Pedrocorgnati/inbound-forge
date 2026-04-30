@@ -10,6 +10,8 @@ import { requireSession, ok, notFound, validationError, internalError } from '@/
 import { CreateConversionSchema } from '@/schemas/lead.schema'
 import { updateThemeConversionScore } from '@/lib/conversion-score'
 import { auditLog } from '@/lib/audit'
+import { trackServerEvent } from '@/lib/ga4-measurement-protocol'
+import { GA4_EVENTS } from '@/constants/ga4-events'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -77,6 +79,16 @@ export async function POST(request: NextRequest, { params }: Params) {
         themeId: lead.firstTouchThemeId,
       },
     })
+
+    // MS13-B006: GA4 Measurement Protocol server-side. SEC-008: sem PII (apenas type + theme_id + channel).
+    void trackServerEvent({
+      name: GA4_EVENTS.LEAD_CONVERTED,
+      params: {
+        conversion_type: conversion.type,
+        theme_id: lead.firstTouchThemeId ?? '',
+        channel: lead.channel ?? 'unknown',
+      },
+    }).catch(() => void 0)
 
     return ok(conversion, 201)
   } catch {

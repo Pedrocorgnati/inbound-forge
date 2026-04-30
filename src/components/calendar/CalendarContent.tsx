@@ -210,6 +210,20 @@ export function CalendarContent() {
     refetch()
   }, [selectedSlot, refetch])
 
+  // TASK-14 ST002 (G-004) — filtros ativos para empty state.
+  // Considera filtrado se nem todos canais OU statuses estao selecionados.
+  const isAllChannels = filters.channels.length === ALL_CHANNELS.length
+  const isAllStatuses = filters.statuses.length === ALL_STATUSES.length
+  const activeFilterLabels: string[] = !isAllChannels || !isAllStatuses
+    ? [
+        ...(!isAllChannels ? filters.channels : []),
+        ...(!isAllStatuses ? filters.statuses : []),
+      ]
+    : []
+  const handleClearFilters = useCallback(() => {
+    setFilters({ channels: ALL_CHANNELS, statuses: ALL_STATUSES })
+  }, [])
+
   return (
     <CalendarDragProvider onDragEnd={handleDragEnd}>
     <div data-testid="calendar-content" className="space-y-6">
@@ -260,6 +274,8 @@ export function CalendarContent() {
           onPeriodChange={handleListPeriodChange}
           onReschedule={setReschedulePost}
           onSlotClick={handleSlotClick}
+          activeFilters={activeFilterLabels}
+          onClearFilters={handleClearFilters}
           isLoading={isLoading}
         />
       ) : (
@@ -272,6 +288,8 @@ export function CalendarContent() {
           onViewChange={handleViewChange}
           onPeriodChange={handlePeriodChange}
           onSlotClick={handleSlotClick}
+          activeFilters={activeFilterLabels}
+          onClearFilters={handleClearFilters}
           isLoading={isLoading}
         />
       )}

@@ -54,3 +54,13 @@ export const PUBLISHING_QUEUE = {
 
 export const TOKEN_REFRESH_THRESHOLD_DAYS = 60
 export const TOKEN_EXPIRY_WARNING_DAYS = 7
+
+// TASK-13 ST001 (M11.7 / G-003) — alertas tiered para refresh de token Instagram.
+// info=30d (preventivo), warning=15d (acao recomendada), critical=7d (urgente).
+export const TOKEN_ALERT_THRESHOLDS = {
+  info: 30,
+  warning: 15,
+  critical: 7,
+} as const
+
+export type TokenAlertSeverity = 'none' | 'info' | 'warning' | 'critical'

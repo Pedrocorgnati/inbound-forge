@@ -20,12 +20,12 @@ interface Params {
 // ─── GET /api/visual-assets/[id] ──────────────────────────────────────────────
 
 export async function GET(_request: NextRequest, { params }: Params) {
-  const { response: authResponse } = await requireSession()
+  const { user, response: authResponse } = await requireSession()
   if (authResponse) return authResponse
 
   const { id } = await params
 
-  const asset = await visualAssetService.findById(id)
+  const asset = await visualAssetService.findById(id, user!.id)
   if (!asset) {
     return notFound('Asset não encontrado.')
   }
@@ -36,7 +36,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 // ─── PUT /api/visual-assets/[id] ──────────────────────────────────────────────
 
 export async function PUT(request: NextRequest, { params }: Params) {
-  const { response: authResponse } = await requireSession()
+  const { user, response: authResponse } = await requireSession()
   if (authResponse) return authResponse
 
   const { id } = await params
@@ -53,7 +53,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     return validationError(parsed.error)
   }
 
-  const existing = await visualAssetService.findById(id)
+  const existing = await visualAssetService.findById(id, user!.id)
   if (!existing) {
     return notFound('Asset não encontrado.')
   }
@@ -70,12 +70,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
 // ─── DELETE /api/visual-assets/[id] ───────────────────────────────────────────
 
 export async function DELETE(_request: NextRequest, { params }: Params) {
-  const { response: authResponse } = await requireSession()
+  const { user, response: authResponse } = await requireSession()
   if (authResponse) return authResponse
 
   const { id } = await params
 
-  const existing = await visualAssetService.findById(id)
+  const existing = await visualAssetService.findById(id, user!.id)
   if (!existing) {
     return notFound('Asset não encontrado.')
   }

@@ -77,8 +77,8 @@ export default async function LeadDetailPage({ params }: Props) {
             name: lead.name ?? '',
             company: lead.company ?? '',
             contactInfo: '',
-            funnelStage: (lead.funnelStage ?? undefined) as 'MQL' | 'SQL' | 'CUSTOMER' | 'VISITOR' | 'LEAD' | undefined,
-            channel: (lead.channel ?? undefined) as 'OTHER' | 'DIRECT' | 'EMAIL' | 'ORGANIC' | 'REFERRAL' | 'SOCIAL' | 'PAID' | undefined,
+            funnelStage: lead.funnelStage as 'AWARENESS' | 'CONSIDERATION' | 'DECISION' | undefined ?? undefined,
+            channel: lead.channel as 'BLOG' | 'LINKEDIN' | 'INSTAGRAM' | undefined ?? undefined,
             notes: lead.notes ?? '',
           }}
         />
