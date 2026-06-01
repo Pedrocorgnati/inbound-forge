@@ -30,10 +30,21 @@ vi.mock('@/lib/services/post.service', () => ({
   PostService: { findById: vi.fn() },
 }))
 
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    scrapingAuditLog: {
+      findMany: vi.fn(async () => []),
+      count: vi.fn(async () => 0),
+    },
+  },
+}))
+
 import { updateSource, deleteSource } from '@/lib/services/source.service'
 import { PostService } from '@/lib/services/post.service'
+import { prisma } from '@/lib/prisma'
 import { PATCH as v1SourcePatch, DELETE as v1SourceDelete } from '@/app/api/v1/sources/[id]/route'
 import { GET as v1PostGet } from '@/app/api/v1/posts/[id]/route'
+import { GET as v1ScrapingAuditGet } from '@/app/api/v1/compliance/scraping-audit/route'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mUpdate = updateSource as any
@@ -41,6 +52,8 @@ const mUpdate = updateSource as any
 const mDelete = deleteSource as any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mFindById = PostService.findById as any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mAuditFindMany = (prisma as any).scrapingAuditLog.findMany
 
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) })
 
@@ -127,5 +140,17 @@ describe('v1 posts/[id] GET — paridade com legacy /api/posts/[id]', () => {
     mFindById.mockResolvedValue(null)
     const res = await v1PostGet(jsonReq('/api/v1/posts/x', 'GET'), ctx('x'))
     expect(res.status).toBe(404)
+  })
+})
+
+describe('v1 compliance/scraping-audit GET — isolamento multi-tenant (finding TASK-013)', () => {
+  it('aplica scoping por source.operatorId no where (findMany + count)', async () => {
+    const res = await v1ScrapingAuditGet(jsonReq('/api/v1/compliance/scraping-audit?sourceId=s1', 'GET'))
+    expect(res.status).toBe(200)
+    expect(mAuditFindMany).toHaveBeenCalledTimes(1)
+    const arg = mAuditFindMany.mock.calls[0][0]
+    expect(arg.where.source).toEqual({ operatorId: 'op-1' })
+    // o filtro de sourceId convive com o scoping de tenant (AND)
+    expect(arg.where.sourceId).toBe('s1')
   })
 })

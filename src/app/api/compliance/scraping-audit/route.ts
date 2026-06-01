@@ -18,7 +18,7 @@ const CACHE_KEY = 'cache:compliance:scraping-audit'
 const QUERY_TIMEOUT_MS = 10_000
 
 export async function GET(request: NextRequest) {
-  const { response: authError } = await requireSession()
+  const { user, response: authError } = await requireSession()
   if (authError) return authError
 
   const searchParams = request.nextUrl.searchParams
@@ -31,7 +31,8 @@ export async function GET(request: NextRequest) {
     const sourceId = searchParams.get('sourceId') ?? undefined
 
     try {
-      const result = await listScrapingAuditLogs({ page, limit, sourceId })
+      // Isolamento multi-tenant (finding TASK-013): scoping via source.operatorId.
+      const result = await listScrapingAuditLogs({ page, limit, sourceId, operatorId: user!.id })
       return ok(result)
     } catch (err) {
       console.error('[ScrapingAudit] Logs query error', err instanceof Error ? err.message : 'unknown')
@@ -39,7 +40,14 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Modo 1 (padrão): relatório agregado com cache Redis
+  // Modo 1 (padrão): relatório agregado com cache Redis.
+  // NOTA (finding TASK-013, escopo deferido): este relatório NÃO é tenant-scoped. A métrica
+  // totalBatches deriva de AlertLog, que não possui operatorId/sourceId (log global de
+  // sistema), portanto não há caminho de scoping per-operador sem mudança de schema. As
+  // métricas de ScrapedText (que tem operatorId) seriam scopáveis, mas misturá-las com um
+  // totalBatches global produziria um relatório inconsistente. Decisão pendente: restringir
+  // este modo a role admin OU adicionar operatorId a AlertLog. Sem consumidor no frontend
+  // hoje (a UI usa o modo logs paginado, já tenant-scoped acima).
   const startDateStr = searchParams.get('startDate')
   const endDateStr = searchParams.get('endDate')
 

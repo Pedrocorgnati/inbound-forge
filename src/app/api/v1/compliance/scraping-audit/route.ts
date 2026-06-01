@@ -6,7 +6,7 @@ import type { Prisma } from '@prisma/client'
 import { requireSession, okPaginated, internalError } from '@/lib/api-auth'
 
 export async function GET(request: NextRequest) {
-  const { response } = await requireSession()
+  const { user, response } = await requireSession()
   if (response) return response
 
   try {
@@ -18,7 +18,11 @@ export async function GET(request: NextRequest) {
     const from = searchParams.get('from')
     const to = searchParams.get('to')
 
-    const where: Prisma.ScrapingAuditLogWhereInput = {}
+    // Isolamento multi-tenant (finding TASK-013): so logs de fontes do operador logado.
+    // ScrapingAuditLog nao tem operatorId proprio; scoping via relacao source.operatorId.
+    const where: Prisma.ScrapingAuditLogWhereInput = {
+      source: { operatorId: user!.id },
+    }
     if (status) where.status = status
     if (sourceId) where.sourceId = sourceId
     if (from || to) {
