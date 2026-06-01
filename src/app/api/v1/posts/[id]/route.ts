@@ -11,10 +11,31 @@ import {
 import { updatePostSchema as UpdatePostSchema } from '@/lib/validators/post'
 import { checkSlot, type SlotChannel } from '@/lib/publishing/slotValidator'
 import { writePublishAudit, computeDelta } from '@/lib/publishing/auditLog'
+import { PostService } from '@/lib/services/post.service'
 
 type Params = { params: Promise<{ id: string }> }
 
 const IMMUTABLE_STATUSES = ['PUBLISHED', 'CANCELLED', 'ROLLED_BACK'] as const
+
+// GET /api/v1/posts/[id]
+// Reconciliacao TASK-016: o frontend (PublishAssistWizard, InstagramPublisherPanel,
+// YouTube/TikTok export panels) le o detalhe do post via v1 GET. O handler espelha o
+// contrato da rota legada /api/posts/[id] (PostService.findById com includes de
+// publishingQueue/contentPiece/theme/pain), eliminando o 405 e permitindo o shim legacy.
+export async function GET(_request: NextRequest, { params }: Params) {
+  const { response } = await requireSession()
+  if (response) return response
+
+  const { id } = await params
+
+  try {
+    const post = await PostService.findById(id)
+    if (!post) return notFound('Post não encontrado')
+    return ok(post)
+  } catch {
+    return internalError()
+  }
+}
 
 // PUT /api/v1/posts/[id]
 export async function PUT(request: NextRequest, { params }: Params) {
