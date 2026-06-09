@@ -64,6 +64,18 @@ vi.mock('@/lib/constants/content.constants', () => ({
   CLAUDE_TIMEOUTS: { ANGLE_GENERATION_MS: 30_000 },
 }))
 
+// TASK-2 ST003: o service consulta isServiceAvailable(CLAUDE) antes de chamar a
+// API. Sem este mock, o health-check real bate em Redis (ausente em teste) e
+// derruba os 3 caminhos que chegam ao Claude (happy/forceRegenerate/parse-error)
+// com SYS_001. Preservamos o enum real e forcamos "disponivel".
+vi.mock('@/lib/services/service-health', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/services/service-health')>('@/lib/services/service-health')
+  return {
+    ...actual,
+    isServiceAvailable: vi.fn().mockResolvedValue(true),
+  }
+})
+
 // ─── Imports (after mocks) ───────────────────────────────────────────────────
 
 import { AngleGenerationService } from '../angle-generation.service'

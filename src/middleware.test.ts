@@ -13,6 +13,16 @@ vi.mock('@supabase/ssr', () => ({
         data: { user: { id: 'mock-user-id', email: 'test@test.com' } },
         error: null,
       }),
+      // O gate de MFA (rotas protegidas) chama getAuthenticatorAssuranceLevel e
+      // e fail-closed: sem este mock, `auth.mfa` indefinido lanca, forca o desafio
+      // e a response vira redirect sem header CSP. AAL1==AAL1 = sessao sem MFA
+      // pendente, libera o fluxo ate a injecao do nonce.
+      mfa: {
+        getAuthenticatorAssuranceLevel: vi.fn().mockResolvedValue({
+          data: { currentLevel: 'aal1', nextLevel: 'aal1' },
+          error: null,
+        }),
+      },
     },
   })),
 }))
@@ -74,5 +84,26 @@ describe('Middleware — CSP Nonce (SEC)', () => {
     const res = await middleware(req)
     const csp = res.headers.get('Content-Security-Policy') ?? ''
     expect(csp).toContain('script-src')
+  })
+})
+
+// TASK-15 ST002 (CL-319): locale inválido → 308 redirect para default
+describe('Middleware — locale fallback inválido', () => {
+  const invalidLocales = ['zz-ZZ', 'xx', 'fr-FR']
+
+  for (const locale of invalidLocales) {
+    it(`locale inválido ${locale} redireciona 308 para default`, async () => {
+      const req = new NextRequest(`http://localhost/${locale}/dashboard`)
+      const res = await middleware(req)
+      expect(res.status).toBe(308)
+      const location = res.headers.get('location') ?? ''
+      expect(location).toMatch(/\/(pt-BR|en-US|it-IT|es-ES)\/dashboard/)
+    })
+  }
+
+  it('locale válido pt-BR passa sem redirect 308', async () => {
+    const req = new NextRequest('http://localhost/pt-BR/login')
+    const res = await middleware(req)
+    expect(res.status).not.toBe(308)
   })
 })
