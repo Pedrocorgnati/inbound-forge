@@ -6,8 +6,23 @@
  * INT-136: nunca permitir LinkedIn, Facebook ou equivalentes.
  * INT-093: fontes isProtected=true não podem ser deletadas.
  */
+import { randomUUID } from 'crypto'
 import { prisma } from '@/lib/prisma'
 import { isBlockedDomain } from '@/lib/constants/blocked-domains'
+import { isBlockedLiteralHost } from '@/lib/security/safe-fetch'
+import { AUDIT_ACTIONS } from '@/lib/audit'
+
+// SA-SEC-02 (defense-in-depth): rejeita IP literal interno/localhost ja na
+// criacao/edicao. A validacao autoritativa com DNS-resolve roda no acesso
+// (safeFetch no /test, assertUrlSafe no worker), pois o host pode resolver
+// publico aqui e sofrer rebinding depois.
+function hasBlockedLiteralHost(rawUrl: string): boolean {
+  try {
+    return isBlockedLiteralHost(new URL(rawUrl).hostname)
+  } catch {
+    return true // URL malformada -> tratar como bloqueada
+  }
+}
 
 export interface SourceDto {
   id: string
@@ -18,6 +33,7 @@ export interface SourceDto {
   isProtected: boolean
   selector: string | null
   crawlFrequency: string
+  rateLimitPerMinute: number
   lastCrawledAt: string | null
   // TASK-3 CL-030
   antiBotBlocked: boolean
@@ -52,6 +68,7 @@ function toDto(source: {
   isProtected: boolean
   selector: string | null
   crawlFrequency: string
+  rateLimitPerMinute: number
   lastCrawledAt: Date | null
   antiBotBlocked: boolean
   antiBotReason: string | null
@@ -108,6 +125,11 @@ export async function createSource(
     return { ok: false, code: 'BLOCKED_DOMAIN' }
   }
 
+  // SA-SEC-02: bloquear IP literal interno/localhost na criacao (defense-in-depth)
+  if (hasBlockedLiteralHost(input.url)) {
+    return { ok: false, code: 'BLOCKED_DOMAIN' }
+  }
+
   // Verificar duplicata por operador + URL
   const existing = await prisma.source.findFirst({
     where: { operatorId, url: input.url },
@@ -147,6 +169,11 @@ export async function updateSource(
     return { ok: false, code: 'BLOCKED_DOMAIN' }
   }
 
+  // SA-SEC-02: bloquear IP literal interno/localhost na edicao (defense-in-depth)
+  if (input.url && hasBlockedLiteralHost(input.url)) {
+    return { ok: false, code: 'BLOCKED_DOMAIN' }
+  }
+
   // Verificar duplicata se URL mudou
   if (input.url && input.url !== existing.url) {
     const dup = await prisma.source.findFirst({
@@ -165,6 +192,37 @@ export async function updateSource(
       ...(input.isActive !== undefined ? { isActive: input.isActive } : {}),
     },
   })
+
+  if (input.isActive !== undefined && input.isActive !== existing.isActive) {
+    // fix REPROVADO (finding TASK-013): correlation_id GARANTIDO e falha de audit
+    // NUNCA mais silenciada. A pausa/reativacao continua nao-bloqueante (decisao
+    // pos-mutacao fire-and-forget), mas qualquer falha do audit e registrada em log
+    // com o correlationId (Zero Silencio) em vez de um catch vazio.
+    const correlationId = randomUUID()
+    try {
+      const { auditLog } = await import('@/lib/audit')
+      await auditLog({
+        action: input.isActive ? AUDIT_ACTIONS.SOURCE_ACTIVATED : AUDIT_ACTIONS.SOURCE_PAUSED,
+        entityType: 'Source',
+        entityId: id,
+        userId: operatorId,
+        metadata: {
+          correlationId,
+          sourceId: id,
+          previousActive: existing.isActive,
+          nextActive: input.isActive,
+          url: existing.url,
+        },
+      })
+    } catch (auditError) {
+      console.error(
+        `[source.service] audit log falhou (correlationId=${correlationId}, sourceId=${id}, action=${
+          input.isActive ? 'SOURCE_ACTIVATED' : 'SOURCE_PAUSED'
+        }):`,
+        auditError instanceof Error ? auditError.message : 'unknown',
+      )
+    }
+  }
 
   return { ok: true, source: toDto(updated) }
 }

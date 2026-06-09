@@ -38,7 +38,16 @@ vi.mock('playwright', () => {
   }
 })
 
+// SA-SEC-02: crawlUrl agora roda assertUrlSafe (DNS-resolve) antes do page.goto.
+// Mockamos o guard para os testes nao tocarem DNS real; default = permitido.
+const { mockAssertUrlSafe } = vi.hoisted(() => ({ mockAssertUrlSafe: vi.fn() }))
+vi.mock('../ssrf-guard', async () => {
+  const actual = await vi.importActual<typeof import('../ssrf-guard')>('../ssrf-guard')
+  return { ...actual, assertUrlSafe: mockAssertUrlSafe }
+})
+
 import { crawlUrl } from '../crawler'
+import { SsrfBlockedError } from '../ssrf-guard'
 import * as playwright from 'playwright'
 
 // Helpers para acessar mocks internos
@@ -61,6 +70,7 @@ function getChromiumLaunch() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockAssertUrlSafe.mockResolvedValue('93.184.216.34') // default: URL permitida
   const page = getPageMocks()
   page.setDefaultTimeout.mockImplementation(() => {})
   page.goto.mockResolvedValue(undefined)
@@ -160,5 +170,19 @@ describe('crawlUrl', () => {
 
     expect(() => new Date(result.extractedAt)).not.toThrow()
     expect(new Date(result.extractedAt).toISOString()).toBe(result.extractedAt)
+  })
+
+  // [SEC] SA-SEC-02: URL bloqueada pelo SSRF guard -> rawText vazio, sem page.goto e sem retry
+  it('retorna rawText vazio sem chamar page.goto quando o SSRF guard bloqueia', async () => {
+    const page = getPageMocks()
+    mockAssertUrlSafe.mockRejectedValueOnce(new SsrfBlockedError('IP interno (169.254.169.254)'))
+
+    const result = await crawlUrl('http://169.254.169.254/latest/meta-data')
+
+    expect(result.rawText).toBe('')
+    expect(result.title).toBeNull()
+    expect(result.url).toBe('http://169.254.169.254/latest/meta-data')
+    expect(page.goto).not.toHaveBeenCalled()
+    expect(getChromiumLaunch()).not.toHaveBeenCalled()
   })
 })

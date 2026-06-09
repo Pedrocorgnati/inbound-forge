@@ -9,6 +9,7 @@
 import type { Browser, Page } from 'playwright'
 import { PAGE_TIMEOUT_MS, CRAWLER_MAX_RETRIES } from './constants'
 import { getBrowser, getBrowserMode } from './browserless-client'
+import { assertUrlSafe, SsrfBlockedError } from './ssrf-guard'
 
 export interface CrawlResult {
   url: string
@@ -52,6 +53,20 @@ async function extractFromPage(page: Page, url: string, selector?: string | null
  * Retorna rawText vazio em caso de falha total — não trava o pipeline.
  */
 export async function crawlUrl(url: string, selector?: string | null): Promise<CrawlResult> {
+  // SA-SEC-02: pre-flight SSRF (resolve DNS + valida todos os IPs) ANTES de
+  // qualquer page.goto. Falha rapida sem retry: nao trava o pipeline (retorna
+  // rawText vazio) mas registra o bloqueio (Zero Silencio). Janela TOCTOU
+  // residual documentada em ssrf-guard.ts.
+  try {
+    await assertUrlSafe(url)
+  } catch (err) {
+    if (err instanceof SsrfBlockedError) {
+      console.warn(`[Crawler] URL bloqueada por SSRF guard | url=${url} | motivo=${err.message}`)
+      return { url, title: null, rawText: '', extractedAt: new Date().toISOString() }
+    }
+    throw err
+  }
+
   let browser: Browser | null = null
   let lastError: unknown
 

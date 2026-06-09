@@ -12,34 +12,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireSession, notFound, internalError } from '@/lib/api-auth'
 import { findSourceById } from '@/lib/services/source.service'
 import { isBlockedDomain } from '@/lib/constants/blocked-domains'
+import { safeFetch, SsrfBlockedError } from '@/lib/security/safe-fetch'
 
 const FETCH_TIMEOUT_MS = 15_000
 const PREVIEW_LENGTH = 500
 
 type Params = { params: Promise<{ id: string }> }
-
-// SEC: bloquear IPs privados e link-local para prevenir SSRF (A10)
-const PRIVATE_IP_PATTERNS = [
-  /^localhost$/i,
-  /^127\./,
-  /^10\./,
-  /^172\.(1[6-9]|2[0-9]|3[01])\./,
-  /^192\.168\./,
-  /^169\.254\./,   // link-local — inclui AWS/GCP metadata endpoint
-  /^::1$/,         // IPv6 loopback
-  /^fc00:/i,       // IPv6 ULA
-  /^fe80:/i,       // IPv6 link-local
-  /^0\./,
-]
-
-function isPrivateOrInternalUrl(urlString: string): boolean {
-  try {
-    const { hostname } = new URL(urlString)
-    return PRIVATE_IP_PATTERNS.some((pattern) => pattern.test(hostname))
-  } catch {
-    return true // URL malformada → tratar como interna
-  }
-}
 
 function extractTextFromHtml(html: string): string {
   // Remove tags e normaliza espaços para preview rápido
@@ -68,13 +46,9 @@ export async function POST(_request: NextRequest, { params }: Params) {
     )
   }
 
-  // SEC: bloquear IPs privados/internos para prevenir SSRF (A10)
-  if (isPrivateOrInternalUrl(source.url)) {
-    return NextResponse.json(
-      { success: false, code: 'SRC_004', error: 'URL aponta para endereço interno não permitido.' },
-      { status: 422 }
-    )
-  }
+  // SEC (SA-SEC-02): a validacao autoritativa de SSRF (DNS-resolve + pin de IP +
+  // redirect:manual) acontece dentro de safeFetch, que rejeita IP interno mesmo
+  // que o hostname so resolva para ele em runtime (anti-rebinding) ou via redirect.
 
   try {
     const controller = new AbortController()
@@ -85,7 +59,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
     let status: number
 
     try {
-      const response = await fetch(source.url, {
+      const response = await safeFetch(source.url, {
         signal: controller.signal,
         headers: { 'User-Agent': 'InboundForge-Crawler/1.0 (B2B lead research)' },
       })
@@ -129,6 +103,14 @@ export async function POST(_request: NextRequest, { params }: Params) {
       },
     })
   } catch (err) {
+    // SA-SEC-02: URL que resolve para endereco interno (inclui rebinding/redirect).
+    if (err instanceof SsrfBlockedError) {
+      return NextResponse.json(
+        { success: false, code: 'SRC_004', error: 'URL aponta para endereço interno não permitido.' },
+        { status: 422 }
+      )
+    }
+
     const message = err instanceof Error ? err.message : 'unknown'
     console.error('[Sources/Test] Extraction failed', { sourceId: id, error: message })
 
