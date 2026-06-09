@@ -9,6 +9,8 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { purgeExpiredLeads } from '@/lib/services/lgpd-purge.service'
+import { runRetentionCleanup } from '@/lib/lgpd/retention'
+import { prisma } from '@/lib/prisma'
 import { captureException } from '@/lib/sentry'
 
 export const runtime = 'nodejs'
@@ -22,9 +24,16 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // CP-COMP-01 / DB-04: runRetentionCleanup (anonimiza contactInfo de leads
+    // >2 anos, nulifica DiagnosticoLead.rawText vencido, purga
+    // ScrapedText/AlertLog/ApiUsageLog por TTL) PRECISA rodar ANTES do hard
+    // delete — antes nao tinha caller, entao leads nunca eram anonimizados e o
+    // gate `contactInfo:null` de purgeExpiredLeads nunca casava.
+    const retention = await runRetentionCleanup(prisma)
     const result = await purgeExpiredLeads()
     return NextResponse.json({
       ok: true,
+      retention: retention.deleted,
       ...result,
       runAt: new Date().toISOString(),
     })

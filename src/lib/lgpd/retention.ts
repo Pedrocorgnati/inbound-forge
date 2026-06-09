@@ -30,6 +30,16 @@ export async function runRetentionCleanup(
   const now = new Date()
   const results: Record<string, number> = {}
 
+  // DiagnosticoLead.rawText: nulifica a PII apos rawTextExpiresAt (DB-04, LGPD
+  // art.16). O registro permanece (segment/createdAt sao usados em analytics),
+  // mas o texto livre com PII e eliminado. Idempotente (so toca rows com rawText
+  // nao-nulo ja vencidas).
+  const { count: diagRawTextCount } = await prisma.diagnosticoLead.updateMany({
+    where: { rawTextExpiresAt: { lt: now }, rawText: { not: null } },
+    data: { rawText: null },
+  })
+  results.DiagnosticoLeadRawText = diagRawTextCount
+
   // ScrapedText: 1h
   const scrapedCutoff = new Date(
     now.getTime() - BUSINESS_RULES.SCRAPED_TEXT_TTL_HOURS * 60 * 60 * 1000
