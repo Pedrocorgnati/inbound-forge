@@ -19,8 +19,12 @@ builder = "NIXPACKS"
 [[services]]
 name = "publishing-worker"
 builder = "DOCKERFILE"
-dockerfilePath = "apps/publishing-worker/Dockerfile"
-startCommand = "node dist/main.js"
-healthcheckPath = "/"
+# Implementacao real em workers/publishing-worker (publica de fato por canal,
+# com retry/backoff). O stub antigo em apps/publishing-worker foi REMOVIDO
+# (finding WK-WRK-02): marcava PublishingQueue=DONE/Post=PUBLISHED com o publish
+# comentado, publicando nada.
+dockerfilePath = "workers/publishing-worker/Dockerfile"
+startCommand = "node dist/index.js"
+healthcheckPath = "/health"
 healthcheckTimeout = 60
 restartPolicyType = "ALWAYS"

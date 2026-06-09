@@ -7,7 +7,7 @@
 import type { Redis } from '@upstash/redis'
 import type { PrismaClient } from '@prisma/client'
 import { publishPost } from './publisher'
-import { assertChannelLocale, ChannelLocaleGateError } from '../../../src/lib/publishing/channel-locale-gate'
+import { assertChannelLocale, ChannelLocaleGateError } from './channel-locale-gate'
 
 const POLLING_INTERVAL_MS = 60_000 // 1 min — posts agendados não precisam de polling rápido
 const HEARTBEAT_INTERVAL_MS = 5 * 60_000 // 5 min

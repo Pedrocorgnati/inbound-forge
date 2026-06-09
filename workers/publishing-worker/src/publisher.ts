@@ -86,7 +86,10 @@ export async function publishPost(
       // Os dois enums sao distintos.
       db.publishingQueue.update({
         where: { postId },
-        data: { status: 'DONE', publishedAt: new Date() },
+        // PublishingQueue.status=DONE marca a conclusao; o timestamp de
+        // publicacao vive em Post.publishedAt (atualizado na mesma transacao).
+        // A PublishingQueue do schema canonico nao possui coluna publishedAt.
+        data: { status: 'DONE' },
       }),
       db.post.update({
         where: { id: postId },
@@ -130,7 +133,7 @@ async function handleFailure(postId: string, err: unknown, db: PrismaClient): Pr
   if (attempts >= maxAttempts) {
     await db.publishingQueue.update({
       where: { postId },
-      data: { status: 'FAILED', attempts, errorMessage: String(err) },
+      data: { status: 'FAILED', attempts, lastError: String(err) },
     })
     await db.post.update({
       where: { id: postId },
@@ -142,7 +145,7 @@ async function handleFailure(postId: string, err: unknown, db: PrismaClient): Pr
     const retryAt = new Date(Date.now() + 5 * 60_000)
     await db.publishingQueue.update({
       where: { postId },
-      data: { status: 'PENDING', attempts, scheduledAt: retryAt, errorMessage: String(err) },
+      data: { status: 'PENDING', attempts, scheduledAt: retryAt, lastError: String(err) },
     })
     log({ event: 'publishing_retry_scheduled', postId, attempts, retryAt, timestamp: new Date().toISOString() })
   }

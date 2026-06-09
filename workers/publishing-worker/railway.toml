@@ -1,6 +1,10 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+# Path relativo a raiz do repo (build context = repo root) para que o
+# `COPY prisma ./prisma` alcance o schema canonico. Mesma convencao do
+# scraping-worker. O Root Directory do service no painel Railway deve ficar
+# VAZIO (= raiz do repo).
+dockerfilePath = "workers/publishing-worker/Dockerfile"
 
 [deploy]
 startCommand = "node dist/index.js"
