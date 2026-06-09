@@ -1,7 +1,7 @@
-# Image Worker — Inbound Forge (module-9)
+# Video Worker — Inbound Forge
 #
 # Build context = REPO ROOT. O railway.toml deste worker aponta
-# dockerfilePath = "workers/image-worker/Dockerfile" (mesma convencao do
+# dockerfilePath = "workers/video-worker/Dockerfile" (mesma convencao do
 # scraping-worker), entao os COPY abaixo usam caminhos relativos a raiz.
 # O schema Prisma canonico vive em /prisma (fonte unica) — o worker NAO mantem
 # copia propria para evitar drift. Sem `npx prisma generate`, @prisma/client
@@ -11,17 +11,11 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Toolchain nativo para sharp e @resvg/resvg-js
-RUN apk add --no-cache python3 make g++ cairo-dev pango-dev
-
-COPY workers/image-worker/package.json workers/image-worker/package-lock.json ./
+COPY workers/video-worker/package.json workers/video-worker/package-lock.json ./
 RUN npm ci
 
-# Fontes do worker + schema canonico da raiz. Copiados separadamente para nao
-# clobberar o node_modules ja instalado (onde o prisma generate grava o client).
-COPY workers/image-worker/tsconfig.json ./
-COPY workers/image-worker/src ./src
-COPY workers/image-worker/fonts ./fonts
+COPY workers/video-worker/tsconfig.json ./
+COPY workers/video-worker/src ./src
 COPY prisma ./prisma
 
 RUN npx prisma generate
@@ -32,15 +26,11 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Libs de runtime para sharp/resvg
-RUN apk add --no-cache cairo pango
-
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
-COPY --from=builder /app/fonts ./fonts
 COPY --from=builder /app/prisma ./prisma
 
-EXPOSE 3001
+EXPOSE 3002
 
 CMD ["node", "dist/index.js"]

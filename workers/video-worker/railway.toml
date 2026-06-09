@@ -4,7 +4,7 @@ builder = "DOCKERFILE"
 # `COPY prisma ./prisma` alcance o schema canonico. Mesma convencao do
 # scraping-worker. O Root Directory do service no painel Railway deve ficar
 # VAZIO (= raiz do repo).
-dockerfilePath = "workers/image-worker/Dockerfile"
+dockerfilePath = "workers/video-worker/Dockerfile"
 
 [deploy]
 startCommand = "node dist/index.js"
@@ -14,13 +14,11 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
 
 # Variáveis de ambiente necessárias (configurar no painel Railway):
-# DATABASE_URL            — Supabase PostgreSQL connection string
-# UPSTASH_REDIS_REST_URL  — URL do Redis Upstash
+# DATABASE_URL             — Supabase PostgreSQL connection string
+# UPSTASH_REDIS_REST_URL   — URL do Redis Upstash
 # UPSTASH_REDIS_REST_TOKEN — Token do Redis Upstash
 # NEXT_PUBLIC_SUPABASE_URL — URL pública do Supabase
 # SUPABASE_SERVICE_ROLE_KEY — Service role key do Supabase
-# SUPABASE_STORAGE_BUCKET   — Bucket para imagens geradas
+# SUPABASE_STORAGE_BUCKET  — Bucket para vídeos gerados
 # WORKER_AUTH_TOKEN        — Token de autenticação do worker
-# IMAGE_WORKER_TIMEOUT_MS  — Timeout por job (default: 60000)
-# IDEOGRAM_API_KEY          — API key do Ideogram (opcional)
-# FAL_API_KEY               — API key do Fal.ai (opcional)
+# PORT                     — Porta do health server (default: 3002)
