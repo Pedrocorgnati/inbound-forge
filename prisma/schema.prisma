@@ -80,6 +80,11 @@ enum ScrapingAuditStatus {
   FAILED
 }
 
+enum ScrapingRobotsDecision {
+  ALLOW
+  DENY
+}
+
 enum WorkerType {
   SCRAPING
   IMAGE
@@ -176,19 +181,58 @@ enum ObjectionType {
 // ─── Entidades ───────────────────────────────────────────────────────────────
 
 model Operator {
-  id                   String   @id @default(uuid())
-  email                String   @unique
-  onboardingCompleted  Boolean  @default(false) @map("onboarding_completed")
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  onboardingCompleted  Boolean   @default(false) @map("onboarding_completed")
+  // CL-249 (TASK-12 ST001) — onboarding skip + resume
+  onboardingStep       Int       @default(0) @map("onboarding_step")
+  onboardingSkippedAt  DateTime? @map("onboarding_skipped_at")
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
   preferences          Json?
-  createdAt            DateTime @default(now()) @map("created_at")
-  updatedAt            DateTime @updatedAt @map("updated_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
 
   // Relations — module-6
   sources          Source[]
   scrapedTexts     ScrapedText[]
   activationEvents ActivationEvent[]
+  dataExportRequests DataExportRequest[]
 
   @@map("operators")
+}
+
+// loop 05-27 TAREFA-028 (P3): backup codes de MFA/TOTP (recovery).
+// O segredo TOTP vive no Supabase Auth (criptografado em repouso); aqui guardamos
+// apenas o HASH SHA-256 de cada backup code one-time. `userId` = id do usuario
+// Supabase (auth.users.id == Operator.id). Sem FK para manter o recurso
+// desacoplado do ciclo de vida do Operator.
+model MfaBackupCode {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  codeHash  String    @map("code_hash") @db.VarChar(64)
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@unique([userId, codeHash], name: "UQ_mfa_backup_codes_user_hash")
+  @@index([userId], name: "IDX_mfa_backup_codes_user")
+  @@map("mfa_backup_codes")
+}
+
+// ─── LGPD Data Export Request (TASK-2, CL-298) ───────────────────────────────
+
+model DataExportRequest {
+  id           String    @id @default(cuid())
+  operatorId   String    @map("operator_id")
+  status       String    @default("pending") @db.VarChar(20) // pending|processing|ready|expired|failed
+  fileUrl      String?   @map("file_url") @db.Text
+  expiresAt    DateTime? @map("expires_at")
+  requestedAt  DateTime  @default(now()) @map("requested_at")
+  completedAt  DateTime? @map("completed_at")
+
+  operator     Operator  @relation(fields: [operatorId], references: [id])
+
+  @@index([operatorId, requestedAt], name: "IDX_data_export_requests_operator")
+  @@map("data_export_requests")
 }
 
 // TASK-1 ST001 (CL-031): evento de ativacao disparado uma vez por operator quando
@@ -423,6 +467,12 @@ model ScrapingAuditLog {
   id               String              @id @default(uuid())
   sourceId         String              @map("source_id")
   sourceUrl        String              @map("source_url") @db.VarChar(1024)
+  robotsDecision   ScrapingRobotsDecision @default(ALLOW) @map("robots_decision")
+  statusCode       Int?                @map("status_code")
+  latencyMs        Int?                @map("latency_ms")
+  correlationId    String              @default(uuid()) @map("correlation_id") @db.VarChar(36)
+  revealedBy       String?             @map("revealed_by") @db.VarChar(255)
+  ttlExpiresAt     DateTime            @default(dbgenerated("(now() + '180 days'::interval)")) @map("ttl_expires_at")
   textsCollected   Int                 @map("texts_collected")
   textsClassified  Int                 @map("texts_classified")
   errorsCount      Int                 @default(0) @map("errors_count")
@@ -436,6 +486,9 @@ model ScrapingAuditLog {
 
   @@index([sourceId, createdAt], name: "IDX_scraping_audit_source_created")
   @@index([status, createdAt], name: "IDX_scraping_audit_status_created")
+  @@index([robotsDecision, createdAt], name: "IDX_scraping_audit_robots_created")
+  @@index([correlationId], name: "IDX_scraping_audit_correlation")
+  @@index([ttlExpiresAt], name: "IDX_scraping_audit_ttl")
   @@map("scraping_audit_logs")
 }
 
@@ -966,6 +1019,8 @@ model Lead {
   conversionEvents    ConversionEvent[]
   reconciliationItems ReconciliationItem[]
   auditLogs           AuditLog[]
+  // TAREFA-002 (P0): trilha de auditoria de revelacao de PII com motivo + TTL.
+  piiRevealAudits     PIIRevealAudit[]
 
   @@index([firstTouchPostId], name: "IDX_leads_first_touch_post")
   @@index([firstTouchThemeId], name: "IDX_leads_first_touch_theme")
@@ -1002,6 +1057,25 @@ model ConversionEvent {
   @@index([leadId], name: "IDX_conversion_events_lead")
   @@index([type], name: "IDX_conversion_events_type")
   @@map("conversion_events")
+}
+
+/// Log de eventos de webhook (Cal.com) — TAREFA-021 P2 (hardening).
+/// Dedup por `eventId` (SHA-256 hex do raw body) dentro de janela de 7 dias +
+/// anti-replay via `payloadTimestamp`. `correlationId` rastreia o processamento
+/// ponta-a-ponta. Logica em src/lib/webhooks/replay-guard.ts.
+model WebhookEventLog {
+  id                String    @id @default(uuid())
+  eventId           String    @unique(map: "UQ_webhook_event_logs_event_id") @map("event_id") @db.VarChar(64)
+  correlationId     String    @map("correlation_id") @db.VarChar(36)
+  source            String    @default("calcom") @db.VarChar(32)
+  triggerEvent      String    @map("trigger_event") @db.VarChar(64)
+  externalBookingId String?   @map("external_booking_id") @db.VarChar(255)
+  payloadTimestamp  DateTime? @map("payload_timestamp")
+  receivedAt        DateTime  @default(now()) @map("received_at")
+
+  @@index([receivedAt], name: "IDX_webhook_event_logs_received")
+  @@index([externalBookingId], name: "IDX_webhook_event_logs_booking")
+  @@map("webhook_event_logs")
 }
 
 model UTMLink {
@@ -1057,6 +1131,27 @@ model AuditLog {
   @@index([userId], name: "IDX_audit_logs_user")
   @@index([createdAt(sort: Desc)], name: "IDX_audit_logs_created")
   @@map("audit_logs")
+}
+
+// ─── TAREFA-002 (P0): PII Reveal Audit (LGPD) ────────────────────────────────
+// Persistido ANTES de retornar qualquer PII em POST /api/v1/leads/[id]/reveal.
+// Consultavel via /compliance/scraping-audit (cruza com TAREFA-014).
+// SEC-008: NUNCA armazenar o valor revelado — apenas o motivo declarado.
+model PIIRevealAudit {
+  id            String   @id @default(uuid())
+  leadId        String   @map("lead_id")
+  revealedBy    String   @map("revealed_by") @db.VarChar(255)
+  motivo        String   @db.Text // motivo declarado pelo operador (LGPD)
+  correlationId String   @map("correlation_id") @db.VarChar(36)
+  ttlExpiresAt  DateTime @map("ttl_expires_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt(sort: Desc)], name: "IDX_pii_reveal_audit_lead_created")
+  @@index([revealedBy, createdAt(sort: Desc)], name: "IDX_pii_reveal_audit_user_created")
+  @@map("pii_reveal_audits")
 }
 
 model ApiUsageLog {
@@ -1214,4 +1309,26 @@ model Notification {
   @@index([readAt, createdAt], name: "IDX_notifications_read_created")
   @@index([type, createdAt], name: "IDX_notifications_type_created")
   @@map("notifications")
+}
+
+// TAREFA-005 (P0): formulario publico /diagnostico com PII criptografada,
+// consentimento LGPD explicito e retencao curta do texto bruto.
+model DiagnosticoLead {
+  id               String   @id @default(uuid())
+  correlationId    String   @unique @map("correlation_id") @db.VarChar(36)
+  encryptedPayload String   @map("encrypted_payload") @db.Text
+  rawText          String?  @map("raw_text") @db.Text
+  rawTextExpiresAt DateTime @map("raw_text_expires_at")
+  segment          String   @db.VarChar(120)
+  lgpdConsent      Boolean  @default(false) @map("lgpd_consent")
+  lgpdConsentAt    DateTime @map("lgpd_consent_at")
+  sourceIpHash     String?  @map("source_ip_hash") @db.VarChar(64)
+  userAgent        String?  @map("user_agent") @db.VarChar(500)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@index([createdAt], name: "IDX_diagnostico_leads_created")
+  @@index([rawTextExpiresAt], name: "IDX_diagnostico_leads_raw_text_expires")
+  @@index([segment, createdAt], name: "IDX_diagnostico_leads_segment_created")
+  @@map("diagnostico_leads")
 }
