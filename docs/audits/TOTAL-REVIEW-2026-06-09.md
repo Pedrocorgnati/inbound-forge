@@ -18,6 +18,12 @@ Apos a sintese, tres pontos foram reconferidos diretamente contra o working tree
 
 3. **Esta revisao foi read-only.** Os 26 subagents NAO usaram Edit/Write e NAO executaram `git restore/checkout/stash/reset` (verificado nos transcripts) — nenhuma mudanca no codigo veio desta revisao. A mudanca Mur->Corgnati as 11:57:53 e de processo externo. O unico arquivo escrito por esta revisao e este proprio relatorio.
 
+4. **Decisoes do operador (entrevista 2026-06-09) + status de remediacao.** Quatro decisoes calibraram o plano de ataque (registro em `blacksmith/inbound-forge-remediacao-decisoes.md`):
+   - **NAO esta em producao (so local/dev).** Sem trafego nem banco de prod com as migrations aplicadas -> **DD-GIT-01 rebaixado de potencial-P0 para P1** (o condicional "escala para P0 se ja aplicadas" nao se concretiza). Os 3 P0 sao "antes do 1o deploy", nao sangramento ativo.
+   - **Single-tenant DEFINITIVO** (UserRole so OPERATOR, single-user-guard por design). Isto **fecha como NAO-ISSUES**: **CP-COMP-11** (Lead sem `operatorId` — nao ha cross-tenant a isolar), as rotas **`/api/admin/*` com apenas `requireSession`** (nao ha outro tenant para escalar privilegio) e a **contradicao DB-08 x Pontos Fortes** (o "isolamento multi-tenant do scraping-audit" e defense-in-depth, nao requisito; o bypass do RLS pelo role dono do Prisma e esperado em single-tenant). Debito registrado: se um dia virar multi-operador, esses gaps voltam e exigem migracao retroativa de dados.
+   - **Execucao autonoma end-to-end.**
+   - **Status (Onda 0 + Onda 1, commitado em main):** Onda 0 higiene -> `9a76029` (schema + 8 migrations versionados) + `e35eb76` (este relatorio). Onda 1 -> `63ad7d6` (CI verde: 533/533, 3 mocks stale corrigidos — eram test-side, nao defeitos), `e43b024` (**P0 AP-API-01 CORRIGIDO**: Idempotency-Key no apiClient + funil publico + reveal/approve), `f2d37d6` (**P0 WK-WRK-01 CORRIGIDO**: image/video workers geram @prisma/client; video-worker ganhou Dockerfile/railway.toml), `491e6fa` (**P0 WK-WRK-02 CORRIGIDO**: publishing-worker consolidado no real, stub removido — resolve tambem **DC-WORK-01**; corrigidos 3 mismatches do publisher.ts contra o schema). `docker build` dos workers nao executado neste ambiente (sem docker); build context documentado nos Dockerfiles.
+
 ---
 
 ## Sumario Executivo
