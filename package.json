@@ -13,6 +13,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "typecheck": "npm run type-check",
     "validate": "npm run lint && npm run type-check && npm run test",
     "postinstall": "prisma generate",
     "test": "vitest run",
@@ -30,7 +31,8 @@
     "db:seed:test": "SEED_ENV=test prisma db seed",
     "db:seed:prod": "SEED_ENV=production prisma db seed",
     "db:seed:mvp": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed-mvp-pains.ts",
-    "db:reset": "prisma migrate reset --force",
+    "db:seed:demo": "tsx prisma/seed-demo.ts",
+    "db:reset": "tsx scripts/db-reset.ts",
     "docker:dev": "docker compose up",
     "docker:dev:build": "docker compose up --build",
     "docker:down": "docker compose down",
@@ -81,7 +83,7 @@
     "diff": "^8.0.4",
     "isomorphic-dompurify": "^2.36.0",
     "lucide-react": "^0.468.0",
-    "next": "^15.5.14",
+    "next": "^15.5.19",
     "next-intl": "^4.8.3",
     "next-themes": "^0.4.4",
     "posthog-js": "^1.191.1",
@@ -106,7 +108,10 @@
     "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "overrides": {
-    "lodash": "4.18.1"
+    "lodash": "4.18.1",
+    "protobufjs": "^7.6.2",
+    "axios": "^1.17.0",
+    "fast-uri": "^3.1.2"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.2",
