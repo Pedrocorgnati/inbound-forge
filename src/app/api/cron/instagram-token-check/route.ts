@@ -47,7 +47,8 @@ const SEVERITY_RANK: Record<string, number> = { none: 0, info: 1, warning: 2, cr
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('Authorization')
   const cronSecret = process.env['CRON_SECRET']
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  // SA-SEC-01: fail-CLOSED — sem CRON_SECRET configurado, rejeita (antes liberava).
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ success: false, error: 'Não autorizado' }, { status: 401 })
   }
 
