@@ -1,4 +1,5 @@
 import { getCsrfTokenSync, clearCsrfToken } from '@/hooks/useCsrfToken'
+import { uuidv7 } from '@/lib/utils/uuidv7'
 
 const MUTATIVE_METHODS = new Set(['POST', 'PUT', 'DELETE', 'PATCH'])
 
@@ -24,6 +25,17 @@ export async function apiClient(input: string, init: ApiClientInit = {}): Promis
     let token = getCsrfTokenSync()
     if (!token) token = await mintCsrfToken()
     if (token) headers.set('x-csrf-token', token)
+
+    // Idempotency-Key (UUID v7) e obrigatorio nas mutations criticas embrulhadas
+    // por withIdempotency (jobs/content/posts/leads/instagram approve|publish):
+    // sem o header a rota responde 400 ERR-060. Geramos uma chave por chamada
+    // quando o caller nao fornece uma; um caller que precise de dedup estavel
+    // entre submissoes distintas (ex.: protecao a double-submit) deve passar
+    // 'Idempotency-Key' em init.headers e reusa-la entre as tentativas. O retry
+    // interno de CSRF abaixo reusa este mesmo objeto headers, preservando a key.
+    if (!headers.has('Idempotency-Key')) {
+      headers.set('Idempotency-Key', uuidv7())
+    }
   }
 
   const response = await fetch(input, opts)

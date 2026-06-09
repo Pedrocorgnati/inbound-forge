@@ -14,6 +14,7 @@ import { ApprovalGate } from '@/components/blog-admin/ApprovalGate'
 import type { BlogArticle } from '@/types/blog'
 import { BLOG_STATUS } from '@/constants/status'
 import { useFormatters } from '@/lib/i18n/formatters'
+import { uuidv7 } from '@/lib/utils/uuidv7'
 
 export default function BlogReviewPage() {
   const params = useParams()
@@ -50,7 +51,11 @@ export default function BlogReviewPage() {
     try {
       const res = await fetch(`/api/blog-articles/${article.id}/approve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // /approve embrulha o handler em withIdempotency (400 sem a key).
+          'Idempotency-Key': uuidv7(),
+        },
         body: JSON.stringify({ approvedBy: 'Admin' }),
       })
       if (!res.ok) {
