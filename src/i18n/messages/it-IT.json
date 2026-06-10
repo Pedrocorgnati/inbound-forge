@@ -70,14 +70,22 @@
     "knowledge": "Base di Conoscenza",
     "content": "Generazione Contenuti",
     "calendar": "Calendario",
+    "fila": "Coda",
     "blog": "Blog",
     "leads": "Lead",
+    "reconciliation": "Riconciliazione",
+    "meetings": "Riunioni",
     "analytics": "Analytics",
     "utm": "Link UTM",
     "health": "Salute",
     "settings": "Impostazioni",
     "signOut": "Esci",
-    "sources": "Fonti"
+    "sources": "Fonti",
+    "approvals": "Approvazioni",
+    "themes": "Temi",
+    "nicheOpportunities": "Opportunità",
+    "assets": "Libreria Risorse",
+    "compliance": "Compliance"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -107,6 +115,14 @@
     "sources": "Fonti",
     "utm": "Link UTM",
     "blog": "Blog"
+  },
+  "queue": {
+    "title": "Coda di pubblicazione",
+    "description": "Trascina per riordinare, fai clic per modificare. Aggiornamenti in tempo reale via Supabase.",
+    "loadingTitle": "Coda di pubblicazione",
+    "loadingDescription": "Caricamento degli elementi in sospeso.",
+    "errorTitle": "Errore durante il caricamento della coda di pubblicazione",
+    "errorDescription": "Non e stato possibile caricare questo segmento. Riprova o contatta il supporto indicando il correlation_id."
   },
   "auth": {
     "login": "Accedi",
@@ -281,7 +297,8 @@
       "emptyFirst": "Inizia aggiungendo il tuo primo punto dolente per alimentare la base di conoscenza.",
       "createFirst": "Crea primo punto dolente",
       "deleteSuccess": "Punto dolente \"{name}\" eliminato",
-      "deleteError": "Errore nell'eliminazione del punto dolente. Riprova."
+      "deleteError": "Errore nell'eliminazione del punto dolente. Riprova.",
+      "searchPlaceholder": "Cerca pain (titolo o descrizione)..."
     },
     "patternList": {
       "new": "Nuovo Modello",
@@ -291,7 +308,8 @@
       "linkedPain": "Punto dolente collegato",
       "linkedCase": "Case collegato",
       "deleteSuccess": "Modello \"{name}\" eliminato",
-      "deleteError": "Errore nell'eliminazione del modello. Riprova."
+      "deleteError": "Errore nell'eliminazione del modello. Riprova.",
+      "searchPlaceholder": "Cerca pattern (nome o descrizione)..."
     },
     "objectionList": {
       "price": "Obiezioni di Prezzo",
@@ -308,7 +326,8 @@
       "loadErrorDesc": "Non è stato possibile caricare le obiezioni. Riprova.",
       "deleteFailure": "Eliminazione fallita",
       "deleteSuccess": "Obiezione eliminata",
-      "deleteError": "Errore nell'eliminazione dell'obiezione. Riprova."
+      "deleteError": "Errore nell'eliminazione dell'obiezione. Riprova.",
+      "searchPlaceholder": "Cerca obiezione (contenuto)..."
     }
   },
   "leads": {

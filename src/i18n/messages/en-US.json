@@ -70,14 +70,22 @@
     "knowledge": "Knowledge Base",
     "content": "Content Generation",
     "calendar": "Calendar",
+    "fila": "Queue",
     "blog": "Blog",
     "leads": "Leads",
+    "reconciliation": "Reconciliation",
+    "meetings": "Meetings",
     "analytics": "Analytics",
     "utm": "UTM Links",
     "health": "Health",
     "settings": "Settings",
     "signOut": "Sign Out",
-    "sources": "Sources"
+    "sources": "Sources",
+    "approvals": "Approvals",
+    "themes": "Themes",
+    "nicheOpportunities": "Opportunities",
+    "assets": "Asset Library",
+    "compliance": "Compliance"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -107,6 +115,14 @@
     "sources": "Sources",
     "utm": "UTM Links",
     "blog": "Blog"
+  },
+  "queue": {
+    "title": "Publishing Queue",
+    "description": "Drag to reorder, click to edit. Real-time updates via Supabase.",
+    "loadingTitle": "Publishing queue",
+    "loadingDescription": "Loading pending items.",
+    "errorTitle": "Error loading publishing queue",
+    "errorDescription": "This segment could not be loaded. Try again or contact support with the correlation_id."
   },
   "auth": {
     "login": "Sign In",
@@ -281,7 +297,8 @@
       "emptyFirst": "Start by adding your first pain point to feed the knowledge base.",
       "createFirst": "Create first pain point",
       "deleteSuccess": "Pain point \"{name}\" deleted",
-      "deleteError": "Error deleting pain point. Try again."
+      "deleteError": "Error deleting pain point. Try again.",
+      "searchPlaceholder": "Search pain (title or description)..."
     },
     "patternList": {
       "new": "New Pattern",
@@ -291,7 +308,8 @@
       "linkedPain": "Linked pain point",
       "linkedCase": "Linked case",
       "deleteSuccess": "Pattern \"{name}\" deleted",
-      "deleteError": "Error deleting pattern. Try again."
+      "deleteError": "Error deleting pattern. Try again.",
+      "searchPlaceholder": "Search pattern (name or description)..."
     },
     "objectionList": {
       "price": "Price Objections",
@@ -308,7 +326,8 @@
       "loadErrorDesc": "Could not load objections. Try again.",
       "deleteFailure": "Failed to delete",
       "deleteSuccess": "Objection deleted",
-      "deleteError": "Error deleting objection. Try again."
+      "deleteError": "Error deleting objection. Try again.",
+      "searchPlaceholder": "Search objection (content)..."
     }
   },
   "leads": {

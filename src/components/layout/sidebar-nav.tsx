@@ -9,12 +9,20 @@ import {
   BookOpen,
   FileText,
   Calendar,
+  CalendarCheck2,
+  ListChecks,
   Globe,
   Users,
   BarChart3,
   Link2,
   Activity,
   Database,
+  GitCompareArrows,
+  CheckCircle2,
+  Lightbulb,
+  Target,
+  Image as ImageIcon,
+  ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -26,12 +34,20 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   BookOpen,
   FileText,
   Calendar,
+  CalendarCheck2,
+  ListChecks,
   Globe,
   Users,
   BarChart3,
   Link2,
   Activity,
   Database,
+  GitCompareArrows,
+  CheckCircle2,
+  Lightbulb,
+  Target,
+  Image: ImageIcon,
+  ShieldCheck,
 }
 
 interface SidebarNavProps {

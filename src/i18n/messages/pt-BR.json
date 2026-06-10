@@ -70,14 +70,22 @@
     "knowledge": "Base de Conhecimento",
     "content": "Geração de Conteúdo",
     "calendar": "Calendário",
+    "fila": "Fila",
     "blog": "Blog",
     "leads": "Leads",
+    "reconciliation": "Reconciliação",
+    "meetings": "Reuniões",
     "analytics": "Analytics",
     "utm": "UTM Links",
     "health": "Saúde",
     "settings": "Configurações",
     "signOut": "Sair",
-    "sources": "Fontes"
+    "sources": "Fontes",
+    "approvals": "Aprovações",
+    "themes": "Temas",
+    "nicheOpportunities": "Oportunidades",
+    "assets": "Biblioteca de Ativos",
+    "compliance": "Compliance"
   },
   "breadcrumbs": {
     "home": "Início",
@@ -107,6 +115,14 @@
     "sources": "Fontes",
     "utm": "UTM Links",
     "blog": "Blog"
+  },
+  "queue": {
+    "title": "Fila de Publicação",
+    "description": "Arraste para reordenar, clique para editar. Atualização em tempo real via Supabase.",
+    "loadingTitle": "Fila de publicação",
+    "loadingDescription": "Carregando itens pendentes.",
+    "errorTitle": "Erro ao carregar fila de publicação",
+    "errorDescription": "Nao foi possivel carregar este segmento. Tente novamente ou fale com suporte informando o correlation_id."
   },
   "settings": {
     "title": "Configurações",
@@ -289,7 +305,8 @@
       "emptyFirst": "Comece adicionando sua primeira dor para alimentar a base de conhecimento.",
       "createFirst": "Criar primeira dor",
       "deleteSuccess": "Dor \"{name}\" deletada",
-      "deleteError": "Erro ao deletar dor. Tente novamente."
+      "deleteError": "Erro ao deletar dor. Tente novamente.",
+      "searchPlaceholder": "Buscar dor (titulo ou descricao)..."
     },
     "patternList": {
       "new": "Novo Padrão",
@@ -299,7 +316,8 @@
       "linkedPain": "Dor vinculada",
       "linkedCase": "Case vinculado",
       "deleteSuccess": "Padrão \"{name}\" deletado",
-      "deleteError": "Erro ao deletar padrão. Tente novamente."
+      "deleteError": "Erro ao deletar padrão. Tente novamente.",
+      "searchPlaceholder": "Buscar padrao (nome ou descricao)..."
     },
     "objectionList": {
       "price": "Objeções de Preço",
@@ -316,7 +334,8 @@
       "loadErrorDesc": "Não foi possível carregar as objeções. Tente novamente.",
       "deleteFailure": "Falha ao deletar",
       "deleteSuccess": "Objeção deletada",
-      "deleteError": "Erro ao deletar objeção. Tente novamente."
+      "deleteError": "Erro ao deletar objeção. Tente novamente.",
+      "searchPlaceholder": "Buscar objecao (conteudo)..."
     }
   },
   "leads": {

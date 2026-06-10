@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { HealthDashboard } from '@/components/health/HealthDashboard'
 import { WorkerControlPanel } from '@/components/workers/WorkerControlPanel'
 import { IntegrationsStatusPanel } from '@/components/health/IntegrationsStatusPanel'
@@ -49,6 +50,16 @@ export default async function HealthPage({ params }: HealthPageProps) {
       </div>
       <IntegrationsStatusPanel />
       <WorkerControlPanel />
+
+      {/* FE-02: deep-link para a subpagina de jobs da fila (antes inalcancavel). */}
+      <div>
+        <Link
+          href={`/${locale}/health/jobs`}
+          className="inline-flex items-center text-sm font-medium text-primary underline underline-offset-2 hover:text-primary-hover"
+        >
+          Ver jobs da fila
+        </Link>
+      </div>
     </div>
   )
 }

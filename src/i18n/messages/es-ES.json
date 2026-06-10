@@ -70,14 +70,22 @@
     "knowledge": "Base de Conocimiento",
     "content": "Generación de Contenido",
     "calendar": "Calendario",
+    "fila": "Cola",
     "blog": "Blog",
     "leads": "Leads",
+    "reconciliation": "Reconciliación",
+    "meetings": "Reuniones",
     "analytics": "Analytics",
     "utm": "Enlaces UTM",
     "health": "Salud",
     "settings": "Configuración",
     "signOut": "Cerrar sesión",
-    "sources": "Fuentes"
+    "sources": "Fuentes",
+    "approvals": "Aprobaciones",
+    "themes": "Temas",
+    "nicheOpportunities": "Oportunidades",
+    "assets": "Biblioteca de Recursos",
+    "compliance": "Cumplimiento"
   },
   "breadcrumbs": {
     "home": "Inicio",
@@ -107,6 +115,14 @@
     "sources": "Fuentes",
     "utm": "Enlaces UTM",
     "blog": "Blog"
+  },
+  "queue": {
+    "title": "Cola de publicación",
+    "description": "Arrastra para reordenar, haz clic para editar. Actualización en tiempo real via Supabase.",
+    "loadingTitle": "Cola de publicación",
+    "loadingDescription": "Cargando elementos pendientes.",
+    "errorTitle": "Error al cargar la cola de publicación",
+    "errorDescription": "No se pudo cargar este segmento. Inténtalo de nuevo o contacta con soporte informando el correlation_id."
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -281,7 +297,8 @@
       "emptyFirst": "Comienza agregando tu primer punto de dolor para alimentar la base de conocimiento.",
       "createFirst": "Crear primer punto de dolor",
       "deleteSuccess": "Punto de dolor \"{name}\" eliminado",
-      "deleteError": "Error al eliminar el punto de dolor. Inténtalo de nuevo."
+      "deleteError": "Error al eliminar el punto de dolor. Inténtalo de nuevo.",
+      "searchPlaceholder": "Buscar dolor (titulo o descripcion)..."
     },
     "patternList": {
       "new": "Nuevo Patrón",
@@ -291,7 +308,8 @@
       "linkedPain": "Punto de dolor vinculado",
       "linkedCase": "Caso vinculado",
       "deleteSuccess": "Patrón \"{name}\" eliminado",
-      "deleteError": "Error al eliminar el patrón. Inténtalo de nuevo."
+      "deleteError": "Error al eliminar el patrón. Inténtalo de nuevo.",
+      "searchPlaceholder": "Buscar patron (nombre o descripcion)..."
     },
     "objectionList": {
       "price": "Objeciones de Precio",
@@ -308,7 +326,8 @@
       "loadErrorDesc": "No se pudieron cargar las objeciones. Inténtalo de nuevo.",
       "deleteFailure": "Error al eliminar",
       "deleteSuccess": "Objeción eliminada",
-      "deleteError": "Error al eliminar la objeción. Inténtalo de nuevo."
+      "deleteError": "Error al eliminar la objeción. Inténtalo de nuevo.",
+      "searchPlaceholder": "Buscar objecion (contenido)..."
     }
   },
   "leads": {

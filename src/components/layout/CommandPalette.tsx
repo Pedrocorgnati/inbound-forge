@@ -23,8 +23,14 @@ const COMMANDS: CommandItem[] = [
   { label: 'Analytics', href: '/analytics', keywords: ['metricas'] },
   { label: 'Leads', href: '/leads', keywords: ['clientes'] },
   { label: 'Health', href: '/health', keywords: ['workers', 'saude'] },
+  // FE-02: Cmd+K para os workflows de-orfanados.
+  { label: 'Aprovações', href: '/approvals', keywords: ['approvals', 'aprovar'] },
+  { label: 'Temas', href: '/themes', keywords: ['themes', 'tema'] },
+  { label: 'Oportunidades', href: '/niche-opportunities', keywords: ['niche', 'nicho'] },
+  { label: 'Biblioteca', href: '/assets', keywords: ['assets', 'imagens'] },
+  { label: 'Compliance', href: '/compliance', keywords: ['lgpd', 'auditoria'] },
   { label: 'Configurações', href: '/settings', keywords: ['settings', 'config'] },
-  { label: 'Perfil', href: '/profile', keywords: ['usuario', 'conta'] },
+  { label: 'Perfil', href: '/settings/account', keywords: ['usuario', 'conta', 'perfil'] },
 ]
 
 export function CommandPalette({ locale }: CommandPaletteProps) {
