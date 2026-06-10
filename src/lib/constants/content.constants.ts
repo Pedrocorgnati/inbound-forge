@@ -39,7 +39,7 @@ export const CONTENT_RATE_LIMITS = {
 
 export const CLAUDE_MODELS = {
   ANGLE_GENERATION: 'claude-sonnet-4-6',
-  CHANNEL_ADAPTATION: 'claude-haiku-4-5-20251001',
+  CHANNEL_ADAPTATION: 'claude-sonnet-4-5-20251001',
 } as const
 
 export const CLAUDE_TIMEOUTS = {

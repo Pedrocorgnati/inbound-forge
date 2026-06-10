@@ -1,9 +1,11 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ScoreBreakdown } from '@/components/niches/ScoreBreakdown'
 import { ThemeSourcesList } from './ThemeSourcesList'
+import { ThemeDetailTabs, type ThemeDetailTab } from './ThemeDetailTabs'
 import { THEME_STATUS } from '@/constants/status'
 
 interface ContentPieceLite {
@@ -47,6 +49,102 @@ interface ThemeDetailPanelProps {
 export function ThemeDetailPanel({ theme, sources, locale }: ThemeDetailPanelProps) {
   const isRejected = theme.status === THEME_STATUS.REJECTED
 
+  // Paineis de detalhe. Em mobile (< 768px) viram tabs (?tab=...); em desktop voltam
+  // a empilhar verticalmente (ver ThemeDetailTabs). A ordem aqui define a tab default.
+  const tabs: ThemeDetailTab[] = [
+    {
+      value: 'overview',
+      label: 'Visao geral',
+      content: (
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold">Visao geral</h2>
+          {theme.pain || theme.case || theme.solutionPattern || theme.nicheOpportunity ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {theme.pain && (
+                <div className="rounded-md border border-border bg-background p-4">
+                  <h3 className="text-sm font-semibold">Dor</h3>
+                  <p className="text-sm text-muted-foreground">{theme.pain.title}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{theme.pain.description}</p>
+                </div>
+              )}
+              {theme.case && (
+                <div className="rounded-md border border-border bg-background p-4">
+                  <h3 className="text-sm font-semibold">Caso</h3>
+                  <p className="text-sm text-muted-foreground">{theme.case.name}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{theme.case.outcome}</p>
+                </div>
+              )}
+              {theme.solutionPattern && (
+                <div className="rounded-md border border-border bg-background p-4">
+                  <h3 className="text-sm font-semibold">Padrao de solucao</h3>
+                  <p className="text-sm text-muted-foreground">{theme.solutionPattern.name}</p>
+                </div>
+              )}
+              {theme.nicheOpportunity && (
+                <div className="rounded-md border border-border bg-background p-4">
+                  <h3 className="text-sm font-semibold">Nicho</h3>
+                  <p className="text-sm text-muted-foreground">
+                    GEO Ready: {theme.nicheOpportunity.isGeoReady ? 'Sim' : 'Nao'}
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Sem dados de contexto para este tema.</p>
+          )}
+        </section>
+      ),
+    },
+    {
+      value: 'score',
+      label: 'Score',
+      content: (
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold">Score breakdown</h2>
+          <ScoreBreakdown
+            breakdown={theme.scoreBreakdown as Parameters<typeof ScoreBreakdown>[0]['breakdown']}
+            finalScore={theme.conversionScore}
+          />
+        </section>
+      ),
+    },
+    {
+      value: 'sources',
+      label: 'Fontes',
+      content: (
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold">Fontes coletadas</h2>
+          <ThemeSourcesList sources={sources} />
+        </section>
+      ),
+    },
+    {
+      value: 'content',
+      label: 'Conteudos',
+      content: (
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold">Conteudos derivados</h2>
+          {theme.contentPieces.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum conteudo gerado ainda.</p>
+          ) : (
+            <ul className="space-y-1 text-sm">
+              {theme.contentPieces.map((c) => (
+                <li key={c.id} className="flex items-center justify-between gap-3">
+                  <span>
+                    {c.recommendedChannel} &middot; {c.status}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(c.createdAt).toLocaleDateString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ),
+    },
+  ]
+
   return (
     <div className="space-y-6" data-testid="theme-detail-panel">
       <div className="flex items-center justify-between gap-3">
@@ -74,69 +172,9 @@ export function ThemeDetailPanel({ theme, sources, locale }: ThemeDetailPanelPro
         )}
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-2">
-        {theme.pain && (
-          <div className="rounded-md border border-border bg-background p-4">
-            <h3 className="text-sm font-semibold">Dor</h3>
-            <p className="text-sm text-muted-foreground">{theme.pain.title}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{theme.pain.description}</p>
-          </div>
-        )}
-        {theme.case && (
-          <div className="rounded-md border border-border bg-background p-4">
-            <h3 className="text-sm font-semibold">Caso</h3>
-            <p className="text-sm text-muted-foreground">{theme.case.name}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{theme.case.outcome}</p>
-          </div>
-        )}
-        {theme.solutionPattern && (
-          <div className="rounded-md border border-border bg-background p-4">
-            <h3 className="text-sm font-semibold">Padrao de solucao</h3>
-            <p className="text-sm text-muted-foreground">{theme.solutionPattern.name}</p>
-          </div>
-        )}
-        {theme.nicheOpportunity && (
-          <div className="rounded-md border border-border bg-background p-4">
-            <h3 className="text-sm font-semibold">Nicho</h3>
-            <p className="text-sm text-muted-foreground">
-              GEO Ready: {theme.nicheOpportunity.isGeoReady ? 'Sim' : 'Nao'}
-            </p>
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Score breakdown</h2>
-        <ScoreBreakdown
-          breakdown={theme.scoreBreakdown as Parameters<typeof ScoreBreakdown>[0]['breakdown']}
-          finalScore={theme.conversionScore}
-        />
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Fontes coletadas</h2>
-        <ThemeSourcesList sources={sources} />
-      </section>
-
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold">Conteudos derivados</h2>
-        {theme.contentPieces.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum conteudo gerado ainda.</p>
-        ) : (
-          <ul className="space-y-1 text-sm">
-            {theme.contentPieces.map((c) => (
-              <li key={c.id} className="flex items-center justify-between gap-3">
-                <span>
-                  {c.recommendedChannel} &middot; {c.status}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(c.createdAt).toLocaleDateString()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <Suspense fallback={<div className="space-y-6">{tabs.map((t) => t.content)}</div>}>
+        <ThemeDetailTabs tabs={tabs} />
+      </Suspense>
     </div>
   )
 }

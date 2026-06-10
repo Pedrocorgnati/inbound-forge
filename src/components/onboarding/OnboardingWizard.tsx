@@ -1,7 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
 import { ONBOARDING_STEPS, ONBOARDING_STEPS_WITH_META } from '@/constants/onboarding-steps'
+import { useOnboardingStepQuery } from '@/app/[locale]/(onboarding)/onboarding/_hooks/use-onboarding-step-query'
 import { NudgeBanner } from './NudgeBanner'
 import { STORAGE_KEYS } from '@/constants/storage-keys'
 import type { OnboardingState } from '@/types/onboarding'
@@ -51,12 +54,89 @@ export function OnboardingWizard({ locale }: OnboardingWizardProps) {
   const [hydrated, setHydrated] = useState(false)
   const [pendingCases, setPendingCases] = useState<PendingCase[]>([])
   const [pendingPains, setPendingPains] = useState<PendingPain[]>([])
+  const [skipBusy, setSkipBusy] = useState(false)
 
-  // Hydrate from localStorage after mount
+  // Task 022 (loop 05-27): deep-link via ?step=N. O hook deriva o passo; o wizard (consumidor)
+  // exibe o toast e limpa a URL no caso de redirect. Aplicado uma unica vez apos a hidratacao.
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const stepQuery = useOnboardingStepQuery()
+  const deepLinkAppliedRef = useRef(false)
+
   useEffect(() => {
-    setState(loadState())
+    if (!hydrated || stepQuery.isLoading || deepLinkAppliedRef.current) return
+    // So intervem quando ha um parametro ?step explicito na URL.
+    if (searchParams.get('step') === null) return
+
+    deepLinkAppliedRef.current = true
+
+    if (stepQuery.toastMessage) {
+      toast.info(stepQuery.toastMessage)
+    }
+
+    const target = stepQuery.redirectTo ?? stepQuery.currentStep
+    setState((prev) => ({ ...prev, currentStep: target }))
+
+    // Redirect (parametro invalido/bloqueado): limpa o ?step da URL para evitar re-trigger.
+    if (stepQuery.redirectTo !== null) {
+      router.replace(`/${locale}/onboarding`)
+    }
+  }, [hydrated, stepQuery, searchParams, router, locale])
+
+  // CL-249 (TASK-12 ST002) — Hidratar do DB + localStorage, DB é fonte de verdade para step.
+  useEffect(() => {
+    const local = loadState()
+    setState(local)
     setHydrated(true)
+
+    async function syncFromDB() {
+      try {
+        const res = await fetch('/api/onboarding/state')
+        if (!res.ok) return
+        const json = await res.json()
+        const dbStep: number = json.data?.step ?? 0
+        if (dbStep > 0) {
+          // Usa updater funcional para (a) nao fechar em cima de `local` stale e
+          // (b) ceder ao deep-link quando ele ja tiver sido aplicado pelo outro efeito.
+          setState((prev) => {
+            if (deepLinkAppliedRef.current) return prev
+            return dbStep > prev.currentStep ? { ...prev, currentStep: dbStep } : prev
+          })
+        }
+      } catch {
+        // DB sync falhou silenciosamente — localStorage prevalece
+      }
+    }
+    void syncFromDB()
   }, [])
+
+  // CL-249 — Persiste step atual no DB quando muda
+  const persistStepDB = useCallback(async (step: number) => {
+    try {
+      await fetch('/api/onboarding/state', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'advance', step }),
+      })
+    } catch {
+      // fire-and-forget, falha silenciosa
+    }
+  }, [])
+
+  // CL-249 — Skip global do onboarding
+  const handleSkipAll = useCallback(async () => {
+    setSkipBusy(true)
+    try {
+      await fetch('/api/onboarding/state', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'skip' }),
+      })
+      window.location.href = `/${locale}/dashboard`
+    } catch {
+      setSkipBusy(false)
+    }
+  }, [locale])
 
   // Busca entradas pendentes para o GuidedCarousel (CL-022/CL-023).
   // Usa APIs existentes; falha silenciosa se nao autenticado.
@@ -66,8 +146,8 @@ export function OnboardingWizard({ locale }: OnboardingWizardProps) {
     async function load() {
       try {
         const [casesRes, painsRes] = await Promise.all([
-          fetch('/api/knowledge/cases?limit=20&status=DRAFT', { signal: controller.signal }),
-          fetch('/api/knowledge/pains?limit=20&status=DRAFT', { signal: controller.signal }),
+          fetch('/api/v1/knowledge/cases?limit=20&status=DRAFT', { signal: controller.signal }),
+          fetch('/api/v1/knowledge/pains?limit=20&status=DRAFT', { signal: controller.signal }),
         ])
         if (casesRes.ok) {
           const body = await casesRes.json()
@@ -150,16 +230,18 @@ export function OnboardingWizard({ locale }: OnboardingWizardProps) {
     (stepId: number) => {
       markCompleted(stepId)
       goNext()
+      void persistStepDB(stepId + 1)
     },
-    [markCompleted, goNext]
+    [markCompleted, goNext, persistStepDB]
   )
 
   const handleStepSkip = useCallback(
     (stepId: number) => {
       markSkipped(stepId)
       goNext()
+      void persistStepDB(stepId + 1)
     },
-    [markSkipped, goNext]
+    [markSkipped, goNext, persistStepDB]
   )
 
   // Prevent flash of wrong step before hydration
@@ -176,14 +258,25 @@ export function OnboardingWizard({ locale }: OnboardingWizardProps) {
 
   return (
     <div data-testid="onboarding-wizard" className="space-y-8">
-      {/* Header */}
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {currentStepDef.title}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Passo {state.currentStep} de {ONBOARDING_STEPS.length}
-        </p>
+      {/* Header — CL-249 (TASK-12 ST002): botao "Pular onboarding" */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {currentStepDef.title}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Passo {state.currentStep} de {ONBOARDING_STEPS.length}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void handleSkipAll()}
+          disabled={skipBusy}
+          className="text-sm text-muted-foreground underline-offset-4 hover:underline disabled:opacity-50"
+          aria-label="Pular onboarding e ir para o dashboard"
+        >
+          {skipBusy ? 'Redirecionando...' : 'Pular onboarding'}
+        </button>
       </div>
 
       {/* Carousel guiado (CL-007) */}

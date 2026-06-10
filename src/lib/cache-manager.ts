@@ -109,3 +109,16 @@ export async function setCached<T>(key: string, value: T, ttl: number): Promise<
     // Silencioso
   }
 }
+
+/**
+ * getCached com TTL resolvido por chave lógica via ttl-config.
+ * TASK-13 ST002 (CL-043)
+ */
+export async function getCachedWithConfig<T>(
+  redisKey: string,
+  logicalKey: string,
+  fetcher: () => Promise<T>,
+): Promise<T> {
+  const { resolveTtl } = await import('@/lib/cache/ttl-config')
+  return getCached(redisKey, resolveTtl(logicalKey), fetcher)
+}

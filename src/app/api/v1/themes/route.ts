@@ -1,9 +1,62 @@
 // GET /api/v1/themes
 // Módulo: module-7-theme-scoring-engine (TASK-1/ST002)
 import { NextRequest } from 'next/server'
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireSession, okPaginated, internalError, validationError } from '@/lib/api-auth'
 import { ListThemesSchema } from '@/schemas/theme.schema'
+import { THEME_STATUS } from '@/constants/status'
+
+function endOfDay(date: string) {
+  const d = new Date(`${date}T23:59:59.999Z`)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+function startOfDay(date: string) {
+  const d = new Date(`${date}T00:00:00.000Z`)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+function applyTab(where: Prisma.ThemeWhereInput, tab: string) {
+  if (tab === 'pending_approval') {
+    where.status = THEME_STATUS.ACTIVE
+    where.isNew = true
+    where.archivedAt = null
+    return
+  }
+  if (tab === 'approved') {
+    where.status = THEME_STATUS.ACTIVE
+    where.isNew = false
+    where.archivedAt = null
+    return
+  }
+  if (tab === 'rejected') {
+    where.status = THEME_STATUS.REJECTED
+    return
+  }
+  if (tab === 'archived') {
+    where.archivedAt = { not: null }
+  }
+}
+
+function applySourceFilter(where: Prisma.ThemeWhereInput, source: string) {
+  if (source === 'manual') {
+    where.createdBy = { contains: 'manual', mode: 'insensitive' }
+    return
+  }
+  if (source === 'rss') {
+    where.OR = [
+      { createdBy: { contains: 'rss', mode: 'insensitive' } },
+      { createdBy: { contains: 'feed', mode: 'insensitive' } },
+    ]
+    return
+  }
+  where.OR = [
+    { createdBy: null },
+    { createdBy: { contains: 'scrap', mode: 'insensitive' } },
+    { createdBy: { contains: 'crawler', mode: 'insensitive' } },
+  ]
+}
 
 export async function GET(request: NextRequest) {
   const { response } = await requireSession()
@@ -14,11 +67,15 @@ export async function GET(request: NextRequest) {
   const listResult = ListThemesSchema.safeParse({
     page: searchParams.get('page') ?? undefined,
     limit: searchParams.get('limit') ?? undefined,
+    tab: searchParams.get('tab') ?? undefined,
     status: searchParams.get('status') ?? undefined,
     isNew: searchParams.get('isNew') ?? undefined,
     minScore: searchParams.get('minScore') ?? undefined,
     painCategory: searchParams.get('painCategory') ?? undefined,
     niche: searchParams.get('niche') ?? undefined,
+    source: searchParams.get('source') ?? undefined,
+    dateFrom: searchParams.get('dateFrom') ?? undefined,
+    dateTo: searchParams.get('dateTo') ?? undefined,
     scoreMin: searchParams.get('scoreMin') ?? undefined,
     scoreMax: searchParams.get('scoreMax') ?? undefined,
   })
@@ -30,14 +87,17 @@ export async function GET(request: NextRequest) {
 
   try {
 
-    const where: Record<string, unknown> = {}
+    const where: Prisma.ThemeWhereInput = {}
+    applyTab(where, parsed.tab)
     if (parsed.status) where.status = parsed.status
     if (parsed.isNew !== undefined) where.isNew = parsed.isNew
-    if (!includeArchived) where.archivedAt = null
+    if (!includeArchived && parsed.tab !== 'all' && parsed.tab !== 'rejected' && parsed.tab !== 'archived') {
+      where.archivedAt = null
+    }
 
     // TASK-4 CL-197: combinacao AND entre minScore/scoreMin/scoreMax
     const scoreGte = parsed.scoreMin ?? parsed.minScore
-    const scoreRange: Record<string, number> = {}
+    const scoreRange: Prisma.IntFilter = {}
     if (scoreGte !== undefined) scoreRange.gte = scoreGte
     if (parsed.scoreMax !== undefined) scoreRange.lte = parsed.scoreMax
     // MS13-B002: filtros de score na listagem operativa de temas usam o composto.
@@ -56,6 +116,19 @@ export async function GET(request: NextRequest) {
         ],
       }
     }
+    if (parsed.source) applySourceFilter(where, parsed.source)
+    const createdAtRange: Prisma.DateTimeFilter = {}
+    if (parsed.dateFrom) {
+      const from = startOfDay(parsed.dateFrom)
+      if (!from) return validationError(new Error('dateFrom inválido'))
+      createdAtRange.gte = from
+    }
+    if (parsed.dateTo) {
+      const to = endOfDay(parsed.dateTo)
+      if (!to) return validationError(new Error('dateTo inválido'))
+      createdAtRange.lte = to
+    }
+    if (Object.keys(createdAtRange).length > 0) where.createdAt = createdAtRange
 
     const [data, total] = await Promise.all([
       prisma.theme.findMany({
@@ -66,7 +139,7 @@ export async function GET(request: NextRequest) {
         take: parsed.limit,
         include: {
           pain: { select: { title: true } },
-          nicheOpportunity: { select: { isGeoReady: true } },
+          nicheOpportunity: { select: { isGeoReady: true, sector: true, painCategory: true } },
         },
         // scoreBreakdown ja vem por padrao em findMany sem select; include nao remove campos top-level
       }),

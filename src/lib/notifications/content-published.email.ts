@@ -6,6 +6,7 @@
  * Enviado de forma assíncrona (void) no route handler.
  */
 import { sendAlertEmail } from '@/lib/alert-email'
+import { withUtm } from '@/lib/utm-builder'
 
 interface ContentPublishedParams {
   postTitle: string
@@ -24,7 +25,11 @@ export async function sendContentPublishedEmail(params: ContentPublishedParams):
     `Canal: ${channel}`,
     `Publicado em: ${timestamp}`,
   ]
-  if (postUrl) lines.push(`URL: ${postUrl}`)
+  if (postUrl) {
+    // TASK-13 ST004 (CL-174): UTM em link outbound do conteúdo publicado
+    const taggedUrl = withUtm(postUrl, { source: 'email', medium: 'email', campaign: 'content-published' })
+    lines.push(`URL: ${taggedUrl}`)
+  }
   lines.push('', `Dashboard: ${baseUrl}/posts`)
 
   await sendAlertEmail({

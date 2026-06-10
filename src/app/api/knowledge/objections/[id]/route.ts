@@ -1,92 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireSession, ok, validationError, internalError } from '@/lib/api-auth'
-import { ObjectionService } from '@/lib/services/objection.service'
-import { UpdateObjectionDto } from '@/lib/dtos/objection.dto'
-
-interface Params {
-  params: Promise<{ id: string }>
-}
+import { NextRequest } from 'next/server'
+import { GET as v1GET, PATCH as v1PATCH, DELETE as v1DELETE } from '@/app/api/v1/knowledge/objections/[id]/route'
+import { proxyToV1, legacySuccessorPath } from '@/lib/deprecation-shim'
 
 /**
- * GET /api/knowledge/objections/:id
- * KNOWLEDGE_030 se não encontrado.
+ * @deprecated Use /api/v1/knowledge/objections/[id].
+ * Rota legada deprecada (TASK-032) — proxy in-process para o twin v1 reconciliado.
+ * Sunset: 2026-06-30. NAO adicionar logica nova aqui — editar o handler v1.
  */
-export async function GET(_req: NextRequest, { params }: Params) {
-  const { response } = await requireSession()
-  if (response) return response
+type Ctx = { params: Promise<{ id: string }> }
+const ROUTE = '/api/knowledge/objections/[id]'
+const TARGET = '/api/v1/knowledge/objections/[id]'
 
-  const { id } = await params
-  try {
-    const item = await ObjectionService.findById(id)
-    if (!item) {
-      return NextResponse.json(
-        { success: false, error: 'KNOWLEDGE_030', message: 'Objeção não encontrada' },
-        { status: 404 }
-      )
-    }
-    return ok(item)
-  } catch {
-    return internalError()
-  }
+export function GET(request: NextRequest, context: Ctx) {
+  const successor = legacySuccessorPath(new URL(request.url).pathname)
+  return proxyToV1(() => v1GET(request, context), successor, { route: ROUTE, target: TARGET })
 }
 
-/**
- * PATCH /api/knowledge/objections/:id
- */
-export async function PATCH(request: NextRequest, { params }: Params) {
-  const { response } = await requireSession()
-  if (response) return response
-
-  const { id } = await params
-
-  let body: unknown
-  try {
-    body = await request.json()
-  } catch {
-    return validationError('Body inválido ou ausente')
-  }
-
-  const parsed = UpdateObjectionDto.safeParse(body)
-  if (!parsed.success) return validationError(parsed.error.flatten())
-
-  try {
-    const existing = await ObjectionService.findById(id)
-    if (!existing) {
-      return NextResponse.json(
-        { success: false, error: 'KNOWLEDGE_030', message: 'Objeção não encontrada' },
-        { status: 404 }
-      )
-    }
-
-    const updated = await ObjectionService.update(id, parsed.data)
-    return ok(updated)
-  } catch {
-    return internalError()
-  }
+export function PATCH(request: NextRequest, context: Ctx) {
+  const successor = legacySuccessorPath(new URL(request.url).pathname)
+  return proxyToV1(() => v1PATCH(request, context), successor, { route: ROUTE, target: TARGET })
 }
 
-/**
- * DELETE /api/knowledge/objections/:id
- * Audit log obrigatório (COMP-001).
- */
-export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { user, response } = await requireSession()
-  if (response) return response
-
-  const { id } = await params
-
-  try {
-    const existing = await ObjectionService.findById(id)
-    if (!existing) {
-      return NextResponse.json(
-        { success: false, error: 'KNOWLEDGE_030', message: 'Objeção não encontrada' },
-        { status: 404 }
-      )
-    }
-
-    await ObjectionService.delete(id, user!.id)
-    return ok({ success: true })
-  } catch {
-    return internalError()
-  }
+export function DELETE(request: NextRequest, context: Ctx) {
+  const successor = legacySuccessorPath(new URL(request.url).pathname)
+  return proxyToV1(() => v1DELETE(request, context), successor, { route: ROUTE, target: TARGET })
 }

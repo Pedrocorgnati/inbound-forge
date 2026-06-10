@@ -59,7 +59,8 @@ vi.mock('@/components/onboarding/steps/ActivationStep', () => ({
 
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(''),
 }))
 
 import { OnboardingWizard } from '../OnboardingWizard'

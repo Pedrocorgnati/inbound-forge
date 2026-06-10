@@ -8,8 +8,17 @@
  */
 import { prisma } from '@/lib/prisma'
 
-// ScrapingAuditStatus não está no schema Prisma principal — definido localmente
-type ScrapingAuditStatus = 'SUCCESS' | 'PARTIAL' | 'ERROR'
+type ScrapingAuditStatus = 'SUCCESS' | 'PARTIAL' | 'FAILED'
+type ScrapingRobotsDecision = 'ALLOW' | 'DENY'
+
+const DEFAULT_SCRAPING_AUDIT_TTL_DAYS = 180
+
+export function getScrapingAuditTtlExpiresAt(now = new Date()): Date {
+  const raw = process.env.SCRAPING_AUDIT_TTL_DAYS
+  const days = raw ? Number.parseInt(raw, 10) : DEFAULT_SCRAPING_AUDIT_TTL_DAYS
+  const safeDays = Number.isFinite(days) && days > 0 ? days : DEFAULT_SCRAPING_AUDIT_TTL_DAYS
+  return new Date(now.getTime() + safeDays * 24 * 60 * 60 * 1000)
+}
 
 export interface ScrapingRunParams {
   sourceId: string
@@ -19,6 +28,12 @@ export interface ScrapingRunParams {
   errorsCount?: number
   durationMs: number
   status: ScrapingAuditStatus
+  robotsDecision?: ScrapingRobotsDecision
+  statusCode?: number | null
+  latencyMs?: number | null
+  correlationId?: string
+  revealedBy?: string | null
+  ttlExpiresAt?: Date
   errorMessage?: string
 }
 
@@ -31,6 +46,12 @@ export interface ScrapingAuditLogDto {
   errorsCount: number
   durationMs: number
   status: ScrapingAuditStatus
+  robotsDecision: ScrapingRobotsDecision
+  statusCode: number | null
+  latencyMs: number | null
+  correlationId: string
+  revealedBy: string | null
+  ttlExpiresAt: string
   errorMessage: string | null
   createdAt: string
 }
@@ -50,6 +71,12 @@ export async function logScrapingRun(params: ScrapingRunParams): Promise<void> {
       errorsCount: params.errorsCount ?? 0,
       durationMs: params.durationMs,
       status: params.status,
+      robotsDecision: params.robotsDecision ?? 'ALLOW',
+      statusCode: params.statusCode ?? null,
+      latencyMs: params.latencyMs ?? params.durationMs,
+      correlationId: params.correlationId,
+      revealedBy: params.revealedBy ?? null,
+      ttlExpiresAt: params.ttlExpiresAt ?? getScrapingAuditTtlExpiresAt(),
       errorMessage: params.errorMessage ?? null,
     },
   })
@@ -59,7 +86,9 @@ export interface ListScrapingAuditLogsParams {
   page?: number
   limit?: number
   sourceId?: string
+  operatorId?: string
   status?: ScrapingAuditStatus
+  robotsDecision?: ScrapingRobotsDecision
 }
 
 /**
@@ -73,8 +102,10 @@ export async function listScrapingAuditLogs(
   const limit = Math.min(100, Math.max(1, params.limit ?? 20))
 
   const where = {
+    ...(params.operatorId && { source: { operatorId: params.operatorId } }),
     ...(params.sourceId && { sourceId: params.sourceId }),
     ...(params.status && { status: params.status }),
+    ...(params.robotsDecision && { robotsDecision: params.robotsDecision }),
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -94,6 +125,7 @@ export async function listScrapingAuditLogs(
     data: items.map((item: any) => ({
       ...item,
       createdAt: item.createdAt.toISOString(),
+      ttlExpiresAt: item.ttlExpiresAt.toISOString(),
     })),
     total,
   }

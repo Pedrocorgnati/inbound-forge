@@ -40,6 +40,8 @@ export const ListObjectionsQueryDto = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   type: ObjectionTypeEnum.optional(),
   status: z.enum(['DRAFT', 'VALIDATED']).optional(),
+  // fix REPROVADO (finding TASK-015): busca textual por conteudo.
+  search: z.string().trim().min(1).optional(),
 })
 
 export type ListObjectionsQuery = z.infer<typeof ListObjectionsQueryDto>

@@ -51,7 +51,7 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
   // Autosave (edit mode only)
   const { autosaveStatus, lastSaved } = useKnowledgeAutosave({
     form,
-    endpoint: `/api/knowledge/patterns/${initialData?.id}`,
+    endpoint: `/api/v1/knowledge/patterns/${initialData?.id}`,
     getPayload: (data) => {
       const payload: Record<string, string> = {
         name: data.name.trim(),
@@ -72,7 +72,7 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
   const fetchPains = useCallback(async () => {
     setIsLoadingPains(true)
     try {
-      const res = await fetch('/api/knowledge/pains?limit=100')
+      const res = await fetch('/api/v1/knowledge/pains?limit=100')
       if (!res.ok) throw new Error()
       const json = await res.json()
       setPains(json.data ?? [])
@@ -86,7 +86,7 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
   const fetchCases = useCallback(async () => {
     setIsLoadingCases(true)
     try {
-      const res = await fetch('/api/knowledge/cases?limit=100')
+      const res = await fetch('/api/v1/knowledge/cases?limit=100')
       if (!res.ok) throw new Error()
       const json = await res.json()
       setCases(json.data ?? [])
@@ -133,6 +133,11 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
     if (!form.painId) {
       errs.painId = 'Selecione uma dor'
     }
+    // fix REPROVADO (finding TASK-015): caseId e obrigatorio (schema Prisma NOT NULL).
+    // Antes o campo era rotulado "opcional" e o submit sem case falhava com 422.
+    if (!form.caseId) {
+      errs.caseId = 'Selecione um case'
+    }
 
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -148,14 +153,13 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
         name: form.name.trim(),
         description: form.description.trim(),
         painId: form.painId,
-      }
-      if (form.caseId) {
-        payload.caseId = form.caseId
+        // caseId agora obrigatorio (validado acima)
+        caseId: form.caseId,
       }
 
       const url = mode === 'create'
-        ? '/api/knowledge/patterns'
-        : `/api/knowledge/patterns/${initialData!.id}`
+        ? '/api/v1/knowledge/patterns'
+        : `/api/v1/knowledge/patterns/${initialData!.id}`
 
       const res = await fetch(url, {
         method: mode === 'create' ? 'POST' : 'PATCH',
@@ -264,12 +268,13 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
           data-testid="pattern-field-painId"
         />
 
-        {/* Case select (optional) */}
+        {/* Case select (required) — fix REPROVADO finding TASK-015 */}
         <Select
-          label="Case associado (opcional)"
+          label="Case associado"
           options={caseOptions}
           value={form.caseId}
           onChange={(e) => updateField('caseId', e.target.value)}
+          error={errors.caseId}
           disabled={isLoadingCases}
           data-testid="pattern-field-caseId"
         />

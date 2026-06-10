@@ -26,7 +26,7 @@ export function AssetLibraryClient() {
     <div data-testid="assets-library" className="space-y-6">
       <AssetUploadZone data-testid="assets-upload-zone" onUploadComplete={handleUploadComplete} />
 
-      <AssetFilters data-testid="assets-filters" filter={filter} onChange={handleFilterChange} />
+      <AssetFilters filter={filter} onChange={handleFilterChange} />
 
       <AssetGallery data-testid="assets-gallery" filter={filter} onRefresh={refreshCounter} />
     </div>

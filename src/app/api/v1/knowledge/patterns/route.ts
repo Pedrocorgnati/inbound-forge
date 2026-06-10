@@ -1,58 +1,45 @@
-import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 import { requireSession, ok, okPaginated, validationError, internalError } from '@/lib/api-auth'
-import { CreateSolutionPatternSchema } from '@/schemas/knowledge.schema'
-import { buildSearchWhere } from '@/lib/search/text-search'
+import { SolutionPatternService } from '@/lib/services/solution-pattern.service'
+import { CreatePatternDto, ListPatternsQueryDto } from '@/lib/dtos/solution-pattern.dto'
 
-// GET /api/v1/knowledge/patterns
-// Intake-Review TASK-22 ST005 (CL-TH-055): ?search= em name/description.
-// Nota: modelo usa `name`, nao `title`, apesar de TASK spec dizer title.
+/** Contrato canonico /api/v1/knowledge/patterns (TASK-031). Delega ao SolutionPatternService. */
 export async function GET(request: NextRequest) {
   const { response } = await requireSession()
   if (response) return response
 
+  const searchParams = Object.fromEntries(request.nextUrl.searchParams.entries())
+  const parsed = ListPatternsQueryDto.safeParse(searchParams)
+  if (!parsed.success) return validationError(parsed.error.message)
+
   try {
-    const { searchParams } = new URL(request.url)
-    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20')))
-    const search = searchParams.get('search') ?? undefined
-
-    const where: Record<string, unknown> = {}
-    const searchWhere = buildSearchWhere(search, ['name', 'description'] as const)
-    if (searchWhere) Object.assign(where, searchWhere)
-
-    const [data, total] = await Promise.all([
-      prisma.solutionPattern.findMany({
-        where,
-        include: { pain: true, case: true },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.solutionPattern.count({ where }),
-    ])
-
-    return okPaginated(data, { page, limit, total })
+    const result = await SolutionPatternService.findAll(parsed.data)
+    return okPaginated(result.data, { page: result.page, limit: result.limit, total: result.total })
   } catch {
     return internalError()
   }
 }
 
-// POST /api/v1/knowledge/patterns
 export async function POST(request: NextRequest) {
   const { response } = await requireSession()
   if (response) return response
 
   let body: unknown
-  try { body = await request.json() } catch { return validationError(new Error('Body inválido')) }
+  try { body = await request.json() } catch { return validationError('Body inválido ou ausente') }
 
-  const parsed = CreateSolutionPatternSchema.safeParse(body)
-  if (!parsed.success) return validationError(parsed.error)
+  const parsed = CreatePatternDto.safeParse(body)
+  if (!parsed.success) return validationError(parsed.error.flatten())
 
   try {
-    const entry = await prisma.solutionPattern.create({ data: parsed.data })
-    return ok(entry, 201)
-  } catch {
+    const created = await SolutionPatternService.create(parsed.data)
+    return ok(created, 201)
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith('KNOWLEDGE_020')) {
+      return NextResponse.json({ success: false, error: 'KNOWLEDGE_020', message: 'painId não encontrado ou inválido' }, { status: 403 })
+    }
+    if (err instanceof Error && err.message.startsWith('KNOWLEDGE_001')) {
+      return NextResponse.json({ success: false, error: 'KNOWLEDGE_001', message: 'caseId não encontrado' }, { status: 404 })
+    }
     return internalError()
   }
 }

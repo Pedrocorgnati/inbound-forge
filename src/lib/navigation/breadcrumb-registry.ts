@@ -35,6 +35,8 @@ const BASE: BreadcrumbEntry[] = [
   { pattern: '/health', labelKey: 'breadcrumbs.health' },
   { pattern: '/knowledge', labelKey: 'breadcrumbs.knowledge' },
   { pattern: '/leads', labelKey: 'breadcrumbs.leads' },
+  { pattern: '/reconciliation', labelKey: 'breadcrumbs.reconciliation' },
+  { pattern: '/meetings', labelKey: 'breadcrumbs.meetings' },
   {
     pattern: '/leads/[id]',
     labelKey: 'breadcrumbs.lead',
@@ -60,8 +62,13 @@ const BASE: BreadcrumbEntry[] = [
     parent: '/niche-opportunities',
   },
   { pattern: '/posts', labelKey: 'breadcrumbs.posts' },
-  { pattern: '/profile', labelKey: 'breadcrumbs.profile' },
   { pattern: '/settings', labelKey: 'breadcrumbs.settings' },
+  {
+    // loop 05-27 TAREFA-026: /profile consolidado em /settings/account (ADR-0010).
+    pattern: '/settings/account',
+    labelKey: 'breadcrumbs.settingsAccount',
+    parent: '/settings',
+  },
   {
     pattern: '/settings/api',
     labelKey: 'breadcrumbs.settingsApi',
@@ -176,6 +183,7 @@ export function resolveBreadcrumbs(pathname: string): ResolvedBreadcrumb[] {
     const href =
       '/' +
       locale +
+      '/' +
       p
         .split('/')
         .filter(Boolean)
@@ -185,9 +193,7 @@ export function resolveBreadcrumbs(pathname: string): ResolvedBreadcrumb[] {
           }
           return part
         })
-        .map((s) => '/' + s)
-        .join('')
-        .slice(1)
+        .join('/')
     result.push({
       href,
       labelKey: entry.labelKey,

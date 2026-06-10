@@ -121,3 +121,32 @@ export const HEALTH_STATUS = {
 } as const
 
 export type HealthStatus = (typeof HEALTH_STATUS)[keyof typeof HEALTH_STATUS]
+
+// ─── Universal Job (TAREFA-017) ────────────────────────────────────────────────
+// Vocabulario externo unico exposto por /api/v1/jobs/[jobId]. Consolida os status
+// internos de WorkerJob / ImageJob / VideoJob num contrato estavel consumido por
+// TAREFA-018 (SSE) e TAREFA-019 (Idempotency-Key). NUNCA comparar strings inline.
+
+export const UNIVERSAL_JOB_STATUS = {
+  QUEUED:    'queued',
+  RUNNING:   'running',
+  DONE:      'done',
+  FAILED:    'failed',
+  CANCELLED: 'cancelled',
+} as const
+
+export type UniversalJobStatus =
+  (typeof UNIVERSAL_JOB_STATUS)[keyof typeof UNIVERSAL_JOB_STATUS]
+
+/** Status terminais: nao admitem nova transicao nem cancelamento. */
+export const UNIVERSAL_JOB_TERMINAL: UniversalJobStatus[] = [
+  UNIVERSAL_JOB_STATUS.DONE,
+  UNIVERSAL_JOB_STATUS.FAILED,
+  UNIVERSAL_JOB_STATUS.CANCELLED,
+]
+
+/** Status nos quais um pedido de cancelamento ainda e aplicavel. */
+export const UNIVERSAL_JOB_CANCELLABLE: UniversalJobStatus[] = [
+  UNIVERSAL_JOB_STATUS.QUEUED,
+  UNIVERSAL_JOB_STATUS.RUNNING,
+]

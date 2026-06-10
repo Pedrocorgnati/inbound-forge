@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { Eye, EyeOff } from 'lucide-react'
+import Link from 'next/link'
+import { Eye, EyeOff, Palette, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { ContentEditorProvider, useContentEditorContext } from '@/contexts/ContentEditorContext'
@@ -15,32 +16,23 @@ import { HashtagSuggestor } from '@/components/content/HashtagSuggestor'
 import { FunnelStageSelector } from '@/components/content/FunnelStageSelector'
 import { ChannelPreview } from '@/components/content/ChannelPreview'
 import { AngleHistoryDrawer } from '@/components/content/AngleHistoryDrawer'
-import { ImagePreviewPanel } from '@/components/content/ImagePreviewPanel'
-import { ArtPreview } from '@/components/content/ArtPreview'
-import { ArtControls } from '@/components/content/ArtControls'
-import type { ImageTemplate, TemplateChannel } from '@/types/image-template'
 
 export default function ContentThemePage() {
-  const { themeId } = useParams<{ themeId: string }>()
+  const { themeId, locale } = useParams<{ themeId: string; locale: string }>()
 
   return (
     <ContentEditorProvider themeId={themeId}>
-      <ContentEditorInner themeId={themeId} />
+      <ContentEditorInner themeId={themeId} locale={locale} />
     </ContentEditorProvider>
   )
 }
 
-function ContentEditorInner({ themeId }: { themeId: string }) {
+function ContentEditorInner({ themeId, locale }: { themeId: string; locale: string }) {
   const editor = useContentEditorContext()
   const [showPreview, setShowPreview] = useState(false)
   const [historyAngleId, setHistoryAngleId] = useState<string | null>(null)
   const [localHashtags, setLocalHashtags] = useState<string[]>([])
   const [themeTitle, setThemeTitle] = useState('Conteúdo do Tema')
-  const [selectedTemplate, setSelectedTemplate] = useState<ImageTemplate | null>(null)
-  const [artHeadline, setArtHeadline] = useState('')
-  const [artBackgroundUrl, setArtBackgroundUrl] = useState<string | undefined>()
-  const [artDimension, setArtDimension] = useState<'og' | 'instagram'>('og')
-  const [isRegeneratingBg, setIsRegeneratingBg] = useState(false)
 
   // Fetch theme title
   useEffect(() => {
@@ -58,15 +50,12 @@ function ContentEditorInner({ themeId }: { themeId: string }) {
     loadTheme()
   }, [themeId])
 
-  // Sync hashtags and headline from selected angle
+  // Sync hashtags from selected angle (headline sync vive no studio de arte — TASK-024)
   useEffect(() => {
     if (editor.piece && editor.selectedAngleId) {
       const angle = editor.piece.angles.find((a) => a.id === editor.selectedAngleId)
       if (angle) {
         setLocalHashtags(angle.hashtags)
-        // CL-082: auto-atualizar headline do preview ao selecionar ângulo
-        const headlineText = (angle.editedBody ?? angle.text).split('\n')[0]?.slice(0, 80) ?? ''
-        setArtHeadline(headlineText)
       }
     }
   }, [editor.piece, editor.selectedAngleId])
@@ -192,60 +181,35 @@ function ContentEditorInner({ themeId }: { themeId: string }) {
         </div>
       )}
 
-      {/* Image Generation: ArtPreview + ArtControls (CL-082, CL-083) */}
+      {/* Studio de arte agora vive em rota propria (/content/[themeId]/art) — TASK-024.
+          O painel inline foi substituido por um acesso deep-linkavel ao studio. */}
       {hasAngles && editor.piece?.id && (
-        <div className="grid gap-6 md:grid-cols-[1fr_280px]" data-testid="image-generation-area">
-          {/* Preview em tempo real */}
-          <div className="space-y-3">
-            <ArtPreview
-              template={selectedTemplate?.templateType}
-              headline={artHeadline}
-              backgroundUrl={artBackgroundUrl}
-              dimensions={artDimension === 'og' ? { width: 1200, height: 630 } : { width: 1080, height: 1350 }}
-            />
-            {/* Fallback: job-based generation */}
-            <ImagePreviewPanel contentPieceId={editor.piece.id} />
-          </div>
-
-          {/* Controles de arte */}
-          <ArtControls
-            headline={artHeadline}
-            selectedTemplateId={selectedTemplate?.id}
-            channel={
-              editor.selectedChannel === 'LINKEDIN' ? 'linkedin'
-              : editor.selectedChannel === 'INSTAGRAM' ? 'instagram'
-              : 'blog' as TemplateChannel
-            }
-            dimensions={artDimension}
-            isRegenerating={isRegeneratingBg}
-            onTemplateChange={setSelectedTemplate}
-            onHeadlineChange={setArtHeadline}
-            onDimensionChange={setArtDimension}
-            onRegenerateBackground={async (dims) => {
-              setIsRegeneratingBg(true)
-              try {
-                const res = await fetch('/api/v1/images/preview', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    template: selectedTemplate?.templateType,
-                    headline: artHeadline,
-                    ...dims,
-                  }),
-                })
-                if (res.ok) {
-                  const json = await res.json()
-                  if (json.imageUrl) setArtBackgroundUrl(json.imageUrl)
-                }
-              } catch {
-                // silent — preview continua com background anterior
-              } finally {
-                setIsRegeneratingBg(false)
-              }
-            }}
-            disabled={editor.isGenerating}
-          />
-        </div>
+        <Card className="p-4" data-testid="art-studio-entry">
+          <Link
+            href={(() => {
+              const params = new URLSearchParams()
+              if (editor.selectedAngleId) params.set('angleId', editor.selectedAngleId)
+              if (editor.selectedChannel) params.set('channel', editor.selectedChannel)
+              const qs = params.toString()
+              return `/${locale}/content/${themeId}/art${qs ? `?${qs}` : ''}`
+            })()}
+            className="flex items-center justify-between gap-4 rounded-md p-2 transition-colors hover:bg-muted"
+            data-testid="art-studio-link"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <Palette className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-medium">Studio de arte</p>
+                <p className="text-xs text-muted-foreground">
+                  Gere e ajuste a arte visual em uma pagina dedicada e compartilhavel.
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </Link>
+        </Card>
       )}
 
       {/* Channel Preview Toggle */}

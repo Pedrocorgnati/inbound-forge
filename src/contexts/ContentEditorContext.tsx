@@ -7,11 +7,13 @@ const ContentEditorContext = createContext<UseContentEditorReturn | null>(null)
 
 interface ContentEditorProviderProps {
   themeId: string
+  initialAngleId?: string
+  initialChannel?: string
   children: ReactNode
 }
 
-export function ContentEditorProvider({ themeId, children }: ContentEditorProviderProps) {
-  const editor = useContentEditor(themeId)
+export function ContentEditorProvider({ themeId, initialAngleId, initialChannel, children }: ContentEditorProviderProps) {
+  const editor = useContentEditor(themeId, initialAngleId, initialChannel)
 
   return (
     <ContentEditorContext.Provider value={editor}>

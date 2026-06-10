@@ -69,7 +69,20 @@ export class PostService {
   static async findById(id: string) {
     return prisma.post.findUnique({
       where: { id },
-      include: { publishingQueue: true, contentPiece: true },
+      include: {
+        publishingQueue: true,
+        contentPiece: {
+          include: {
+            theme: {
+              select: {
+                id: true,
+                title: true,
+                pain: { select: { id: true, title: true, description: true } },
+              },
+            },
+          },
+        },
+      },
     })
   }
 

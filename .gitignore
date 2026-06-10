@@ -40,3 +40,7 @@ yarn-error.log*
 tests/load/results/*.json
 tests/load/results/*.html
 tests/load/results/*.xml
+
+# Build artifacts dos workers (gerados por tsc/npm run build)
+workers/*/dist/
+workers/*/*.tsbuildinfo

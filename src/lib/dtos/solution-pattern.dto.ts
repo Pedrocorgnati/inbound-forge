@@ -7,7 +7,11 @@ export const CreatePatternDto = z.object({
   description: z.string().min(10, 'Descrição deve ter no mínimo 10 caracteres'),
   /** Dor de referência — obrigatório */
   painId: z.string().uuid('painId deve ser um UUID válido'),
-  /** Case de referência — opcional */
+  // fix REPROVADO (finding TASK-015): caseId e OBRIGATORIO e assim permanece — o
+  // schema Prisma (SolutionPattern.caseId) e NOT NULL com relacao `case` requerida.
+  // A contradicao real estava no PatternForm, que rotulava o campo como "opcional"
+  // e enviava payload sem caseId -> create falhava com 422. A correcao alinha o
+  // FORM ao schema (campo obrigatorio + validacao), sem migration arriscada.
   caseId: z.string().uuid('caseId deve ser um UUID válido'),
 })
 
@@ -39,6 +43,8 @@ export const ListPatternsQueryDto = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   painId: z.string().uuid().optional(),
+  // fix REPROVADO (finding TASK-015): busca textual por nome/descricao.
+  search: z.string().trim().min(1).optional(),
 })
 
 export type ListPatternsQuery = z.infer<typeof ListPatternsQueryDto>

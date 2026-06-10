@@ -5,12 +5,21 @@ import { logAudit } from '@/lib/audit/log'
 export class PainLibraryService {
   /** Lista dores com filtro por setor e paginação. */
   static async findAll(query: ListPainsQuery) {
-    const { page, limit, sector, status } = query
+    const { page, limit, sector, status, search } = query
     const skip = (page - 1) * limit
 
     const where = {
       ...(status ? { status } : {}),
       ...(sector ? { sectors: { has: sector } } : {}),
+      // fix REPROVADO (finding TASK-015): busca textual por titulo/descricao.
+      ...(search
+        ? {
+            OR: [
+              { title: { contains: search, mode: 'insensitive' as const } },
+              { description: { contains: search, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
     }
 
     const [data, total] = await Promise.all([

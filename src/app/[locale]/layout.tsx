@@ -8,6 +8,8 @@ import { ThemeProvider } from '@/components/shared/ThemeProvider'
 import { WebVitalsInit } from '@/components/shared/WebVitalsInit'
 import { NetworkStatusBanner } from '@/components/ux/NetworkStatusBanner'
 import { OfflineBanner } from '@/components/layout/OfflineBanner'
+import { SkipToContent } from '@/components/a11y/SkipToContent'
+import { AsyncErrorBoundary } from '@/components/errors/AsyncErrorBoundary'
 
 interface LocaleLayoutProps {
   children: React.ReactNode
@@ -28,14 +30,20 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <ThemeProvider defaultTheme="system">
+        <AsyncErrorBoundary>
         <LangUpdater locale={locale} />
         <WebVitalsInit />
         <div lang={locale} data-nonce={nonce}>
+          {/* TASK-14 ST001 (CL-T05): skip link A11y */}
+          <SkipToContent />
           <OfflineBanner />
           <NetworkStatusBanner />
-          {children}
+          <main id="main" tabIndex={-1}>
+            {children}
+          </main>
           <Toaster position="top-right" richColors />
         </div>
+        </AsyncErrorBoundary>
       </ThemeProvider>
     </NextIntlClientProvider>
   )

@@ -9,6 +9,7 @@ import { InstagramPreChecks } from '@/components/publishing/InstagramPreChecks'
 import { RetryPublishButton } from '@/components/publishing/RetryPublishButton'
 import { RateLimitCounter } from '@/components/publishing/RateLimitCounter'
 import { UI_TIMING } from '@/constants/timing'
+import { uuidv7 } from '@/lib/utils/uuidv7'
 
 // TASK-12 ST004 (G-002) — consulta o kill-switch INSTAGRAM_PUBLISHING_LIVE
 // via endpoint server-side. Polling 30s + chamada inicial. Fail-safe: erro =
@@ -86,7 +87,11 @@ export function InstagramPublishButton({ postId, post, onRetrySuccess }: Instagr
     try {
       const res = await fetch('/api/instagram/publish', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          // fix REPROVADO TAREFA-008: rota agora exige Idempotency-Key (UUID v7).
+          'Idempotency-Key': uuidv7(),
+        },
         body: JSON.stringify({ postId }),
       })
 

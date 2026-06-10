@@ -13,6 +13,7 @@ import { DegradedBanner } from '@/components/shared/degraded-banner'
 import { SeedIncompleteBanner } from '@/components/onboarding/SeedIncompleteBanner'
 import { TokenExpiryAlert } from '@/components/publishing/TokenExpiryAlert'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
+import { SSEStatus } from '@/components/sse/SSEStatus'
 import { getDegradedServiceNames } from '@/lib/services/service-health'
 import { getActivationForOperator } from '@/lib/onboarding/activation-event'
 import type { WorkerHeartbeat, SidebarBadges, ProgressWidgetData } from '@/types'
@@ -111,6 +112,11 @@ export default async function ProtectedLayout({ children, params }: ProtectedLay
           monthlyCost={monthlyCost}
           locale={locale}
         >
+          <div className="flex items-center justify-end px-4 pt-2">
+            {/* TAREFA-018: consumidor real do canal SSE health (Zero Orfaos / Zero Silencio).
+                Fallback de polling no endpoint de health detalhado durante o cutover (ST004). */}
+            <SSEStatus channel="health" pollUrl="/api/v1/health/detailed" compact />
+          </div>
           <Breadcrumbs />
           {children}
         </AppShell>

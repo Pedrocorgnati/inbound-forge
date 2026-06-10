@@ -20,6 +20,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { validateSignature } from '@/lib/calcom/webhook-validator'
+import {
+  deriveEventId,
+  checkTimestampFreshness,
+  recordEvent,
+} from '@/lib/webhooks/replay-guard'
 import { logger } from '@/lib/logger'
 
 export const runtime = 'nodejs'
@@ -91,11 +96,55 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'invalid-payload', issues: parsed.error.issues }, { status: 400 })
   }
 
-  const { triggerEvent, payload } = parsed.data
+  const { triggerEvent, payload, createdAt } = parsed.data
   const externalBookingId = resolveBookingId(payload)
   if (!externalBookingId) {
     return NextResponse.json({ error: 'missing-booking-id' }, { status: 400 })
   }
+
+  // Anti-replay: o timestamp de emissao do evento nao pode estar mais antigo
+  // que 5 minutos. Sem timestamp (campo opcional do Cal.com) -> fail-open com
+  // WARN, preservando o comportamento atual do webhook (Zero Silencio).
+  const freshness = checkTimestampFreshness(createdAt)
+  if (!freshness.fresh) {
+    logger.warn('calcom.webhook', 'evento rejeitado por anti-replay (timestamp obsoleto)', {
+      externalBookingId,
+      triggerEvent,
+      ageMs: freshness.ageMs,
+    })
+    return NextResponse.json({ error: 'stale-timestamp' }, { status: 401 })
+  }
+  if (freshness.reason === 'no-timestamp') {
+    logger.warn('calcom.webhook', 'evento sem timestamp; anti-replay nao aplicavel', {
+      externalBookingId,
+      triggerEvent,
+    })
+  }
+
+  // Dedup por event_id (SHA-256 do raw body) dentro de 7 dias. Duplicatas sao
+  // descartadas com 200 idempotente para encerrar os retries do Cal.com.
+  const eventId = deriveEventId(rawBody)
+  const payloadTimestamp = createdAt ? new Date(createdAt) : null
+  const dedup = await recordEvent({
+    eventId,
+    triggerEvent,
+    externalBookingId,
+    payloadTimestamp:
+      payloadTimestamp && !Number.isNaN(payloadTimestamp.getTime()) ? payloadTimestamp : null,
+  })
+  if (dedup.duplicate) {
+    logger.info('calcom.webhook', 'evento duplicado descartado (dedup)', {
+      externalBookingId,
+      triggerEvent,
+      correlationId: dedup.correlationId,
+      firstSeenAt: dedup.firstSeenAt.toISOString(),
+    })
+    return NextResponse.json(
+      { ok: true, duplicate: true, correlationId: dedup.correlationId },
+      { status: 200 }
+    )
+  }
+  const correlationId = dedup.correlationId
 
   const leadId = await resolveLeadId(payload.metadata)
   const occurredAt = payload.startTime ? new Date(payload.startTime) : new Date()
@@ -107,8 +156,8 @@ export async function POST(request: NextRequest) {
       case 'BOOKING_CREATED':
       case 'BOOKING_CONFIRMED': {
         if (!leadId) {
-          logger.warn('calcom.webhook', 'booking sem lead associado', { externalBookingId })
-          return NextResponse.json({ ok: true, reconciled: false }, { status: 200 })
+          logger.warn('calcom.webhook', 'booking sem lead associado', { externalBookingId, correlationId })
+          return NextResponse.json({ ok: true, reconciled: false, correlationId }, { status: 200 })
         }
         await prisma.conversionEvent.upsert({
           where: { externalBookingId },
@@ -127,21 +176,21 @@ export async function POST(request: NextRequest) {
             notes: `Cal.com booking ${externalBookingId}`,
           },
         })
-        return NextResponse.json({ ok: true, reconciled: true }, { status: 200 })
+        return NextResponse.json({ ok: true, reconciled: true, correlationId }, { status: 200 })
       }
       case 'BOOKING_CANCELLED': {
         const updated = await prisma.conversionEvent.updateMany({
           where: { externalBookingId },
           data: { bookingStatus: 'canceled' },
         })
-        return NextResponse.json({ ok: true, updated: updated.count }, { status: 200 })
+        return NextResponse.json({ ok: true, updated: updated.count, correlationId }, { status: 200 })
       }
       case 'BOOKING_RESCHEDULED': {
         const updated = await prisma.conversionEvent.updateMany({
           where: { externalBookingId },
           data: { bookingStatus: 'scheduled', occurredAt },
         })
-        return NextResponse.json({ ok: true, updated: updated.count }, { status: 200 })
+        return NextResponse.json({ ok: true, updated: updated.count, correlationId }, { status: 200 })
       }
     }
   } catch (err) {
@@ -149,6 +198,7 @@ export async function POST(request: NextRequest) {
       error: err instanceof Error ? err.message : String(err),
       triggerEvent,
       externalBookingId,
+      correlationId,
     })
     return NextResponse.json({ error: 'internal' }, { status: 500 })
   }

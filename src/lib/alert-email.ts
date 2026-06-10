@@ -11,6 +11,7 @@
  */
 import { prisma } from '@/lib/prisma'
 import { getAlertsEmail } from '@/lib/settings/system-settings'
+import { sendSlackAlert } from '@/lib/alerts/channels/slack'
 
 export type AlertSeverity = 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL'
 
@@ -42,7 +43,7 @@ export async function sendAlertEmail(options: SendAlertEmailOptions): Promise<vo
 
   // Criar AlertLog no banco (sempre — independente do email)
   try {
-    await prisma.alertLog.create({
+    const created = await prisma.alertLog.create({
       data: {
         type: logType,
         severity,
@@ -50,6 +51,12 @@ export async function sendAlertEmail(options: SendAlertEmailOptions): Promise<vo
         resolved: false,
       },
     })
+    // TASK-4 ST005: dispatch Slack (email já tratado abaixo)
+    if (severity === 'WARNING' || severity === 'ERROR' || severity === 'CRITICAL') {
+      sendSlackAlert({ id: created.id, type: logType, severity, message: subject }).catch((err) =>
+        console.warn('[alert-email] slack dispatch erro:', err),
+      )
+    }
   } catch (err) {
     console.error('[alert-email] Falha ao criar AlertLog:', err)
   }

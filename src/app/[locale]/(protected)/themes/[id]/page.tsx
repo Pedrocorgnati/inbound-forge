@@ -1,4 +1,6 @@
 // Intake-Review TASK-3 ST002 (CL-196): detalhe de tema.
+// Task 025 (loop 05-27): em mobile (< 768px) os paineis colapsam em tabs com estado em
+// ?tab=...; o layout responsivo vive em ThemeDetailPanel -> ThemeDetailTabs (client).
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { ThemeDetailPanel } from '@/components/dashboard/ThemeDetailPanel'

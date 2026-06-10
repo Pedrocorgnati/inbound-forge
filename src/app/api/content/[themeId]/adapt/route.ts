@@ -2,7 +2,7 @@
  * POST /api/content/[themeId]/adapt
  * Módulo: module-8-content-generation (TASK-4/ST003+ST005)
  *
- * Adapta ângulo para canal específico via Claude haiku com rate limit.
+ * Adapta ângulo para canal específico via Claude sonnet com rate limit.
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireSession, ok } from '@/lib/api-auth'

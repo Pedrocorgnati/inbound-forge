@@ -70,6 +70,7 @@ export function AssetFilters({ filter, onChange }: AssetFiltersProps) {
 
   return (
     <div
+      id="assets-filters"
       role="search"
       aria-label="Filtros de assets"
       className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6"

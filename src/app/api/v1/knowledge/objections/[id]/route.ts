@@ -1,59 +1,46 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { requireSession, ok, notFound, validationError, internalError } from '@/lib/api-auth'
-import { UpdateObjectionSchema } from '@/schemas/knowledge.schema'
-import { auditLog } from '@/lib/audit'
+import { ObjectionService } from '@/lib/services/objection.service'
+import { UpdateObjectionDto } from '@/lib/dtos/objection.dto'
 
+/** Contrato canonico /api/v1/knowledge/objections/[id] (TASK-032). GET/PATCH/DELETE via ObjectionService. */
 type Params = { params: Promise<{ id: string }> }
 
-// PUT /api/v1/knowledge/objections/[id]
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function GET(_request: NextRequest, { params }: Params) {
   const { response } = await requireSession()
   if (response) return response
-
   const { id } = await params
-
-  let body: unknown
-  try { body = await request.json() } catch { return validationError(new Error('Body inválido')) }
-
-  const parsed = UpdateObjectionSchema.safeParse(body)
-  if (!parsed.success) return validationError(parsed.error)
-
   try {
-    const existing = await prisma.objection.findUnique({ where: { id } })
-    if (!existing) return notFound('Objeção não encontrada')
-
-    const updated = await prisma.objection.update({ where: { id }, data: parsed.data })
-    return ok(updated)
-  } catch {
-    return internalError()
-  }
+    const item = await ObjectionService.findById(id)
+    if (!item) return notFound('Objeção não encontrada')
+    return ok(item)
+  } catch { return internalError() }
 }
 
-// TASK-2 ST003 (CL-247): DELETE handler — remove objecao.
+export async function PATCH(request: NextRequest, { params }: Params) {
+  const { response } = await requireSession()
+  if (response) return response
+  const { id } = await params
+  let body: unknown
+  try { body = await request.json() } catch { return validationError('Body inválido ou ausente') }
+  const parsed = UpdateObjectionDto.safeParse(body)
+  if (!parsed.success) return validationError(parsed.error.flatten())
+  try {
+    const existing = await ObjectionService.findById(id)
+    if (!existing) return notFound('Objeção não encontrada')
+    const updated = await ObjectionService.update(id, parsed.data)
+    return ok(updated)
+  } catch { return internalError() }
+}
+
 export async function DELETE(_request: NextRequest, { params }: Params) {
   const { user, response } = await requireSession()
   if (response) return response
-
   const { id } = await params
-
   try {
-    const existing = await prisma.objection.findUnique({ where: { id } })
+    const existing = await ObjectionService.findById(id)
     if (!existing) return notFound('Objeção não encontrada')
-
-    await prisma.objection.delete({ where: { id } })
-    if (user?.id) {
-      await auditLog({
-        action: 'delete_objection',
-        entityType: 'Objection',
-        entityId: id,
-        userId: user.id,
-        metadata: { type: existing.type },
-      }).catch(() => undefined)
-    }
-
-    return new Response(null, { status: 204 })
-  } catch {
-    return internalError()
-  }
+    await ObjectionService.delete(id, user!.id)
+    return ok({ message: 'Objeção removida' })
+  } catch { return internalError() }
 }

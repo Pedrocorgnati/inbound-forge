@@ -52,7 +52,7 @@ export function ObjectionForm({
   // Autosave (edit mode only)
   const { autosaveStatus, lastSaved } = useKnowledgeAutosave({
     form,
-    endpoint: `/api/knowledge/objections/${initialData?.id}`,
+    endpoint: `/api/v1/knowledge/objections/${initialData?.id}`,
     getPayload: (data) => ({
       content: data.content.trim(),
       type: data.type,
@@ -115,8 +115,8 @@ export function ObjectionForm({
 
       const url =
         mode === 'create'
-          ? '/api/knowledge/objections'
-          : `/api/knowledge/objections/${initialData!.id}`
+          ? '/api/v1/knowledge/objections'
+          : `/api/v1/knowledge/objections/${initialData!.id}`
 
       const res = await fetch(url, {
         method: mode === 'create' ? 'POST' : 'PATCH',

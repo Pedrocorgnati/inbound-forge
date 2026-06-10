@@ -256,6 +256,7 @@ export function AssetUploadZone({ onUploadComplete }: AssetUploadZoneProps) {
 
   return (
     <div
+      id="asset-upload-zone"
       role="region"
       aria-label="Área de upload de assets"
       aria-live="polite"

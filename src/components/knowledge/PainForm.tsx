@@ -41,7 +41,7 @@ export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, locale
   // Autosave (edit mode only)
   const { autosaveStatus, lastSaved } = useKnowledgeAutosave({
     form,
-    endpoint: `/api/knowledge/pains/${initialData?.id}`,
+    endpoint: `/api/v1/knowledge/pains/${initialData?.id}`,
     getPayload: (data) => ({
       title: data.title.trim(),
       description: data.description.trim(),
@@ -96,8 +96,8 @@ export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, locale
       }
 
       const url = mode === 'create'
-        ? '/api/knowledge/pains'
-        : `/api/knowledge/pains/${initialData!.id}`
+        ? '/api/v1/knowledge/pains'
+        : `/api/v1/knowledge/pains/${initialData!.id}`
 
       const res = await fetch(url, {
         method: mode === 'create' ? 'POST' : 'PATCH',

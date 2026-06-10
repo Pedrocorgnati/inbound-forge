@@ -50,7 +50,7 @@ export function ReconciliationPanel() {
       if (!res.ok) throw new Error('Erro ao carregar itens')
       const json = await res.json()
       setItems(json.data ?? [])
-      setTotal(json.meta?.total ?? 0)
+      setTotal(json.pagination?.total ?? json.meta?.total ?? 0)
     } catch {
       toast.error('Erro ao carregar painel de reconciliação')
       setItems([])

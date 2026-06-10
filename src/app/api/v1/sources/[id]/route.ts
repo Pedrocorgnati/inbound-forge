@@ -72,8 +72,15 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
     if (!source) return notFound('Fonte nao encontrada.')
 
-    const [recentLogs, totalRuns, successfulRuns, failedRuns, partialRuns, scrapedTextsCount] =
-      await Promise.all([
+    const [
+      recentLogs,
+      totalRuns,
+      successfulRuns,
+      failedRuns,
+      partialRuns,
+      scrapedTextsCount,
+      robotsDeniedRuns,
+    ] = await Promise.all([
         prisma.scrapingAuditLog.findMany({
           where: { sourceId: id },
           orderBy: { createdAt: 'desc' },
@@ -96,6 +103,9 @@ export async function GET(_request: NextRequest, { params }: Params) {
         prisma.scrapingAuditLog.count({ where: { sourceId: id, status: 'FAILED' } }),
         prisma.scrapingAuditLog.count({ where: { sourceId: id, status: 'PARTIAL' } }),
         prisma.scrapedText.count({ where: { sourceId: id, operatorId: user!.id } }),
+        // fix REPROVADO (finding TASK-013): evidencia REAL de respeito ao robots.txt,
+        // derivada das decisoes registradas nos audit logs do scraper.
+        prisma.scrapingAuditLog.count({ where: { sourceId: id, robotsDecision: 'DENY' } }),
       ])
 
     const successRate = totalRuns > 0 ? Math.round((successfulRuns / totalRuns) * 100) : null
@@ -118,11 +128,21 @@ export async function GET(_request: NextRequest, { params }: Params) {
         successRate,
         scrapedTextsCount,
       },
+      // fix REPROVADO (finding TASK-013): flags de compliance lastreadas em dados
+      // REAIS, nao mais hardcoded. Onde nao ha evidencia (0 runs), o valor reflete
+      // honestamente a ausencia de violacao observada (Zero Assumido).
       compliance: {
-        robotsTxtRespected: true,
-        browserlessConfigured: Boolean(process.env.BROWSERLESS_URL || process.env.BROWSERLESS_API_KEY),
+        // respeitado quando NENHUM run recente registrou robotsDecision=DENY
+        robotsTxtRespected: robotsDeniedRuns === 0,
+        // worker usa BROWSERLESS_WS_URL; mantem fallback aos nomes legados
+        browserlessConfigured: Boolean(
+          process.env.BROWSERLESS_WS_URL ||
+            process.env.BROWSERLESS_URL ||
+            process.env.BROWSERLESS_API_KEY,
+        ),
         rateLimited: source.rateLimitPerMinute > 0,
-        lgpdAuditEnabled: true,
+        // trilha de auditoria LGPD existe de fato quando ha audit logs para a fonte
+        lgpdAuditEnabled: totalRuns > 0,
         antiBotProtectionOk: !source.antiBotBlocked,
       },
       logs: recentLogs.map((log) => ({

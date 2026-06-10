@@ -28,7 +28,7 @@ export default function EditCasePage() {
       setError(null)
 
       try {
-        const res = await fetch(`/api/knowledge/cases/${id}`)
+        const res = await fetch(`/api/v1/knowledge/cases/${id}`)
         if (!res.ok) {
           if (res.status === 404) {
             toast.error(t('notFound'))

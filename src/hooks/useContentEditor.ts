@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Channel, ContentAngle, FunnelStage, CTADestination } from '@prisma/client'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -57,7 +57,9 @@ export interface UseContentEditorReturn {
   refetch: () => void
 }
 
-export function useContentEditor(themeId: string): UseContentEditorReturn {
+export function useContentEditor(themeId: string, initialAngleId?: string, initialChannel?: string): UseContentEditorReturn {
+  const initialAngleIdRef = useRef(initialAngleId)
+  const initialChannelRef = useRef(initialChannel)
   const [piece, setPiece] = useState<ContentPiece | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -83,11 +85,23 @@ export function useContentEditor(themeId: string): UseContentEditorReturn {
       const json = await res.json()
       const data: ContentPiece = json.data ?? json
       setPiece(data)
-      if (data.recommendedChannel) setSelectedChannel(data.recommendedChannel)
+      const initCh = initialChannelRef.current
+      if (initCh) {
+        setSelectedChannel(initCh as Channel)
+        initialChannelRef.current = undefined
+      } else if (data.recommendedChannel) {
+        setSelectedChannel(data.recommendedChannel)
+      }
       if (data.funnelStage) setFunnelStage(data.funnelStage)
       if (data.angles.length > 0) {
-        const selected = data.angles.find((a) => a.isSelected)
-        setSelectedAngleId(selected?.id ?? data.angles[0].id)
+        const init = initialAngleIdRef.current
+        if (init && data.angles.some((a) => a.id === init)) {
+          setSelectedAngleId(init)
+          initialAngleIdRef.current = undefined
+        } else {
+          const selected = data.angles.find((a) => a.isSelected)
+          setSelectedAngleId(selected?.id ?? data.angles[0].id)
+        }
       }
     } catch {
       setError('Não foi possível carregar o conteúdo deste tema.')

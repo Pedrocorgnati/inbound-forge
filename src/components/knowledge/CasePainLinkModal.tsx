@@ -39,7 +39,7 @@ export function CasePainLinkModal({
 
     try {
       const [casesRes, linkedRes] = await Promise.all([
-        fetch('/api/knowledge/cases?limit=100'),
+        fetch('/api/v1/knowledge/cases?limit=100'),
         fetch(`/api/knowledge/pains/${painId}/cases`),
       ])
       if (!casesRes.ok) throw new Error('Falha ao carregar cases')

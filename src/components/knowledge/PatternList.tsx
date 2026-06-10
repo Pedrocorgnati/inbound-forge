@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { PatternForm } from './PatternForm'
 import { PatternDeleteModal } from './PatternDeleteModal'
 import { useKnowledgeList } from '@/hooks/useKnowledgeList'
+import { useDebounce } from '@/hooks/useDebounce'
 import type { PatternResponse } from '@/lib/dtos/solution-pattern.dto'
 import type { PainResponse } from '@/lib/dtos/pain-library.dto'
 
@@ -29,6 +30,9 @@ function snippet(text: string, maxLen = 80): string {
 
 export function PatternList({ locale }: PatternListProps) {
   const t = useTranslations()
+  // fix REPROVADO (finding TASK-015): busca textual funcional (antes inexistente).
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
 
   const {
     items: patterns,
@@ -43,9 +47,15 @@ export function PatternList({ locale }: PatternListProps) {
     refresh,
     handleDelete,
   } = useKnowledgeList<PatternResponse>({
-    endpoint: '/api/knowledge/patterns',
+    endpoint: '/api/v1/knowledge/patterns',
     pageSize: PAGE_SIZE,
+    filters: { search: debouncedSearch },
   })
+
+  // Reset page quando a busca muda
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch, setPage])
 
   // Pain name cache for display
   const [painMap, setPainMap] = useState<Record<string, string>>({})
@@ -57,7 +67,7 @@ export function PatternList({ locale }: PatternListProps) {
 
   const fetchPainNames = useCallback(async () => {
     try {
-      const res = await fetch('/api/knowledge/pains?limit=100')
+      const res = await fetch('/api/v1/knowledge/pains?limit=100')
       if (!res.ok) return
       const json = await res.json()
       const map: Record<string, string> = {}
@@ -89,7 +99,16 @@ export function PatternList({ locale }: PatternListProps) {
   return (
     <div data-testid="pattern-list" className="space-y-4">
       {/* Header bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('knowledge.patternList.searchPlaceholder')}
+          aria-label={t('knowledge.patternList.searchPlaceholder')}
+          data-testid="pattern-search"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 sm:w-72"
+        />
         <Button
           onClick={openCreateForm}
           data-testid="pattern-new-button"
@@ -214,7 +233,11 @@ export function PatternList({ locale }: PatternListProps) {
       )}
 
       {/* Pattern form modal (create/edit) */}
+      {/* fix REPROVADO (finding TASK-015): key por ID do alvo remonta o form ao trocar
+          de entidade, eliminando o estado stale. Sem isFormOpen na key para nao
+          cancelar autosave pendente ao fechar o modal. */}
       <PatternForm
+        key={formTarget?.id ?? 'new'}
         mode={formMode}
         initialData={formTarget}
         isOpen={isFormOpen}

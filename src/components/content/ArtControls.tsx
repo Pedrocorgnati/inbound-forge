@@ -3,12 +3,13 @@
 // ArtControls — Controles para trocar template, editar headline e gerar novo background
 // Rastreabilidade: CL-083, TASK-4 ST003
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { TemplateSelector } from './TemplateSelector'
+import { PreflightModal } from '@/components/preflight/PreflightModal'
 import type { ImageTemplate, TemplateChannel } from '@/types/image-template'
 
 type DimensionPreset = 'og' | 'instagram'
@@ -44,6 +45,13 @@ export function ArtControls({
   disabled,
 }: ArtControlsProps) {
   const [localHeadline, setLocalHeadline] = useState(headline)
+
+  useEffect(() => {
+    setLocalHeadline(headline)
+  }, [headline])
+
+  // Preflight obrigatório antes de geração paga de arte (Ideogram/Flux) — TASK-003.
+  const [preflightOpen, setPreflightOpen] = useState(false)
 
   function handleHeadlineBlur() {
     if (localHeadline !== headline) {
@@ -110,18 +118,26 @@ export function ArtControls({
         </div>
       </div>
 
-      {/* Regenerate background button */}
+      {/* Regenerate background button — abre preflight antes da geração paga */}
       <Button
         variant="outline"
         size="sm"
         className="w-full"
         data-testid="regenerate-background-btn"
-        onClick={() => onRegenerateBackground(currentDimensions)}
+        onClick={() => setPreflightOpen(true)}
         disabled={disabled || isRegenerating}
       >
         <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isRegenerating ? 'animate-spin' : ''}`} />
         {isRegenerating ? 'Gerando...' : 'Novo Background'}
       </Button>
+
+      <PreflightModal
+        open={preflightOpen}
+        onClose={() => setPreflightOpen(false)}
+        kind="art"
+        params={{ count: 1 }}
+        onConfirm={() => onRegenerateBackground(currentDimensions)}
+      />
     </div>
   )
 }

@@ -64,7 +64,7 @@ export function useCalendarPosts({
         params.append('status', st)
       }
 
-      const res = await fetch(`/api/posts?${params.toString()}`, {
+      const res = await fetch(`/api/v1/posts?${params.toString()}`, {
         signal: controller.signal,
       })
 

@@ -19,7 +19,7 @@ Monitoramento em tempo real via `/api/v1/api-usage` e `/api/v1/health/detailed`.
 
 | Serviço | Custo Estimado | Unidade | Uso Típico |
 |---------|---------------|---------|------------|
-| Anthropic Claude (Haiku/Sonnet) | $10-20/mês | ~200k tokens | 50 peças de conteúdo |
+| Anthropic Claude (Sonnet/Sonnet) | $10-20/mês | ~200k tokens | 50 peças de conteúdo |
 | Ideogram (imagens) | $5-10/mês | ~50 req | 50 imagens (1/post) |
 | Flux/Fal.ai | $2-5/mês | ~50 req | Imagens adicionais |
 | Browserless.io Cloud | $25/mês | Fixo | 6h/mês |
@@ -61,7 +61,7 @@ Monitoramento em tempo real via `/api/v1/api-usage` e `/api/v1/health/detailed`.
 | Estratégia | Economia Estimada | Quando Aplicar |
 |-----------|------------------|----------------|
 | Migrar para Browserless self-hosted (Railway) | -$15/mês | Após crescimento 2x |
-| Usar Claude Haiku para conteúdo simples (em vez de Sonnet) | -30-40% em Claude | Imediato |
+| Usar Claude Sonnet para conteúdo simples (em vez de Sonnet) | -30-40% em Claude | Imediato |
 | Cache de geração de temas (Redis) | -20% em Claude | Já implementado (TASK-4) |
 | Batch de imagens (menos req) | -20% em Ideogram | Quando > 100 posts/mês |
 

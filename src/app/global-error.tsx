@@ -12,9 +12,15 @@ interface GlobalErrorProps {
 }
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
+  const correlationId = error.digest ?? 'global-error'
+
   useEffect(() => {
-    captureException(error, { digest: error.digest, boundary: 'global-error' })
-  }, [error])
+    captureException(error, {
+      boundary: 'global-error',
+      correlation_id: correlationId,
+      digest: error.digest,
+    })
+  }, [correlationId, error])
 
   return (
     <html lang="pt-BR">
@@ -33,13 +39,11 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
           <p style={{ fontSize: '5rem', fontWeight: 700, color: 'rgba(239,68,68,0.2)', margin: 0 }}>500</p>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0.5rem 0' }}>Erro crítico na aplicação</h1>
           <p style={{ color: '#94a3b8', marginBottom: '1.5rem' }}>
-            Ocorreu um erro inesperado. Nosso time foi notificado.
+            Ocorreu um erro inesperado. Tente novamente ou fale com suporte.
           </p>
-          {error.digest && (
-            <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '1rem' }}>
-              Código: {error.digest}
-            </p>
-          )}
+          <p style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '1rem' }}>
+            correlation_id: {correlationId}
+          </p>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center' }}>
             <button
               type="button"
@@ -71,6 +75,21 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               }}
             >
               Voltar ao início
+            </a>
+            <a
+              href="mailto:suporte@inboundforge.com?subject=Erro%20critico%20no%20Inbound%20Forge"
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '0.375rem',
+                background: 'transparent',
+                color: '#94a3b8',
+                border: '1px solid #334155',
+                textDecoration: 'none',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+              }}
+            >
+              Falar com suporte
             </a>
           </div>
         </main>

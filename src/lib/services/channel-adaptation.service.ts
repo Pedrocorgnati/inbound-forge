@@ -2,7 +2,7 @@
  * ChannelAdaptationService — Inbound Forge
  * Módulo: module-8-content-generation (TASK-4/ST001)
  *
- * Adapta conteúdo para canal específico via Claude haiku.
+ * Adapta conteúdo para canal específico via Claude sonnet.
  * Inclui timeout de 15s, auto-truncação e logging de uso.
  */
 import Anthropic from '@anthropic-ai/sdk'
@@ -20,7 +20,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export class ChannelAdaptationService {
   /**
-   * Adapta um ângulo para o canal alvo via Claude haiku.
+   * Adapta um ângulo para o canal alvo via Claude sonnet.
    * Retorna body adaptado (com truncação automática se necessário).
    */
   static async adapt(
@@ -56,7 +56,7 @@ export class ChannelAdaptationService {
       ctaCustomText
     )
 
-    // Call Claude haiku with timeout
+    // Call Claude sonnet with timeout
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), CLAUDE_TIMEOUTS.CHANNEL_ADAPTATION_MS)
 

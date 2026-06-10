@@ -10,6 +10,7 @@ import {
   REGENERATION_SYSTEM_PROMPT,
   buildRegenerationUserPrompt,
 } from '@/lib/prompts/content-regeneration'
+import { withContentPieceLock, ContentPieceLocked } from '@/lib/content/lock'
 
 const RegenerateSchema = z.object({
   angle: z.enum([
@@ -44,6 +45,9 @@ export async function POST(request: NextRequest, { params }: Params) {
   try {
     const piece = await prisma.contentPiece.findUnique({ where: { id: pieceId } })
     if (!piece) return notFound('Peça não encontrada')
+
+    // CL-052 (TASK-10 ST003) — evitar geracao concorrente do mesmo ContentPiece
+    return await withContentPieceLock(pieceId, async () => {
 
     const last = await prisma.contentAngleVariant.findFirst({
       where: { pieceId },
@@ -92,7 +96,11 @@ export async function POST(request: NextRequest, { params }: Params) {
       variant,
       prompt: { system: REGENERATION_SYSTEM_PROMPT, user: userPrompt },
     }, 201)
-  } catch {
+    }) // end withContentPieceLock
+  } catch (err) {
+    if (err instanceof ContentPieceLocked) {
+      return ok({ error: 'CONTENT_PIECE_LOCKED', message: err.message }, 409)
+    }
     return internalError()
   }
 }

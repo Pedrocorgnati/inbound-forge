@@ -12,13 +12,15 @@ const AUTH_TAG_LENGTH = 16 // bytes
 const KEY_LENGTH = 32 // bytes (256 bits)
 
 function getKey(): Buffer {
-  const keyHex = process.env.PII_ENCRYPTION_KEY
-  if (!keyHex) {
+  const keyValue = process.env.PII_ENCRYPTION_KEY
+  if (!keyValue) {
     throw new Error('PII_ENCRYPTION_KEY is required')
   }
-  const key = Buffer.from(keyHex, 'hex')
+  const key = /^[a-f0-9]{64}$/i.test(keyValue)
+    ? Buffer.from(keyValue, 'hex')
+    : Buffer.from(keyValue, 'base64')
   if (key.length !== KEY_LENGTH) {
-    throw new Error(`PII_ENCRYPTION_KEY must be ${KEY_LENGTH * 2} hex chars (${KEY_LENGTH} bytes)`)
+    throw new Error(`PII_ENCRYPTION_KEY must decode to ${KEY_LENGTH} bytes`)
   }
   return key
 }

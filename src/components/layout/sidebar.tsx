@@ -117,7 +117,7 @@ export function Sidebar({
         <div data-testid="sidebar-header" className="flex items-center h-16 px-3 border-b border-border shrink-0">
           {/* Logo: símbolo (collapsed) ou full (expandido) — G19 */}
           {collapsed ? (
-            <Image src="/images/logo-symbol.svg" alt="Inbound Forge" width={28} height={28} className="shrink-0" />
+            <Image src="/images/logo-symbol.png" alt="Inbound Forge" width={28} height={28} className="shrink-0" />
           ) : (
             <Image src="/images/logo-full.svg" alt="Inbound Forge" width={120} height={28} className="flex-1 object-contain object-left" />
           )}

@@ -37,7 +37,7 @@ export default async function LoginPage({ params }: LoginPageProps) {
           {/* Logo — substituir SVG placeholder quando asset real for gerado */}
           <div className="mx-auto mb-4 h-12 w-12 flex items-center justify-center">
             <Image
-              src="/images/logo-symbol.svg"
+              src="/images/logo-symbol.png"
               alt="Inbound Forge"
               width={48}
               height={48}

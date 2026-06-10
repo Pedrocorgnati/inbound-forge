@@ -1,8 +1,11 @@
 'use client'
 
 import useSWR from 'swr'
+import { useLocale } from 'next-intl'
+import { CalendarClock } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/shared/empty-state'
 
 interface QueueItem {
   id: string
@@ -17,6 +20,7 @@ const fetcher = (url: string) =>
   fetch(url).then((r) => r.json() as Promise<ApiResponse<QueueItem[]>>)
 
 export function QueueBoard() {
+  const locale = useLocale()
   const { data, isLoading, mutate } = useSWR('/api/v1/publishing-queue', fetcher, {
     refreshInterval: 10_000,
   })
@@ -26,6 +30,18 @@ export function QueueBoard() {
 
   if (isLoading) {
     return <p className="text-sm text-muted-foreground">Carregando fila...</p>
+  }
+
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        icon={<CalendarClock className="h-12 w-12" />}
+        title="Nenhum item na fila"
+        description="Abra o calendário editorial para planejar novas publicações."
+        ctaLabel="Abrir calendário"
+        ctaHref={`/${locale}/calendar`}
+      />
+    )
   }
 
   return (

@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { AlertTriangle, Globe, Shield, ShieldAlert, Pencil, Trash2, Power, RefreshCw } from 'lucide-react'
+import Link from 'next/link'
+import { useLocale } from 'next-intl'
+import { AlertTriangle, Eye, Globe, Shield, ShieldAlert, Pencil, Trash2, Power, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { SkeletonCard } from '@/components/ui/skeleton'
@@ -11,6 +13,7 @@ import { SourceForm } from './SourceForm'
 import type { SourceDto } from '@/lib/services/source.service'
 
 export function SourceList() {
+  const locale = useLocale()
   const [sources, setSources] = useState<SourceDto[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,7 +41,7 @@ export function SourceList() {
 
   async function handleToggleActive(source: SourceDto) {
     try {
-      const res = await fetch(`/api/sources/${source.id}`, {
+      const res = await fetch(`/api/v1/sources/${source.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !source.isActive }),
@@ -66,7 +69,7 @@ export function SourceList() {
     if (!deleteTarget) return
     setIsDeleting(true)
     try {
-      const res = await fetch(`/api/sources/${deleteTarget.id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/v1/sources/${deleteTarget.id}`, { method: 'DELETE' })
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
         throw new Error(json.message ?? 'Erro ao remover fonte')
@@ -109,8 +112,8 @@ export function SourceList() {
         icon={<Globe className="h-12 w-12" />}
         title="Nenhuma fonte cadastrada"
         description="Adicione fontes de scraping para que o sistema colete temas automaticamente."
-        ctaLabel="Adicionar primeira fonte"
-        onCtaClick={() => setShowForm(true)}
+        ctaLabel="Ir para Nova fonte"
+        ctaHref="#source-add-button"
       />
     )
   }
@@ -166,6 +169,19 @@ export function SourceList() {
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                aria-label={`Abrir detalhe da fonte ${source.name}`}
+                data-testid={`source-detail-${source.id}`}
+              >
+                <Link href={`/${locale}/sources/${source.id}`}>
+                  <Eye className="h-3.5 w-3.5" aria-hidden />
+                  Detalhes
+                </Link>
+              </Button>
+
               {source.antiBotBlocked && (
                 <Button
                   variant="outline"

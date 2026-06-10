@@ -5,10 +5,21 @@ import { logAudit } from '@/lib/audit/log'
 export class SolutionPatternService {
   /** Lista padrões com filtro opcional por painId. */
   static async findAll(query: ListPatternsQuery) {
-    const { page, limit, painId } = query
+    const { page, limit, painId, search } = query
     const skip = (page - 1) * limit
 
-    const where = painId ? { painId } : {}
+    // fix REPROVADO (finding TASK-015): busca textual por nome/descricao + filtro painId.
+    const where = {
+      ...(painId ? { painId } : {}),
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' as const } },
+              { description: { contains: search, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    }
 
     const [data, total] = await Promise.all([
       prisma.solutionPattern.findMany({

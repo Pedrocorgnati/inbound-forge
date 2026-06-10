@@ -45,7 +45,9 @@ npm run dev
 | `npm run lint` | ESLint |
 | `npm run type-check` | TypeScript strict check |
 | `npx prisma studio` | UI para visualizar banco |
-| `npx prisma db seed` | Seed de desenvolvimento |
+| `npm run db:seed` ou `npx prisma db seed` | Seed de desenvolvimento (idempotente) |
+| `npm run db:seed:demo` | Seed demo completo (Lead/Conversion/UTMLink — pipeline end-to-end) |
+| `npm run db:reset` | Reset DB + reseed (interativo, bloqueado em production) |
 | `SEED_ENV=test npx prisma db seed` | Seed de testes (fixtures) |
 
 ## Estrutura
@@ -81,6 +83,12 @@ Backup automático: Supabase diário (7 dias de retenção).
 ## Próximos Passos
 
 Ver [docs/POST-MVP-ROADMAP.md](./docs/POST-MVP-ROADMAP.md) para features e melhorias planejadas pós-MVP (Q3/Q4 2026).
+
+## Operations
+
+- [docs/runbook.md](./docs/runbook.md) — Playbook de incidentes: deploy rollback, DB down, workers stuck, quota excedida, auth Supabase down
+- [docs/DEPLOY-RUNBOOK.md](./docs/DEPLOY-RUNBOOK.md) — Procedimentos de deploy Vercel + Railway
+- `GET /api/health/public` — Health check sem autenticacao (para status pages externas)
 
 ## Governança e Compliance
 

@@ -10,7 +10,7 @@ export function SourceAddButton() {
 
   return (
     <>
-      <Button onClick={() => setShowForm(true)} data-testid="source-add-button">
+      <Button id="source-add-button" onClick={() => setShowForm(true)} data-testid="source-add-button">
         <Plus className="h-4 w-4" aria-hidden />
         Nova fonte
       </Button>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { AlertTriangle, ChevronRight, Eye, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,13 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Modal } from '@/components/ui/modal'
+import { CopyButton } from '@/components/ui/copy-button'
 import { toast } from '@/components/ui/toast'
+// TAREFA-002 (P0): reveal de PII com motivo + ciencia LGPD + audit antes de expor.
+import {
+  RevealPIIModal,
+  type RevealPIIResult,
+} from '@/app/[locale]/(protected)/leads/[id]/_components/RevealPIIModal'
 import { ConversionHistory } from '@/components/conversions/ConversionHistory'
 import { ConversionForm } from '@/components/conversions/ConversionForm'
 import { AttributionCard } from '@/components/attribution/AttributionCard'
@@ -79,8 +85,26 @@ export function LeadDetailClient() {
   const [error, setError] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
-  const [isRevealing, setIsRevealing] = useState(false)
+  const [revealOpen, setRevealOpen] = useState(false)
   const [revealedContact, setRevealedContact] = useState<string | null>(null)
+  const [revealSecondsLeft, setRevealSecondsLeft] = useState<number | null>(null)
+  const revealTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const clearRevealTimer = useCallback(() => {
+    if (revealTimerRef.current) {
+      clearInterval(revealTimerRef.current)
+      revealTimerRef.current = null
+    }
+  }, [])
+
+  const hideRevealedContact = useCallback(() => {
+    clearRevealTimer()
+    setRevealedContact(null)
+    setRevealSecondsLeft(null)
+  }, [clearRevealTimer])
+
+  // Limpa o timer ao desmontar (Zero Estados Indefinidos).
+  useEffect(() => clearRevealTimer, [clearRevealTimer])
 
   const fetchLead = useCallback(async () => {
     setIsLoading(true)
@@ -110,19 +134,36 @@ export function LeadDetailClient() {
     fetchLead()
   }, [fetchLead])
 
-  async function handleRevealContact() {
-    setIsRevealing(true)
-    try {
-      const res = await fetch(`/api/v1/leads/${id}?includeContact=true`)
-      if (!res.ok) throw new Error('Falha ao revelar contato')
-      const json = await res.json()
-      setRevealedContact(json.data.contactInfo)
-    } catch {
-      toast.error('Erro ao revelar contato')
-    } finally {
-      setIsRevealing(false)
-    }
-  }
+  // TAREFA-002: revelacao recebe valor + TTL via modal auditado; copia para a
+  // area de transferencia e reverte automaticamente ao expirar o TTL.
+  const handleRevealed = useCallback(
+    (result: RevealPIIResult) => {
+      clearRevealTimer()
+      setRevealedContact(result.contactInfo)
+
+      void navigator.clipboard
+        ?.writeText(result.contactInfo)
+        .then(() => toast.success('Contato copiado para a área de transferência.'))
+        .catch(() => {
+          /* clipboard indisponivel: contato segue visivel na tela */
+        })
+
+      const totalSeconds = Math.max(1, Math.round(result.ttlMs / 1000))
+      setRevealSecondsLeft(totalSeconds)
+      revealTimerRef.current = setInterval(() => {
+        setRevealSecondsLeft((prev) => {
+          if (prev === null) return null
+          if (prev <= 1) {
+            hideRevealedContact()
+            toast.info('Contato ocultado automaticamente (TTL expirado).')
+            return null
+          }
+          return prev - 1
+        })
+      }, 1000)
+    },
+    [clearRevealTimer, hideRevealedContact],
+  )
 
   function handleFormSuccess() {
     setShowForm(false)
@@ -269,7 +310,7 @@ export function LeadDetailClient() {
               <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Contato
               </dt>
-              <dd className="mt-1 flex items-center gap-2">
+              <dd className="mt-1 flex flex-wrap items-center gap-2">
                 <span className="text-sm text-foreground" data-testid="lead-contact-info">
                   {contactDisplay ?? '—'}
                 </span>
@@ -277,14 +318,33 @@ export function LeadDetailClient() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleRevealContact}
-                    isLoading={isRevealing}
-                    loadingText="Revelando..."
+                    onClick={() => setRevealOpen(true)}
                     data-testid="lead-reveal-contact"
                   >
                     <Eye className="h-3.5 w-3.5" aria-hidden />
                     Revelar
                   </Button>
+                )}
+                {revealedContact && (
+                  <>
+                    <CopyButton textToCopy={revealedContact} size="sm" />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={hideRevealedContact}
+                      data-testid="lead-hide-contact"
+                    >
+                      Ocultar
+                    </Button>
+                    {revealSecondsLeft !== null && (
+                      <span
+                        className="text-xs text-muted-foreground"
+                        data-testid="lead-reveal-ttl"
+                      >
+                        oculta em {revealSecondsLeft}s
+                      </span>
+                    )}
+                  </>
                 )}
               </dd>
             </div>
@@ -355,6 +415,14 @@ export function LeadDetailClient() {
           onSuccess={handleFormSuccess}
         />
       </Modal>
+
+      {/* TAREFA-002: Reveal PII com motivo + ciencia LGPD + TTL */}
+      <RevealPIIModal
+        leadId={lead.id}
+        open={revealOpen}
+        onClose={() => setRevealOpen(false)}
+        onRevealed={handleRevealed}
+      />
     </div>
   )
 }

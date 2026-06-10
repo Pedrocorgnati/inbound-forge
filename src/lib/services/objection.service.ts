@@ -5,12 +5,14 @@ import { logAudit } from '@/lib/audit/log'
 export class ObjectionService {
   /** Lista objeções com filtro por tipo e paginação. */
   static async findAll(query: ListObjectionsQuery) {
-    const { page, limit, type, status } = query
+    const { page, limit, type, status, search } = query
     const skip = (page - 1) * limit
 
     const where = {
       ...(type ? { type } : {}),
       ...(status ? { status } : {}),
+      // fix REPROVADO (finding TASK-015): busca textual por conteudo.
+      ...(search ? { content: { contains: search, mode: 'insensitive' as const } } : {}),
     }
 
     const [data, total] = await Promise.all([

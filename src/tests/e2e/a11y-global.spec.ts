@@ -1,6 +1,7 @@
 /**
- * a11y-global.spec.ts — TASK-12 ST001
+ * a11y-global.spec.ts — TASK-12 ST001 + TASK-14 ST004 (CL-T05)
  * Auditoria WCAG 2.1 AA global — todas as rotas protegidas
+ * Inclui: smoke test do SkipToContent (tab focus em #main)
  *
  * Cobre rotas que NÃO foram auditadas por a11y-module15.spec.ts (que cobre /health e /onboarding).
  *
@@ -52,3 +53,22 @@ for (const target of PROTECTED_PAGES) {
     expect(blocking).toHaveLength(0)
   })
 }
+
+// TASK-14 ST004 (CL-T05): SkipToContent smoke test
+test('[A11y] SkipToContent — Tab deve revelar link para #main', async ({ page }) => {
+  const LOCALE = process.env.TEST_LOCALE ?? 'pt-BR'
+  await page.goto(`/${LOCALE}/dashboard`)
+  await page.waitForLoadState('networkidle')
+
+  // Tab uma vez — skip link deve ficar visível
+  await page.keyboard.press('Tab')
+
+  const skipLink = page.locator('a[href="#main"]')
+  await expect(skipLink).toBeVisible()
+  await expect(skipLink).toBeFocused()
+
+  // Enter deve mover foco para #main
+  await page.keyboard.press('Enter')
+  const main = page.locator('#main')
+  await expect(main).toBeAttached()
+})

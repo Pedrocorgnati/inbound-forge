@@ -5,6 +5,7 @@ import { OnboardingResumeCard } from '@/components/dashboard/OnboardingResumeCar
 import { ScoringPhaseBadge } from '@/components/dashboard/ScoringPhaseBadge'
 import { GenerateThemesButton } from '@/components/dashboard/GenerateThemesButton'
 import { MvpCriteriaCard } from './MvpCriteriaCard'
+import { QuotaWidget } from '@/components/cost/QuotaBadge'
 
 export const metadata: Metadata = { title: 'Dashboard' }
 
@@ -23,6 +24,7 @@ export default async function DashboardPage({ params }: PageProps) {
         <GenerateThemesButton />
       </div>
       <MvpCriteriaCard />
+      <QuotaWidget />
       <DashboardContent />
     </>
   )

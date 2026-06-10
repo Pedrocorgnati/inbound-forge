@@ -75,7 +75,7 @@ export function PostForm({ onSuccess, defaultDate }: PostFormProps) {
     setIsSubmitting(true)
 
     try {
-      const response = await fetch('/api/posts', {
+      const response = await fetch('/api/v1/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

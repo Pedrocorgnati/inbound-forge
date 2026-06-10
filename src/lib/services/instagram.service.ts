@@ -23,6 +23,21 @@ export class InstagramService {
     return withLock(`publish:post:${postId}`, 120, () => InstagramService._publishPostInner(postId))
   }
 
+  /**
+   * loop 05-27 TAREFA-008 (fix REPROVADO graph-caption): monta a legenda final que
+   * vai ao Graph API combinando caption + hashtags editadas, espelhando exatamente o
+   * preview do operador (InstagramPreview.tsx). Antes, apenas `post.caption` era
+   * enviado e as hashtags editadas eram descartadas no publish.
+   */
+  static _composeCaption(caption: string, hashtags: string[]): string {
+    const tags = (hashtags ?? [])
+      .map((t) => t.trim().replace(/^#+/, ''))
+      .filter(Boolean)
+      .map((t) => `#${t}`)
+    if (tags.length === 0) return caption
+    return [caption.trim(), tags.join(' ')].filter(Boolean).join('\n\n')
+  }
+
   static async _publishPostInner(postId: string) {
     const post = await prisma.post.findUnique({
       where: { id: postId },
@@ -30,6 +45,24 @@ export class InstagramService {
     })
 
     if (!post) throw new Error('Post não encontrado')
+
+    // fix REPROVADO (server-validation): revalidar o canal no servidor. O backend
+    // nunca deve publicar via Graph um post que nao seja do canal INSTAGRAM, mesmo
+    // que approvedAt/imageUrl existam (regressao "integridade de canal").
+    if (post.channel !== 'INSTAGRAM') {
+      throw Object.assign(new Error('Post nao pertence ao canal INSTAGRAM'), {
+        code: 'POST_051',
+      })
+    }
+
+    // fix REPROVADO (idempotency): bloquear status terminal ANTES de chamar o Graph.
+    // Uma rechamada de /api/instagram/publish sobre um post ja PUBLISHED nao pode
+    // republicar. Combinado com o withLock, garante replay-safe no dominio.
+    if (post.status === ContentStatus.PUBLISHED) {
+      throw Object.assign(new Error('Post ja foi publicado'), {
+        code: 'POST_052',
+      })
+    }
 
     // INT-070: aprovação humana obrigatória
     if (!post.approvedAt) {
@@ -73,10 +106,27 @@ export class InstagramService {
       attempts,
     })
 
+    // fix REPROVADO (graph-caption + server-validation): montar a legenda final com
+    // hashtags e revalidar os limites da plataforma no SERVIDOR (nao confiar so no
+    // client). caption <= 2200 chars; hashtags <= 30.
+    const finalCaption = InstagramService._composeCaption(post.caption, post.hashtags)
+    if (finalCaption.length > 2200) {
+      throw Object.assign(
+        new Error(`Legenda final tem ${finalCaption.length} chars (limite 2200)`),
+        { code: 'POST_053' },
+      )
+    }
+    if ((post.hashtags ?? []).length > 30) {
+      throw Object.assign(
+        new Error(`${post.hashtags.length} hashtags (limite 30)`),
+        { code: 'POST_053' },
+      )
+    }
+
     try {
       // Publicar via Graph API
       const client = createInstagramClient(token, config.businessAccountId)
-      const result = await client.publishPost(post.imageUrl, post.caption)
+      const result = await client.publishPost(post.imageUrl, finalCaption)
 
       // Atualizar banco: sucesso
       await prisma.$transaction([

@@ -134,7 +134,7 @@ export function Header({
         <Tooltip>
           <TooltipTrigger asChild>
             <Link
-              href={`/${locale}/profile`}
+              href={`/${locale}/settings/account`}
               data-testid="header-profile-link"
               aria-label={tHeader('profileLabel') || 'Perfil'}
               className="flex h-11 w-11 items-center justify-center rounded-md hover:bg-muted transition-colors"

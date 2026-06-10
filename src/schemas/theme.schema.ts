@@ -1,6 +1,16 @@
 import { z } from 'zod'
 import { THEME_STATUS } from '@/constants/status'
 
+export const ThemeIndexTabSchema = z.enum([
+  'pending_approval',
+  'approved',
+  'rejected',
+  'archived',
+  'all',
+])
+
+export const ThemeSourceFilterSchema = z.enum(['rss', 'scraping', 'manual'])
+
 export const RejectThemeSchema = z.object({
   reason: z.string().min(10, 'Motivo de rejeição deve ter no mínimo 10 caracteres.'),
 })
@@ -8,12 +18,16 @@ export const RejectThemeSchema = z.object({
 export const ListThemesSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
+  tab: ThemeIndexTabSchema.default('pending_approval'),
   status: z.enum([THEME_STATUS.ACTIVE, THEME_STATUS.DEPRIORITIZED, THEME_STATUS.REJECTED]).optional(),
   isNew: z.coerce.boolean().optional(),
   minScore: z.coerce.number().int().min(0).max(100).optional(),
   // Intake-Review TASK-4 ST001 (CL-197): filtros adicionais.
   painCategory: z.string().trim().min(1).max(255).optional(),
   niche: z.string().trim().min(1).max(255).optional(),
+  source: ThemeSourceFilterSchema.optional(),
+  dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   scoreMin: z.coerce.number().int().min(0).max(100).optional(),
   scoreMax: z.coerce.number().int().min(0).max(100).optional(),
 })
@@ -33,6 +47,8 @@ export const NicheOpportunitySchema = z.object({
 
 export type RejectThemeInput = z.infer<typeof RejectThemeSchema>
 export type ListThemesInput = z.infer<typeof ListThemesSchema>
+export type ThemeIndexTab = z.infer<typeof ThemeIndexTabSchema>
+export type ThemeSourceFilter = z.infer<typeof ThemeSourceFilterSchema>
 export type GenerateThemesInput = z.infer<typeof GenerateThemesSchema>
 export type ScoreThemeInput = z.infer<typeof ScoreThemeSchema>
 export type NicheOpportunityInput = z.infer<typeof NicheOpportunitySchema>

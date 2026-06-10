@@ -4,7 +4,10 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { useLocale } from 'next-intl'
+import { ClipboardList } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { EmptyState } from '@/components/shared/empty-state'
 
 interface AuditRow {
   id: string
@@ -37,6 +40,7 @@ const STATUS_COLOR: Record<AuditRow['status'], string> = {
 }
 
 export function ScrapingAuditTable() {
+  const locale = useLocale()
   const params = useSearchParams()
   const router = useRouter()
   const page = parseInt(params.get('page') ?? '1')
@@ -74,6 +78,18 @@ export function ScrapingAuditTable() {
   const rows = data?.data ?? []
   const pag = data?.pagination
 
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        icon={<ClipboardList className="h-12 w-12" />}
+        title="Nenhum registro de auditoria"
+        description="Revise as fontes configuradas para gerar novas coletas auditáveis."
+        ctaLabel="Revisar fontes"
+        ctaHref={`/${locale}/sources`}
+      />
+    )
+  }
+
   return (
     <div className="space-y-3" data-testid="audit-table-wrap">
       <div className="overflow-x-auto rounded-md border border-border">
@@ -90,13 +106,6 @@ export function ScrapingAuditTable() {
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-muted-foreground">
-                  Nenhum registro.
-                </td>
-              </tr>
-            )}
             {rows.map((r) => (
               <tr key={r.id} className="border-t border-border">
                 <td className="px-3 py-2 whitespace-nowrap">{formatDate(r.createdAt)}</td>

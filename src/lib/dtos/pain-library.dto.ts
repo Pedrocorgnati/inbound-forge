@@ -40,6 +40,8 @@ export const ListPainsQueryDto = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   sector: z.string().optional(),
   status: z.enum(['DRAFT', 'VALIDATED']).optional(),
+  // fix REPROVADO (finding TASK-015): busca textual por titulo/descricao.
+  search: z.string().trim().min(1).optional(),
 })
 
 export type ListPainsQuery = z.infer<typeof ListPainsQueryDto>

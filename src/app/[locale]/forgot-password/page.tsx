@@ -23,7 +23,7 @@ export default async function ForgotPasswordPage({ params }: ForgotPasswordPageP
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 h-12 w-12 flex items-center justify-center">
             <Image
-              src="/images/logo-symbol.svg"
+              src="/images/logo-symbol.png"
               alt="Inbound Forge"
               width={48}
               height={48}

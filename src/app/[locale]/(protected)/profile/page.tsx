@@ -1,7 +1,9 @@
-import { getTranslations } from 'next-intl/server'
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase-server'
-import { ProfileForm } from '@/components/settings/ProfileForm'
+/**
+ * loop 05-27 TAREFA-026: /profile foi consolidado em /settings/account
+ * (caminho UNICO do perfil do operador). Ver ADR-0010-profile-namespace.
+ * Esta rota agora e apenas um alias permanente (HTTP 308) para o canonico.
+ */
+import { permanentRedirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,24 +13,5 @@ interface ProfilePageProps {
 
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { locale } = await params
-  const t = await getTranslations('settings.profile')
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) redirect(`/${locale}/login`)
-
-  const initial = {
-    name: (user.user_metadata?.name as string | undefined) ?? '',
-    email: user.email ?? '',
-  }
-
-  return (
-    <section className="space-y-6 max-w-xl">
-      <header>
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('description')}</p>
-      </header>
-      <ProfileForm initial={initial} />
-    </section>
-  )
+  permanentRedirect(`/${locale}/settings/account`)
 }

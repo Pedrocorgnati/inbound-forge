@@ -10,9 +10,10 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const period = searchParams.get('period') ?? '30d'
+  const includeEmptyCoreChannels = searchParams.get('includeEmpty') === 'core'
 
   try {
-    const data = await getChannelPerformance(period, user!.id)
+    const data = await getChannelPerformance(period, user!.id, { includeEmptyCoreChannels })
     return ok({ period, channels: data })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Erro ao buscar métricas por canal'

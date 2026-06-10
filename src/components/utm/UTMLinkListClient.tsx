@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useLocale } from 'next-intl'
 import { Copy, Link2, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -41,6 +42,7 @@ function truncateUrl(url: string): string {
 }
 
 export function UTMLinkListClient() {
+  const locale = useLocale()
   const [links, setLinks] = useState<UTMLinkItem[]>([])
   const [meta, setMeta] = useState<PaginationMeta | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -124,6 +126,8 @@ export function UTMLinkListClient() {
           icon={<Link2 className="h-12 w-12" />}
           title="Nenhum UTM link criado"
           description="Gere UTM links a partir dos seus posts para rastrear conversões"
+          ctaLabel="Abrir calendário editorial"
+          ctaHref={`/${locale}/calendar`}
         />
       )}
 

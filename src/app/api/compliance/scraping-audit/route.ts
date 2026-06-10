@@ -41,13 +41,10 @@ export async function GET(request: NextRequest) {
   }
 
   // Modo 1 (padrão): relatório agregado com cache Redis.
-  // NOTA (finding TASK-013, escopo deferido): este relatório NÃO é tenant-scoped. A métrica
-  // totalBatches deriva de AlertLog, que não possui operatorId/sourceId (log global de
-  // sistema), portanto não há caminho de scoping per-operador sem mudança de schema. As
-  // métricas de ScrapedText (que tem operatorId) seriam scopáveis, mas misturá-las com um
-  // totalBatches global produziria um relatório inconsistente. Decisão pendente: restringir
-  // este modo a role admin OU adicionar operatorId a AlertLog. Sem consumidor no frontend
-  // hoje (a UI usa o modo logs paginado, já tenant-scoped acima).
+  // fix REPROVADO (finding TASK-013): o relatório agora é tenant-scoped — passamos
+  // user.id ao serviço, que escopa todas as métricas por operador (ver
+  // getScrapingAuditReport). O cache também é por-operador (senão um operador veria
+  // o relatório cacheado de outro).
   const startDateStr = searchParams.get('startDate')
   const endDateStr = searchParams.get('endDate')
 
@@ -57,7 +54,7 @@ export async function GET(request: NextRequest) {
     ? new Date(startDateStr)
     : new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-  const cacheKey = `${CACHE_KEY}:${startDate.toISOString()}:${endDate.toISOString()}`
+  const cacheKey = `${CACHE_KEY}:${user!.id}:${startDate.toISOString()}:${endDate.toISOString()}`
 
   // DEGRADED: tentar cache Redis primeiro
   try {
@@ -82,7 +79,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const report = await Promise.race([
-      getScrapingAuditReport(startDate, endDate),
+      getScrapingAuditReport(user!.id, startDate, endDate),
       timeoutPromise,
     ])
 

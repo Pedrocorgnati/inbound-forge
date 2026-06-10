@@ -6,12 +6,19 @@
  * SEC-007: ownership — post deve pertencer ao operador
  */
 import { NextRequest } from 'next/server'
+import crypto from 'crypto'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireSession, ok, okPaginated, conflict, validationError, internalError, notFound } from '@/lib/api-auth'
 import { buildUTMUrl } from '@/lib/utm-builder'
 import { auditLog } from '@/lib/audit'
 import { UTM_SOURCES, UTM_MEDIUMS } from '@/constants/utm-constants'
+import {
+  applyRateLimitHeaders,
+  checkPublicIpRateLimit,
+  extractClientIp,
+  rateLimitExceededResponse,
+} from '@/lib/rate-limit'
 
 const UTMLinkCreateSchema = z.object({
   postId: z.string().uuid(),
@@ -31,24 +38,28 @@ const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://inbound-forge.verc
 
 // POST /api/v1/utm-links
 export async function POST(request: NextRequest) {
+  const correlationId = crypto.randomUUID()
+  const rateLimit = await checkPublicIpRateLimit(extractClientIp(request.headers), 'api-v1-utm-links')
+  if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit, correlationId)
+
   const { user, response } = await requireSession()
-  if (response) return response
+  if (response) return applyRateLimitHeaders(response, rateLimit, correlationId)
 
   let body: unknown
-  try { body = await request.json() } catch { return validationError(new Error('Body inválido')) }
+  try { body = await request.json() } catch { return applyRateLimitHeaders(validationError(new Error('Body inválido')), rateLimit, correlationId) }
 
   const parsed = UTMLinkCreateSchema.safeParse(body)
-  if (!parsed.success) return validationError(parsed.error)
+  if (!parsed.success) return applyRateLimitHeaders(validationError(parsed.error), rateLimit, correlationId)
 
   const { postId, source, medium, campaign, content, term } = parsed.data
 
   // Verificar que post existe (SEC-007)
   const post = await prisma.post.findUnique({ where: { id: postId } })
-  if (!post) return notFound('Post não encontrado')
+  if (!post) return applyRateLimitHeaders(notFound('Post não encontrado'), rateLimit, correlationId)
 
   // Verificar duplicata
   const existing = await prisma.uTMLink.findUnique({ where: { postId } })
-  if (existing) return conflict('UTM link já existe para este post')
+  if (existing) return applyRateLimitHeaders(conflict('UTM link já existe para este post'), rateLimit, correlationId)
 
   try {
     // Construir fullUrl
@@ -72,19 +83,23 @@ export async function POST(request: NextRequest) {
       entityType: 'UTMLink',
       entityId: utmLink.id,
       userId: user!.id,
-      metadata: { postId, source, medium, campaign },
+      metadata: { postId, source, medium, campaign, correlationId },
     })
 
-    return ok(utmLink, 201)
+    return applyRateLimitHeaders(ok(utmLink, 201), rateLimit, correlationId)
   } catch {
-    return internalError()
+    return applyRateLimitHeaders(internalError(), rateLimit, correlationId)
   }
 }
 
 // GET /api/v1/utm-links
 export async function GET(request: NextRequest) {
+  const correlationId = crypto.randomUUID()
+  const rateLimit = await checkPublicIpRateLimit(extractClientIp(request.headers), 'api-v1-utm-links')
+  if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit, correlationId)
+
   const { response } = await requireSession()
-  if (response) return response
+  if (response) return applyRateLimitHeaders(response, rateLimit, correlationId)
 
   const { searchParams } = new URL(request.url)
   // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para parâmetros inválidos
@@ -92,7 +107,7 @@ export async function GET(request: NextRequest) {
     page: searchParams.get('page'),
     limit: searchParams.get('limit'),
   })
-  if (!listResult.success) return validationError(listResult.error)
+  if (!listResult.success) return applyRateLimitHeaders(validationError(listResult.error), rateLimit, correlationId)
   const parsed = listResult.data
 
   try {
@@ -106,8 +121,8 @@ export async function GET(request: NextRequest) {
       prisma.uTMLink.count(),
     ])
 
-    return okPaginated(data, { page: parsed.page, limit: parsed.limit, total })
+    return applyRateLimitHeaders(okPaginated(data, { page: parsed.page, limit: parsed.limit, total }), rateLimit, correlationId)
   } catch {
-    return internalError()
+    return applyRateLimitHeaders(internalError(), rateLimit, correlationId)
   }
 }

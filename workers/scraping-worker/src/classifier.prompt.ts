@@ -65,9 +65,9 @@ Substitua por descritores genéricos:
 Responda SOMENTE com o JSON solicitado — sem texto adicional.
 `.trim()
 
-export const CLAUDE_MODEL = 'claude-haiku-4-5-20251001'
+export const CLAUDE_MODEL = 'claude-sonnet-4-5-20251001'
 export const CLAUDE_MAX_TOKENS = 500
 
-// Custo estimado por 1M tokens (USD) — claude-haiku
+// Custo estimado por 1M tokens (USD) — claude-sonnet
 export const COST_PER_INPUT_TOKEN = 0.25 / 1_000_000
 export const COST_PER_OUTPUT_TOKEN = 1.25 / 1_000_000

@@ -16,6 +16,9 @@ export const STORAGE_KEYS = {
 
   /** Tema da interface (light | dark | system) — alinhado com ThemeProvider.storageKey default */
   THEME: 'inbound-forge-theme',
+
+  /** CL-249 (TASK-12 ST003) — dismiss do banner de onboarding pulado */
+  ONBOARDING_SKIP_BANNER_DISMISSED: 'onboarding:skip-banner:dismissed',
 } as const
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]

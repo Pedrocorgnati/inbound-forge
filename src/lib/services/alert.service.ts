@@ -7,6 +7,7 @@
  * SEC-008: sem dados de conteúdo em logs.
  */
 import { prisma } from '@/lib/prisma'
+import { dispatchAlert } from '@/lib/alerts/dispatcher'
 
 export interface AlertSummary {
   id: string
@@ -43,6 +44,10 @@ export async function createAlertIfAbsent(params: {
   })
 
   console.warn(`[AlertService] Alert created | type=${params.type} | id=${alert.id}`)
+  // TASK-4 ST005: dispatch para canais externos
+  dispatchAlert({ id: alert.id, type: alert.type, severity: alert.severity, message: alert.message }).catch(
+    (err) => console.warn('[AlertService] dispatch error:', err),
+  )
   return alert
 }
 

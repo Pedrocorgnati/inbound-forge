@@ -13,6 +13,17 @@ import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { PostHoverPreview } from './PostHoverPreview'
 import type { PublishingPost } from '@/types/publishing'
 
+// CL-149 (TASK-7 ST001) — posts agendados > 48h sem publicacao recebem badge amarelo.
+const STUCK_THRESHOLD_MS = 48 * 60 * 60 * 1000
+
+function isStuckPost(post: PublishingPost): boolean {
+  return (
+    !post.publishedAt &&
+    post.scheduledAt !== null &&
+    Date.now() - new Date(post.scheduledAt).getTime() > STUCK_THRESHOLD_MS
+  )
+}
+
 // TASK-14 ST005 (M11.15 / G-005) — preview expandido on hover/focus.
 const HOVER_OPEN_DELAY_MS = 300
 const HOVER_CLOSE_DELAY_MS = 120
@@ -262,6 +273,15 @@ export function PostMiniCard({
           <QueueStatusBadge status={post.status} />
           {post.scheduledAt && (
             <span className="text-xs text-muted-foreground">{fmt.time(post.scheduledAt)}</span>
+          )}
+          {/* CL-149 (TASK-7 ST001) — badge amarelo para posts stuck > 48h */}
+          {isStuckPost(post) && (
+            <span
+              className="rounded bg-yellow-100 px-1.5 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300"
+              title="Agendado há mais de 48h sem publicação"
+            >
+              +48h
+            </span>
           )}
         </div>
       </div>

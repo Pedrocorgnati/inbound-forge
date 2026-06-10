@@ -10,6 +10,12 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireSession, ok, okPaginated, validationError, internalError } from '@/lib/api-auth'
 import { auditLog } from '@/lib/audit'
+import {
+  applyRateLimitHeaders,
+  checkPublicIpRateLimit,
+  extractClientIp,
+  rateLimitExceededResponse,
+} from '@/lib/rate-limit'
 
 const CreateSchema = z.object({
   targetUrl: z.string().url().max(2048),
@@ -36,14 +42,18 @@ function generateShortId(): string {
 }
 
 export async function POST(request: NextRequest) {
+  const correlationId = crypto.randomUUID()
+  const rateLimit = await checkPublicIpRateLimit(extractClientIp(request.headers), 'api-v1-shortlinks')
+  if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit, correlationId)
+
   const { user, response } = await requireSession()
-  if (response) return response
+  if (response) return applyRateLimitHeaders(response, rateLimit, correlationId)
 
   let body: unknown
-  try { body = await request.json() } catch { return validationError(new Error('Body invalido')) }
+  try { body = await request.json() } catch { return applyRateLimitHeaders(validationError(new Error('Body invalido')), rateLimit, correlationId) }
 
   const parsed = CreateSchema.safeParse(body)
-  if (!parsed.success) return validationError(parsed.error)
+  if (!parsed.success) return applyRateLimitHeaders(validationError(parsed.error), rateLimit, correlationId)
 
   try {
     // Gera shortId unico (retry ate 5x em caso de colisao)
@@ -53,7 +63,7 @@ export async function POST(request: NextRequest) {
       const existing = await prisma.shortlink.findUnique({ where: { shortId: candidate } })
       if (!existing) { shortId = candidate; break }
     }
-    if (!shortId) return internalError()
+    if (!shortId) return applyRateLimitHeaders(internalError(), rateLimit, correlationId)
 
     const shortlink = await prisma.shortlink.create({
       data: {
@@ -74,18 +84,22 @@ export async function POST(request: NextRequest) {
       entityType: 'Shortlink',
       entityId: shortlink.id,
       userId: user!.id,
-      metadata: { shortId, channel: parsed.data.channel, postId: parsed.data.postId },
+      metadata: { shortId, channel: parsed.data.channel, postId: parsed.data.postId, correlationId },
     })
 
-    return ok({ ...shortlink, url: `${BASE_URL}/go/${shortId}` }, 201)
+    return applyRateLimitHeaders(ok({ ...shortlink, url: `${BASE_URL}/go/${shortId}` }, 201), rateLimit, correlationId)
   } catch {
-    return internalError()
+    return applyRateLimitHeaders(internalError(), rateLimit, correlationId)
   }
 }
 
 export async function GET(request: NextRequest) {
+  const correlationId = crypto.randomUUID()
+  const rateLimit = await checkPublicIpRateLimit(extractClientIp(request.headers), 'api-v1-shortlinks')
+  if (!rateLimit.allowed) return rateLimitExceededResponse(rateLimit, correlationId)
+
   const { response } = await requireSession()
-  if (response) return response
+  if (response) return applyRateLimitHeaders(response, rateLimit, correlationId)
 
   const { searchParams } = new URL(request.url)
   const parsed = ListSchema.safeParse({
@@ -93,7 +107,7 @@ export async function GET(request: NextRequest) {
     limit: searchParams.get('limit'),
     channel: searchParams.get('channel') ?? undefined,
   })
-  if (!parsed.success) return validationError(parsed.error)
+  if (!parsed.success) return applyRateLimitHeaders(validationError(parsed.error), rateLimit, correlationId)
 
   const { page, limit, channel } = parsed.data
   const where = channel ? { channel } : {}
@@ -109,11 +123,15 @@ export async function GET(request: NextRequest) {
       prisma.shortlink.count({ where }),
     ])
 
-    return okPaginated(
-      data.map((s) => ({ ...s, url: `${BASE_URL}/go/${s.shortId}` })),
-      { page, limit, total },
+    return applyRateLimitHeaders(
+      okPaginated(
+        data.map((s) => ({ ...s, url: `${BASE_URL}/go/${s.shortId}` })),
+        { page, limit, total },
+      ),
+      rateLimit,
+      correlationId,
     )
   } catch {
-    return internalError()
+    return applyRateLimitHeaders(internalError(), rateLimit, correlationId)
   }
 }

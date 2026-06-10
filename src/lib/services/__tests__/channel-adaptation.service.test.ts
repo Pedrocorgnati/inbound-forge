@@ -33,7 +33,7 @@ vi.mock('@/lib/prompts/channel-adaptation.prompt', () => ({
 }))
 
 vi.mock('@/lib/constants/content.constants', () => ({
-  CLAUDE_MODELS: { CHANNEL_ADAPTATION: 'claude-haiku-4-5-20251001' },
+  CLAUDE_MODELS: { CHANNEL_ADAPTATION: 'claude-sonnet-4-5-20251001' },
   CLAUDE_TIMEOUTS: { CHANNEL_ADAPTATION_MS: 15_000 },
   CHANNEL_CHAR_LIMITS: {
     LINKEDIN: 3000,

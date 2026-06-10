@@ -51,7 +51,7 @@ export function SourceForm({ source, onClose, onSuccess }: SourceFormProps) {
   async function onSubmit(values: SourceFormValues) {
     setIsSubmitting(true)
     try {
-      const url = isEdit ? `/api/sources/${source!.id}` : '/api/sources'
+      const url = isEdit ? `/api/v1/sources/${source!.id}` : '/api/sources'
       const method = isEdit ? 'PATCH' : 'POST'
 
       const res = await fetch(url, {

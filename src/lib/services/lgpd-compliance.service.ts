@@ -18,33 +18,34 @@ export interface ScrapingAuditReportDto {
 }
 
 export async function getScrapingAuditReport(
+  operatorId: string,
   startDate: Date,
   endDate: Date
 ): Promise<ScrapingAuditReportDto> {
-  const [lgpdLogs, textStats] = await Promise.all([
-    // Logs LGPD_SCRAPING no período
-    prisma.alertLog.findMany({
-      where: {
-        type: 'LGPD_SCRAPING',
-        createdAt: { gte: startDate, lte: endDate },
-      },
-      select: { id: true, createdAt: true },
+  // loop 05-27 TAREFA-013 (fix REPROVADO multi-tenant): TODAS as metricas sao
+  // escopadas por operador. A versao anterior derivava totalBatches de AlertLog
+  // (log GLOBAL de sistema, sem operatorId) e agregava ScrapedText sem filtro,
+  // vazando dados de todos os operadores. Agora:
+  //  - totalBatches = ScrapingAuditLog do operador (join source.operatorId) — cada
+  //    log representa um batch/run de scraping, e o modelo tem o vinculo de tenant;
+  //  - ScrapedText e filtrado por operatorId (campo nativo do modelo).
+  const period = { createdAt: { gte: startDate, lte: endDate } }
+
+  const [totalBatches, textStats] = await Promise.all([
+    prisma.scrapingAuditLog.count({
+      where: { source: { operatorId }, ...period },
     }),
-    // Estatísticas de ScrapedTexts
     prisma.scrapedText.aggregate({
-      where: {
-        createdAt: { gte: startDate, lte: endDate },
-      },
+      where: { operatorId, ...period },
       _count: { _all: true },
     }),
   ])
-
-  const totalBatches = lgpdLogs.length
 
   const totalTextos = textStats._count._all
 
   const textosComPII = await prisma.scrapedText.count({
     where: {
+      operatorId,
       createdAt: { gte: startDate, lte: endDate },
       piiRemoved: true,
     },
@@ -52,6 +53,7 @@ export async function getScrapingAuditReport(
 
   const rawTextLimpos = await prisma.scrapedText.count({
     where: {
+      operatorId,
       createdAt: { gte: startDate, lte: endDate },
       rawText: null,
       isProcessed: true,

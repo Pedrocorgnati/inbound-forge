@@ -183,6 +183,63 @@ export function buildBlogUrl(config: BlogUTMConfig): string {
 }
 
 /**
+ * withUtm — helper universal de UTM tagging para qualquer URL outbound.
+ * TASK-13 ST003 (CL-174)
+ *
+ * - Idempotente: não retagueia URLs que já possuem utm_source
+ * - Ignora URLs internas (mesmo host da app)
+ * - Failsafe: URL inválida retorna original sem throw
+ */
+export interface UtmParams {
+  source: string
+  medium: string
+  campaign: string
+  content?: string
+  term?: string
+}
+
+export type UtmChannel = 'email' | 'blog' | 'instagram' | 'whatsapp' | 'linkedin' | 'seo'
+
+const UTM_PRESETS: Record<UtmChannel, Omit<UtmParams, 'campaign'>> = {
+  email: { source: 'email', medium: 'email' },
+  blog: { source: 'inbound-forge', medium: 'organic' },
+  instagram: { source: 'instagram', medium: 'social' },
+  whatsapp: { source: 'whatsapp', medium: 'social' },
+  linkedin: { source: 'linkedin', medium: 'social' },
+  seo: { source: 'google', medium: 'organic' },
+}
+
+/** Retorna preset UTM por canal (sem campaign — chamador deve fornecer). */
+export function getDefaultUtm(channel: UtmChannel): Omit<UtmParams, 'campaign'> {
+  return UTM_PRESETS[channel]
+}
+
+/** Tagueia URL outbound com parâmetros UTM. Idempotente e failsafe. */
+export function withUtm(rawUrl: string, params: UtmParams): string {
+  let url: URL
+  try {
+    url = new URL(rawUrl)
+  } catch {
+    return rawUrl
+  }
+
+  const appHost = process.env.NEXT_PUBLIC_APP_URL
+    ? new URL(process.env.NEXT_PUBLIC_APP_URL).host
+    : null
+  if (appHost && url.host === appHost) return rawUrl
+
+  if (url.searchParams.has('utm_source')) return rawUrl
+
+  url.searchParams.set('utm_source', params.source)
+  url.searchParams.set('utm_medium', params.medium)
+  url.searchParams.set('utm_campaign', params.campaign)
+  if (params.content) url.searchParams.set('utm_content', params.content)
+  if (params.term) url.searchParams.set('utm_term', params.term)
+
+  return url.toString()
+}
+
+/**
  * Cria um shortlink rastreavel para WhatsApp chamando POST /api/v1/shortlinks.
  *
  * Intake-Review TASK-1 (CL-275): substitui o uso direto de wa.me em CTAs por

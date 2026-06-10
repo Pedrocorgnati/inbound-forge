@@ -47,7 +47,7 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
   // Autosave (edit mode only)
   const { autosaveStatus, lastSaved, triggerSave } = useKnowledgeAutosave({
     form,
-    endpoint: `/api/knowledge/cases/${initialData?.id}`,
+    endpoint: `/api/v1/knowledge/cases/${initialData?.id}`,
     getPayload: (data) => ({ ...data }),
     entityId: initialData?.id,
     mode,
@@ -112,7 +112,7 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
           isDraft: asDraft,
         }
 
-        const res = await fetch('/api/knowledge/cases', {
+        const res = await fetch('/api/v1/knowledge/cases', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -135,7 +135,7 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
           isDraft: asDraft,
         }
 
-        const res = await fetch(`/api/knowledge/cases/${initialData!.id}`, {
+        const res = await fetch(`/api/v1/knowledge/cases/${initialData!.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

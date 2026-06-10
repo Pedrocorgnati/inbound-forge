@@ -1,6 +1,9 @@
 // Inbound Forge — Flux 2 Schnell Client via fal-ai
-// Rastreabilidade: CL-050, TASK-2 ST001
+// Rastreabilidade: CL-050, TASK-2 ST001, CL-108, TASK-5 ST002
 // Custo: $0.015/imagem (ver IMAGE_PROVIDERS['flux'])
+
+import { checkQuota, QuotaExceededError } from '@/lib/cost/quota-guard'
+export { QuotaExceededError } from '@/lib/cost/quota-guard'
 
 const FAL_API_URL = 'https://fal.run/fal-ai/flux/schnell'
 const FLUX_TIMEOUT_MS = 30_000
@@ -45,12 +48,18 @@ export interface FluxGenerateResponse {
 /**
  * Gera imagem de background via Flux 2 Schnell (fal-ai).
  * Custo fixo: $0.015/imagem.
+ * Throws QuotaExceededError se quota mensal atingida (TASK-5 ST002).
  * Throws em caso de timeout, erro de rede, ou resposta nao-OK.
  */
 export async function generateWithFlux(
   apiKey: string,
   request: FluxGenerateRequest
 ): Promise<FluxGenerateResponse> {
+  const quota = await checkQuota('flux')
+  if (!quota.allowed) {
+    throw new QuotaExceededError('flux', quota.remaining)
+  }
+
   const payload = {
     prompt: request.prompt,
     image_size:

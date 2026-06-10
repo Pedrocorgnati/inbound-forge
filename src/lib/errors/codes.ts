@@ -29,6 +29,12 @@ export const ERROR_CODES = {
   'CSRF_TOKEN_MISSING': 'Token CSRF ausente',
   'CSRF_TOKEN_INVALID': 'Token CSRF invalido ou expirado',
   'SESSION_REQUIRED': 'Sessao requerida',
+  // Idempotência (TAREFA-019)
+  'ERR-060': 'Idempotency-Key ausente no cabeçalho',
+  'ERR-061': 'Idempotency-Key inválido (esperado UUID v7)',
+  'ERR-062': 'Conflito de idempotência — corpo divergente para a mesma chave',
+  'ERR-063': 'Requisição idempotente ainda em processamento',
+  'ERR-064': 'Serviço de idempotência indisponível',
   // Servidor
   'ERR-500': 'Erro interno do servidor',
   'ERR-503': 'Serviço temporariamente indisponível',

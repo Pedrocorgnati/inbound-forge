@@ -1,54 +1,21 @@
 import { NextRequest } from 'next/server'
-import { requireSession, ok, okPaginated, validationError, internalError } from '@/lib/api-auth'
-import { ObjectionService } from '@/lib/services/objection.service'
-import { CreateObjectionDto, ListObjectionsQueryDto } from '@/lib/dtos/objection.dto'
+import { GET as v1GET, POST as v1POST } from '@/app/api/v1/knowledge/objections/route'
+import { proxyToV1, legacySuccessorPath } from '@/lib/deprecation-shim'
 
 /**
- * GET /api/knowledge/objections
- * Lista objeções com filtro por tipo e paginação.
+ * @deprecated Use /api/v1/knowledge/objections.
+ * Rota legada deprecada (TASK-031) — proxy in-process para o twin v1 reconciliado.
+ * Sunset: 2026-06-30. NAO adicionar logica nova aqui — editar o handler v1.
  */
-export async function GET(request: NextRequest) {
-  const { response } = await requireSession()
-  if (response) return response
+const ROUTE = '/api/knowledge/objections'
+const TARGET = '/api/v1/knowledge/objections'
 
-  const searchParams = Object.fromEntries(request.nextUrl.searchParams.entries())
-  const parsed = ListObjectionsQueryDto.safeParse(searchParams)
-  if (!parsed.success) return validationError(parsed.error.message)
-
-  try {
-    const result = await ObjectionService.findAll(parsed.data)
-    return okPaginated(result.data, {
-      page: result.page,
-      limit: result.limit,
-      total: result.total,
-    })
-  } catch {
-    return internalError()
-  }
+export function GET(request: NextRequest) {
+  const successor = legacySuccessorPath(new URL(request.url).pathname)
+  return proxyToV1(() => v1GET(request), successor, { route: ROUTE, target: TARGET })
 }
 
-/**
- * POST /api/knowledge/objections
- * Cria objeção. Requer content (min 5) e type válido.
- */
-export async function POST(request: NextRequest) {
-  const { response } = await requireSession()
-  if (response) return response
-
-  let body: unknown
-  try {
-    body = await request.json()
-  } catch {
-    return validationError('Body inválido ou ausente')
-  }
-
-  const parsed = CreateObjectionDto.safeParse(body)
-  if (!parsed.success) return validationError(parsed.error.flatten())
-
-  try {
-    const created = await ObjectionService.create(parsed.data)
-    return ok(created, 201)
-  } catch {
-    return internalError()
-  }
+export function POST(request: NextRequest) {
+  const successor = legacySuccessorPath(new URL(request.url).pathname)
+  return proxyToV1(() => v1POST(request), successor, { route: ROUTE, target: TARGET })
 }

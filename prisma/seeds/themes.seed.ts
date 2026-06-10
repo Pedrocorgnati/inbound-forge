@@ -65,16 +65,14 @@ export async function seedThemes(prisma: PrismaClient) {
   console.log('🎯 [DEV] Seeding temas complementares — contexto SystemForge...')
 
   for (const themeData of DEV_THEMES) {
-    await prisma.theme.upsert({
-      where: { id: themeData.title },
-      update: themeData,
-      create: themeData,
-    }).catch(async () => {
-      const existing = await prisma.theme.findFirst({ where: { title: themeData.title } })
-      if (!existing) {
-        await prisma.theme.create({ data: themeData })
-      }
-    })
+    // TASK-16 ST001 (CL-313): idempotente via findFirst — title como natural key
+    const existing = await prisma.theme.findFirst({ where: { title: themeData.title } })
+    if (existing) {
+      console.log(`    [exists] Theme: ${themeData.title.slice(0, 50)}...`)
+    } else {
+      await prisma.theme.create({ data: themeData })
+      console.log(`    [created] Theme: ${themeData.title.slice(0, 50)}...`)
+    }
   }
 
   const count = await prisma.theme.count()

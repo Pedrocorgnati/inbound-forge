@@ -16,6 +16,7 @@ import { prisma } from '@/lib/prisma'
 export const AUDIT_ACTIONS = {
   LGPD_PURGE:          'lgpd.purge',
   ASSET_UPLOAD:        'asset.upload',
+  ASSET_UPDATE:        'asset.update',     // CL-317 (TASK-7 ST003)
   ASSET_DELETE:        'asset.delete',
   // Intake-Review TASK-4 ST005 (CL-TH-059): requeue manual de DLQ
   WORKER_JOB_REQUEUE:  'worker_job.requeue',
@@ -24,6 +25,12 @@ export const AUDIT_ACTIONS = {
   // Intake-Review TASK-6 ST001/ST002 (CL-AU-017/018): alteracao self-service
   PASSWORD_CHANGED:    'auth.password_changed',
   EMAIL_CHANGE_REQUESTED: 'auth.email_change_requested',
+  // TASK-8 ST004 (CL-261): logout completo
+  USER_LOGOUT:         'auth.logout',
+  // loop 05-27 TAREFA-028 (P3): MFA/TOTP opt-in
+  MFA_ENABLED:         'auth.mfa_enabled',
+  MFA_DISABLED:        'auth.mfa_disabled',
+  MFA_RECOVERY_USED:   'auth.mfa_recovery_used',
   // Intake-Review TASK-8 ST001 (CL-TH-018): export CSV de Themes
   THEMES_EXPORT:       'themes.export',
   // Intake-Review TASK-12 (CL-CG-008/009/011/038): DLQ ops
@@ -36,6 +43,8 @@ export const AUDIT_ACTIONS = {
   CONVERSIONS_EXPORT:  'conversions.export',
   USERS_EXPORT:        'users.export',
   AUDIT_LOGS_EXPORT:   'audit_logs.export',
+  SOURCE_PAUSED:       'source.paused',
+  SOURCE_ACTIVATED:    'source.activated',
 } as const
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[keyof typeof AUDIT_ACTIONS] | string

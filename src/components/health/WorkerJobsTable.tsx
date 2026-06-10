@@ -6,7 +6,10 @@
  */
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useLocale } from 'next-intl'
+import { ListChecks } from 'lucide-react'
 import { toast } from 'sonner'
+import { EmptyState } from '@/components/shared/empty-state'
 
 type JobStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'DEAD_LETTER'
 
@@ -47,6 +50,7 @@ function formatDuration(started: string | null, completed: string | null): strin
 }
 
 export function WorkerJobsTable() {
+  const locale = useLocale()
   const [filters, setFilters] = useState<Filters>({ page: 1 })
   const queryClient = useQueryClient()
 
@@ -169,9 +173,13 @@ export function WorkerJobsTable() {
       )}
 
       {data && data.data.length === 0 && !isLoading && (
-        <div className="rounded-md border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          Sem jobs para os filtros selecionados.
-        </div>
+        <EmptyState
+          icon={<ListChecks className="h-12 w-12" />}
+          title="Sem jobs para os filtros selecionados"
+          description="Volte para o painel de saúde para revisar integrações e alertas operacionais."
+          ctaLabel="Abrir saúde do sistema"
+          ctaHref={`/${locale}/health`}
+        />
       )}
 
       {data && data.data.length > 0 && (

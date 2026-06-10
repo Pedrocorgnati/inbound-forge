@@ -40,6 +40,8 @@ export interface ChannelPerformance {
   channel: Channel
   leadsCount: number
   conversionsCount: number
+  engagementCount?: number
+  postsCount?: number
   conversionRate: number
 }
 

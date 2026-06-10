@@ -4,6 +4,9 @@
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useLocale } from 'next-intl'
+import { SearchX } from 'lucide-react'
+import { EmptyState } from '@/components/shared/empty-state'
 import { NicheActionDialog } from './NicheActionDialog'
 
 interface Opp {
@@ -23,6 +26,7 @@ interface NicheOpportunityTableProps {
 }
 
 export function NicheOpportunityTable({ status = 'NEW' }: NicheOpportunityTableProps) {
+  const locale = useLocale()
   const qc = useQueryClient()
   const [action, setAction] = useState<{ opp: Opp; kind: 'approve' | 'discard' } | null>(null)
 
@@ -40,6 +44,18 @@ export function NicheOpportunityTable({ status = 'NEW' }: NicheOpportunityTableP
 
   const rows = data?.data ?? []
 
+  if (rows.length === 0) {
+    return (
+      <EmptyState
+        icon={<SearchX className="h-12 w-12" />}
+        title={`Nenhuma oportunidade ${status.toLowerCase()}`}
+        description="Revise fontes e coletas para alimentar novas oportunidades de nicho."
+        ctaLabel="Revisar fontes"
+        ctaHref={`/${locale}/sources`}
+      />
+    )
+  }
+
   return (
     <>
       <div className="overflow-x-auto rounded-md border border-border" data-testid="niche-opps-table">
@@ -54,13 +70,6 @@ export function NicheOpportunityTable({ status = 'NEW' }: NicheOpportunityTableP
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
-                  Nenhuma oportunidade {status.toLowerCase()}.
-                </td>
-              </tr>
-            )}
             {rows.map((opp) => (
               <tr key={opp.id} className="border-t border-border">
                 <td className="px-3 py-2">{opp.sector}</td>

@@ -27,6 +27,12 @@ export const REDIS_KEYS = {
 
   // Rate limiting
   RATE_LIMIT: (identifier: string) => `rl:${identifier}`,
+
+  // Universal job control (TAREFA-017) — overlay sobre o status persistido no
+  // banco. Owner: /api/v1/jobs/[jobId] + src/lib/jobs/registry.ts.
+  JOB_CANCEL_REQUEST: (jobId: string) => `job:cancel-request:${jobId}`,
+  JOB_CANCELLED: (jobId: string) => `job:cancelled:${jobId}`,
+  JOB_PROGRESS: (jobId: string) => `job:progress:${jobId}`,
 } as const
 
 export type QueueKey =

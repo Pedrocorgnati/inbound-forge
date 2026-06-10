@@ -13,6 +13,7 @@ import { PainForm } from './PainForm'
 import { PainDeleteModal } from './PainDeleteModal'
 import { CasePainLinkModal } from './CasePainLinkModal'
 import { useKnowledgeList } from '@/hooks/useKnowledgeList'
+import { useDebounce } from '@/hooks/useDebounce'
 import { SECTOR_FILTER_OPTIONS } from '@/constants/knowledge'
 import type { PainResponse } from '@/lib/dtos/pain-library.dto'
 
@@ -25,6 +26,10 @@ const PAGE_SIZE = 20
 export function PainList({ locale }: PainListProps) {
   const t = useTranslations()
   const [sectorFilter, setSectorFilter] = useState('')
+  // fix REPROVADO (finding TASK-015): busca textual funcional, debounced, ligada ao
+  // fetch via filters (o input orfao PainSearchInput nunca era importado).
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
 
   const {
     items: pains,
@@ -39,9 +44,9 @@ export function PainList({ locale }: PainListProps) {
     refresh,
     handleDelete,
   } = useKnowledgeList<PainResponse>({
-    endpoint: '/api/knowledge/pains',
+    endpoint: '/api/v1/knowledge/pains',
     pageSize: PAGE_SIZE,
-    filters: { sector: sectorFilter },
+    filters: { sector: sectorFilter, search: debouncedSearch },
   })
 
   // Form modal state
@@ -52,10 +57,10 @@ export function PainList({ locale }: PainListProps) {
   // Link modal state
   const [linkTarget, setLinkTarget] = useState<PainResponse | null>(null)
 
-  // Reset page when filter changes
+  // Reset page when filter/search changes
   useEffect(() => {
     setPage(1)
-  }, [sectorFilter, setPage])
+  }, [sectorFilter, debouncedSearch, setPage])
 
   function openCreateForm() {
     setFormMode('create')
@@ -73,14 +78,25 @@ export function PainList({ locale }: PainListProps) {
     <div data-testid="pain-list" className="space-y-4">
       {/* Header bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Select
-          options={[...SECTOR_FILTER_OPTIONS]}
-          value={sectorFilter}
-          onChange={(e) => setSectorFilter(e.target.value)}
-          aria-label={t('knowledge.painList.filterByCategory')}
-          className="w-full sm:w-56"
-          data-testid="pain-filter-sector"
-        />
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('knowledge.painList.searchPlaceholder')}
+            aria-label={t('knowledge.painList.searchPlaceholder')}
+            data-testid="pain-search"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 sm:w-72"
+          />
+          <Select
+            options={[...SECTOR_FILTER_OPTIONS]}
+            value={sectorFilter}
+            onChange={(e) => setSectorFilter(e.target.value)}
+            aria-label={t('knowledge.painList.filterByCategory')}
+            className="w-full sm:w-56"
+            data-testid="pain-filter-sector"
+          />
+        </div>
 
         <Button
           onClick={openCreateForm}
@@ -164,7 +180,12 @@ export function PainList({ locale }: PainListProps) {
       )}
 
       {/* Pain form modal (create/edit) */}
+      {/* fix REPROVADO (finding TASK-015): key liga o estado interno do form ao ALVO
+          de edicao (id). Sem isso, o useState(initialData) so inicializava no primeiro
+          mount e exibia dados stale ao editar outra entidade. Nao incluir isFormOpen na
+          key: remontar ao fechar cancelaria autosaves pendentes (debounce). */}
       <PainForm
+        key={formTarget?.id ?? 'new'}
         mode={formMode}
         initialData={formTarget}
         isOpen={isFormOpen}

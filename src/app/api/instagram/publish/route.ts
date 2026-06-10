@@ -9,20 +9,18 @@ import { InstagramService } from '@/lib/services/instagram.service'
 import { canPublish, recordPublish, getRetryAfterSeconds } from '@/lib/middleware/instagram-rate-limiter'
 import { isFeatureEnabled, FeatureFlags } from '@/lib/feature-flags'
 import { logPublishAttempt } from '@/lib/audit/publish-audit'
+import { withIdempotency } from '@/lib/idempotency/middleware'
 import { z } from 'zod'
 
 const publishSchema = z.object({
   postId: z.string().min(1),
 })
 
-export async function POST(request: NextRequest) {
-  // Aceita auth do worker (Bearer WORKER_AUTH_TOKEN) OU sessao do operador.
-  // Worker chama backend-to-backend; operador chama via UI (cookie).
-  if (!requireWorkerToken(request)) {
-    const { response } = await requireSession()
-    if (response) return response
-  }
-
+// loop 05-27 TAREFA-008 (fix REPROVADO): toda a logica de publicacao vive dentro
+// deste handler para que `withIdempotency` consiga calcular o fingerprint do corpo
+// ANTES de o stream ser consumido. Erros (>=300) liberam a chave para retry; apenas
+// o 201 e cacheado, garantindo replay-safe (mesma Idempotency-Key nao republica).
+async function doPublish(request: NextRequest): Promise<NextResponse> {
   // RESOLVED: G007 — safeParse para retornar 422 em vez de 500 para input inválido
   let body: unknown
   try { body = await request.json() } catch { return validationError(new Error('Body inválido')) }
@@ -32,8 +30,6 @@ export async function POST(request: NextRequest) {
   const { postId } = parsed.data
 
   // TASK-12 ST001 (G-002): kill-switch INSTAGRAM_PUBLISHING_LIVE.
-  // Quando flag desligada (PostHog ou env FEATURE_FLAGS_FORCE_OFF), bloqueia
-  // toda publicacao manual em < 60s e registra audit log.
   const liveEnabled = await isFeatureEnabled(FeatureFlags.INSTAGRAM_PUBLISHING_LIVE)
   if (!liveEnabled) {
     await logPublishAttempt({
@@ -81,6 +77,28 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         )
       }
+      // fix REPROVADO (server-validation): post de canal != INSTAGRAM nao publica.
+      if (err.code === 'POST_051') {
+        return NextResponse.json(
+          { success: false, error: { code: 'POST_051', message: err.message } },
+          { status: 400 }
+        )
+      }
+      // fix REPROVADO (idempotency): post em status terminal (PUBLISHED) nao
+      // republica — replay seguro mesmo sem header.
+      if (err.code === 'POST_052') {
+        return NextResponse.json(
+          { success: false, error: { code: 'POST_052', message: err.message } },
+          { status: 409 }
+        )
+      }
+      // fix REPROVADO (server-validation): limites de plataforma (caption/hashtags).
+      if (err.code === 'POST_053') {
+        return NextResponse.json(
+          { success: false, error: { code: 'POST_053', message: err.message } },
+          { status: 422 }
+        )
+      }
       if (err.code === 'SYS_002') {
         return NextResponse.json(
           { success: false, error: { code: 'SYS_002', message: err.message } },
@@ -102,4 +120,26 @@ export async function POST(request: NextRequest) {
     }
     return internalError()
   }
+}
+
+export async function POST(request: NextRequest) {
+  // Aceita auth do worker (Bearer WORKER_AUTH_TOKEN) OU sessao do operador.
+  // Worker chama backend-to-backend; operador chama via UI (cookie).
+  const isWorker = requireWorkerToken(request)
+  let userId = 'worker'
+  if (!isWorker) {
+    const { user, response } = await requireSession()
+    if (response) return response
+    userId = user!.id
+  }
+
+  // fix REPROVADO (idempotency): o backend agora HONRA o header Idempotency-Key nas
+  // chamadas do operador (UI) — `withIdempotency` exige UUID v7, dedupa replays na
+  // janela de 24h e responde Idempotent-Replayed. O caminho worker (backend-to-backend,
+  // sem header) permanece protegido pelo lock distribuido + guarda de status terminal
+  // dentro do InstagramService (republicacao de PUBLISHED lanca POST_052).
+  if (isWorker) {
+    return doPublish(request)
+  }
+  return withIdempotency(request, { userId, handler: () => doPublish(request) })
 }

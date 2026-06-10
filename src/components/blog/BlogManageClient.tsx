@@ -180,6 +180,12 @@ export function BlogManageClient({ locale }: BlogManageClientProps) {
             ) : !data || data.items.length === 0 ? (
               <div className="rounded-lg border border-border p-8 text-center">
                 <p className="text-muted-foreground">{t('empty')}</p>
+                <Button asChild className="mt-4">
+                  <Link href={`/${locale}/blog-manage/new`}>
+                    <Plus className="h-4 w-4" aria-hidden />
+                    {t('new')}
+                  </Link>
+                </Button>
               </div>
             ) : (
               <div className="overflow-x-auto">

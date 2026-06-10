@@ -1,6 +1,9 @@
 // Inbound Forge — Ideogram 2.0 API Client
 // A-007: timeout explícito de 60s via AbortSignal
-// Rastreabilidade: INT-058, FEAT-creative-generation-002
+// Rastreabilidade: INT-058, FEAT-creative-generation-002, CL-108, TASK-5 ST002
+
+import { checkQuota, QuotaExceededError } from '@/lib/cost/quota-guard'
+export { QuotaExceededError } from '@/lib/cost/quota-guard'
 
 const IDEOGRAM_API_URL = 'https://api.ideogram.ai/generate'
 const IDEOGRAM_TIMEOUT_MS = 60_000
@@ -29,12 +32,18 @@ export interface IdeogramGenerateResponse {
 
 /**
  * Gera imagem via Ideogram 2.0 com timeout explícito de 60s.
+ * Throws QuotaExceededError se quota mensal atingida (TASK-5 ST002).
  * Throws em caso de timeout, erro de rede, ou resposta não-OK.
  */
 export async function generateWithIdeogram(
   apiKey: string,
   payload: IdeogramGenerateRequest
 ): Promise<IdeogramGenerateResponse> {
+  const quota = await checkQuota('ideogram')
+  if (!quota.allowed) {
+    throw new QuotaExceededError('ideogram', quota.remaining)
+  }
+
   const response = await fetch(IDEOGRAM_API_URL, {
     method: 'POST',
     headers: {

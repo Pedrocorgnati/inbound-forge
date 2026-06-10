@@ -7,15 +7,13 @@ import { CaseList } from './CaseList'
 import { PainList } from './PainList'
 import { PatternList } from './PatternList'
 import { ObjectionList } from './ObjectionList'
-import type { KnowledgeFilters } from './KnowledgeSearchBar'
 
 interface KnowledgeTabsProps {
   activeTab: string
   locale?: string
-  filters?: KnowledgeFilters
 }
 
-export function KnowledgeTabs({ activeTab, locale = 'pt', filters: _filters }: KnowledgeTabsProps) {
+export function KnowledgeTabs({ activeTab, locale = 'pt' }: KnowledgeTabsProps) {
   const router = useRouter()
   const pathname = usePathname()
   const t = useTranslations('knowledge.tabs')

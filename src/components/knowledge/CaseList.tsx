@@ -43,7 +43,7 @@ export function CaseList({ locale }: CaseListProps) {
     refresh,
     handleDelete,
   } = useKnowledgeList<CaseResponse>({
-    endpoint: '/api/knowledge/cases',
+    endpoint: '/api/v1/knowledge/cases',
     pageSize: PAGE_SIZE,
     filters: { status: statusFilter },
   })

@@ -10,6 +10,7 @@ import { toast } from '@/components/ui/toast'
 import { ObjectionCard } from './ObjectionCard'
 import { ObjectionForm } from './ObjectionForm'
 import { ObjectionDeleteModal } from './ObjectionDeleteModal'
+import { useDebounce } from '@/hooks/useDebounce'
 import type { ObjectionResponse } from '@/lib/dtos/objection.dto'
 
 interface ObjectionListProps {
@@ -24,6 +25,9 @@ export function ObjectionList({ locale }: ObjectionListProps) {
   const [objections, setObjections] = useState<ObjectionResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // fix REPROVADO (finding TASK-015): busca textual funcional (antes inexistente).
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
 
   const TYPE_SECTIONS: { type: ObjectionType; label: string }[] = [
     { type: 'PRICE', label: t('price') },
@@ -46,7 +50,9 @@ export function ObjectionList({ locale }: ObjectionListProps) {
     setError(null)
 
     try {
-      const res = await fetch('/api/knowledge/objections?limit=100')
+      const params = new URLSearchParams({ limit: '100' })
+      if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
+      const res = await fetch(`/api/v1/knowledge/objections?${params}`)
       if (!res.ok) throw new Error(t('loadError'))
 
       const json = await res.json()
@@ -56,7 +62,7 @@ export function ObjectionList({ locale }: ObjectionListProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [t])
+  }, [t, debouncedSearch])
 
   useEffect(() => {
     fetchObjections()
@@ -90,7 +96,7 @@ export function ObjectionList({ locale }: ObjectionListProps) {
     setIsDeleting(true)
 
     try {
-      const res = await fetch(`/api/knowledge/objections/${removed.id}`, {
+      const res = await fetch(`/api/v1/knowledge/objections/${removed.id}`, {
         method: 'DELETE',
       })
 
@@ -115,7 +121,16 @@ export function ObjectionList({ locale }: ObjectionListProps) {
   return (
     <div data-testid="objection-list" className="space-y-6">
       {/* Header bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('searchPlaceholder')}
+          aria-label={t('searchPlaceholder')}
+          data-testid="objection-search"
+          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 sm:w-72"
+        />
         <p className="text-sm text-muted-foreground">
           {!isLoading && !error && t('count', { count: objections.length })}
         </p>
@@ -194,7 +209,11 @@ export function ObjectionList({ locale }: ObjectionListProps) {
       )}
 
       {/* Form modal */}
+      {/* fix REPROVADO (finding TASK-015): key por ID do alvo remonta o form ao trocar
+          de entidade, eliminando o estado stale. Sem formOpen na key para nao cancelar
+          autosave pendente ao fechar. */}
       <ObjectionForm
+        key={editTarget?.id ?? 'new'}
         mode={editTarget ? 'edit' : 'create'}
         initialData={editTarget}
         isOpen={formOpen}

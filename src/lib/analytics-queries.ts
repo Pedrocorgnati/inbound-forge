@@ -4,6 +4,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { ConversionType } from '@/types/enums'
+import { Channel } from '@/types/enums'
 import { getCachedAnalytics } from '@/lib/analytics-cache'
 import { ANALYTICS_CACHE_TTL } from '@/constants/analytics-constants'
 import type {
@@ -238,43 +239,98 @@ export async function getThemeRanking(
  */
 export async function getChannelPerformance(
   period: unknown,
-  userId: string
+  userId: string,
+  options: { includeEmptyCoreChannels?: boolean } = {}
 ): Promise<ChannelPerformance[]> {
   const validPeriod = validatePeriod(period)
   const from = periodStartDate(validPeriod)
-  const cacheKey = `analytics:channel:${validPeriod}:${userId}`
+  const cacheKey = `analytics:channel:v2:${validPeriod}:${options.includeEmptyCoreChannels ? 'core' : 'active'}:${userId}`
 
   return getCachedAnalytics(cacheKey, ANALYTICS_CACHE_TTL.channelPerformance, async () => {
-    // MS13-B005: Single query elimina N+1. Carrega leads do período com seus conversionEvents
-    // em uma única roundtrip e agrega em memória.
-    const leadsWithEvents = await prisma.lead.findMany({
-      where: { channel: { not: null }, createdAt: { gte: from } },
-      select: {
-        channel: true,
-        conversionEvents: {
-          where: { occurredAt: { gte: from } },
-          select: { id: true },
+    const [leadsWithEvents, postsWithEngagement] = await Promise.all([
+      // MS13-B005: Single query elimina N+1. Carrega leads do período com seus conversionEvents.
+      prisma.lead.findMany({
+        where: { channel: { not: null }, createdAt: { gte: from } },
+        select: {
+          channel: true,
+          conversionEvents: {
+            where: { occurredAt: { gte: from } },
+            select: { id: true },
+          },
         },
-      },
-    })
+      }),
+      prisma.post.findMany({
+        where: { publishedAt: { gte: from } },
+        select: {
+          channel: true,
+          utmLink: { select: { clicks: true } },
+        },
+      }),
+    ])
 
-    const channelMap = new Map<string, { leadsCount: number; conversionsCount: number }>()
+    const coreChannels: Channel[] = [Channel.INSTAGRAM, Channel.LINKEDIN, Channel.BLOG]
+    const channelMap = new Map<string, {
+      leadsCount: number
+      conversionsCount: number
+      engagementCount: number
+      postsCount: number
+    }>()
+
+    if (options.includeEmptyCoreChannels) {
+      for (const channel of coreChannels) {
+        channelMap.set(channel, {
+          leadsCount: 0,
+          conversionsCount: 0,
+          engagementCount: 0,
+          postsCount: 0,
+        })
+      }
+    }
+
     for (const lead of leadsWithEvents) {
       if (!lead.channel) continue
-      const cur = channelMap.get(lead.channel) ?? { leadsCount: 0, conversionsCount: 0 }
+      const cur = channelMap.get(lead.channel) ?? {
+        leadsCount: 0,
+        conversionsCount: 0,
+        engagementCount: 0,
+        postsCount: 0,
+      }
       cur.leadsCount += 1
       cur.conversionsCount += lead.conversionEvents.length
       channelMap.set(lead.channel, cur)
     }
 
-    const results: ChannelPerformance[] = Array.from(channelMap.entries()).map(([channel, agg]) => ({
-      channel: channel as ChannelPerformance['channel'],
-      leadsCount: agg.leadsCount,
-      conversionsCount: agg.conversionsCount,
-      conversionRate: agg.leadsCount > 0
-        ? Math.round((agg.conversionsCount / agg.leadsCount) * 100)
-        : 0,
-    }))
+    for (const post of postsWithEngagement) {
+      const cur = channelMap.get(post.channel) ?? {
+        leadsCount: 0,
+        conversionsCount: 0,
+        engagementCount: 0,
+        postsCount: 0,
+      }
+      cur.postsCount += 1
+      cur.engagementCount += post.utmLink?.clicks ?? 0
+      channelMap.set(post.channel, cur)
+    }
+
+    const rows = Array.from(channelMap.entries())
+    const filteredRows = options.includeEmptyCoreChannels
+      ? rows.filter(([channel]) => coreChannels.includes(channel as Channel))
+      : rows.filter(([, agg]) =>
+          agg.leadsCount > 0 || agg.conversionsCount > 0 || agg.engagementCount > 0 || agg.postsCount > 0
+        )
+
+    const results: ChannelPerformance[] = filteredRows
+      .map(([channel, agg]) => ({
+        channel: channel as ChannelPerformance['channel'],
+        leadsCount: agg.leadsCount,
+        conversionsCount: agg.conversionsCount,
+        engagementCount: agg.engagementCount,
+        postsCount: agg.postsCount,
+        conversionRate: agg.leadsCount > 0
+          ? Math.round((agg.conversionsCount / agg.leadsCount) * 100)
+          : 0,
+      }))
+      .sort((a, b) => b.conversionRate - a.conversionRate || b.engagementCount - a.engagementCount)
 
     return results
   })

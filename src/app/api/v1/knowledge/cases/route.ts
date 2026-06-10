@@ -1,56 +1,42 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { requireSession, ok, okPaginated, validationError, internalError } from '@/lib/api-auth'
-import { CreateCaseSchema } from '@/schemas/knowledge.schema'
-import { KnowledgeStatus } from '@/constants/status'
+import { CaseLibraryService } from '@/lib/services/case-library.service'
+import { CreateCaseDto, ListCasesQueryDto } from '@/lib/dtos/case-library.dto'
 
-// GET /api/v1/knowledge/cases
+/**
+ * Contrato canonico /api/v1/knowledge/cases (TASK-031).
+ * Delega ao CaseLibraryService (mesma logica do legacy), garantindo paridade.
+ */
 export async function GET(request: NextRequest) {
   const { response } = await requireSession()
   if (response) return response
 
+  const searchParams = Object.fromEntries(request.nextUrl.searchParams.entries())
+  const parsed = ListCasesQueryDto.safeParse(searchParams)
+  if (!parsed.success) return validationError(parsed.error.message)
+  if (parsed.data.limit > 100) return validationError('limit não pode exceder 100')
+
   try {
-    const { searchParams } = new URL(request.url)
-    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20')))
-    const status = searchParams.get('status') as KnowledgeStatus | null
-
-    const where = status ? { status } : {}
-
-    const [data, total] = await Promise.all([
-      prisma.caseLibraryEntry.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.caseLibraryEntry.count({ where }),
-    ])
-
-    return okPaginated(data, { page, limit, total })
+    const result = await CaseLibraryService.findAll(parsed.data)
+    return okPaginated(result.data, { page: result.page, limit: result.limit, total: result.total })
   } catch {
     return internalError()
   }
 }
 
-// POST /api/v1/knowledge/cases
 export async function POST(request: NextRequest) {
   const { response } = await requireSession()
   if (response) return response
 
   let body: unknown
-  try {
-    body = await request.json()
-  } catch {
-    return validationError(new Error('Body inválido'))
-  }
+  try { body = await request.json() } catch { return validationError('Body inválido ou ausente') }
 
-  const parsed = CreateCaseSchema.safeParse(body)
-  if (!parsed.success) return validationError(parsed.error)
+  const parsed = CreateCaseDto.safeParse(body)
+  if (!parsed.success) return validationError(parsed.error.flatten())
 
   try {
-    const entry = await prisma.caseLibraryEntry.create({ data: parsed.data })
-    return ok(entry, 201)
+    const created = await CaseLibraryService.create(parsed.data)
+    return ok(created, 201)
   } catch {
     return internalError()
   }

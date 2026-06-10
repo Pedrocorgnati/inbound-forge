@@ -64,6 +64,83 @@ export async function calculateFirstTouchAttribution(leadId: string): Promise<At
   }
 }
 
+// ─── Multi-touch attribution (CL-178 / TASK-11 ST002) ────────────────────────
+
+export interface MultiTouchResult {
+  model: 'FIRST_TOUCH' | 'LAST_TOUCH' | 'LINEAR'
+  touchpoints: Array<{
+    postId: string | null
+    source: string
+    campaign: string | null
+    medium: string | null
+    weight: number   // 0-1, soma dos touchpoints = 1.0
+    occurredAt: Date | null
+  }>
+  confidence: number
+}
+
+/**
+ * Calcula atribuição multi-touch para um lead.
+ * Modelos: FIRST_TOUCH, LAST_TOUCH, LINEAR.
+ * Touchpoints = posts com UTMLink publicados antes da conversao mais recente.
+ */
+export async function calculateMultiTouchAttribution(
+  leadId: string,
+  model: 'FIRST_TOUCH' | 'LAST_TOUCH' | 'LINEAR'
+): Promise<MultiTouchResult | null> {
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { id: true, firstTouchThemeId: true },
+  })
+  if (!lead) return null
+
+  // Buscar ultima conversao do lead
+  const lastConversion = await prisma.conversionEvent.findFirst({
+    where: { leadId },
+    orderBy: { occurredAt: 'desc' },
+    select: { occurredAt: true },
+  })
+  const cutoff = lastConversion?.occurredAt ?? new Date()
+
+  // Touchpoints = posts do tema com UTMLink antes da conversao
+  const posts = await prisma.post.findMany({
+    where: {
+      contentPiece: { themeId: lead.firstTouchThemeId },
+      publishedAt: { not: null, lt: cutoff },
+      utmLink: { isNot: null },
+    },
+    include: { utmLink: true },
+    orderBy: { publishedAt: 'asc' },
+    take: 20,
+  })
+
+  if (posts.length === 0) return null
+
+  const n = posts.length
+
+  const touchpoints = posts.map((p, i) => {
+    let weight: number
+    if (model === 'FIRST_TOUCH') weight = i === 0 ? 1 : 0
+    else if (model === 'LAST_TOUCH') weight = i === n - 1 ? 1 : 0
+    else weight = 1 / n  // LINEAR
+
+    return {
+      postId: p.id,
+      source: p.utmLink!.source,
+      campaign: p.utmLink!.campaign ?? null,
+      medium: p.utmLink!.medium ?? null,
+      weight,
+      occurredAt: p.publishedAt,
+    }
+  })
+
+  return {
+    model,
+    touchpoints,
+    confidence: ATTRIBUTION_CONFIDENCE.WITH_UTM,
+  }
+}
+
 /**
  * Calcula atribuição assisted-touch para um lead em relação a uma conversão.
  * Retorna posts do mesmo tema com UTMLink publicados antes da conversão.

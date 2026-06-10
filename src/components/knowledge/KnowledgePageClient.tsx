@@ -1,7 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-import { KnowledgeSearchBar, type KnowledgeFilters } from './KnowledgeSearchBar'
 import { KnowledgeTabs } from './knowledge-tabs'
 
 interface KnowledgePageClientProps {
@@ -9,13 +7,15 @@ interface KnowledgePageClientProps {
   locale: string
 }
 
+// fix REPROVADO (finding TASK-015): a barra de busca global era ligada a KnowledgeTabs
+// que DESCARTAVA os filtros (`filters: _filters`), entao nao buscava nada (Zero
+// Silencio). Cada lista (Cases/Pains/Patterns/Objections) agora tem busca textual
+// propria e funcional, tornando a barra global redundante. Removida para evitar um
+// controle morto.
 export function KnowledgePageClient({ activeTab, locale }: KnowledgePageClientProps) {
-  const [filters, setFilters] = useState<KnowledgeFilters>({ search: '', status: '', type: '' })
-
   return (
     <div className="space-y-4">
-      <KnowledgeSearchBar onChange={setFilters} />
-      <KnowledgeTabs activeTab={activeTab} locale={locale} filters={filters} />
+      <KnowledgeTabs activeTab={activeTab} locale={locale} />
     </div>
   )
 }

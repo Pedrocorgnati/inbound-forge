@@ -128,15 +128,18 @@ export function AssetGallery({ filter, onRefresh }: AssetGalleryProps) {
 
   // Empty state
   if (!data || data.items.length === 0) {
+    const hasFilters = Boolean(filter?.fileType || filter?.tag)
     return (
       <EmptyState
         icon={<ImageIcon className="h-12 w-12" />}
         title="Nenhum asset encontrado"
         description={
-          filter?.fileType || filter?.tag
+          hasFilters
             ? 'Tente ajustar os filtros para encontrar seus assets.'
             : 'Faça upload de imagens para começar a construir sua biblioteca de assets.'
         }
+        ctaLabel={hasFilters ? 'Revisar filtros' : 'Enviar primeiro asset'}
+        ctaHref={hasFilters ? '#assets-filters' : '#asset-upload-zone'}
       />
     )
   }

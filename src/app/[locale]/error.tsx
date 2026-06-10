@@ -1,8 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
-import { usePathname } from 'next/navigation'
-import { captureException } from '@/lib/sentry'
+import { RouteErrorState } from '@/components/app-states/RouteErrorState'
 
 interface ErrorProps {
   error: Error & { digest?: string }
@@ -10,28 +8,17 @@ interface ErrorProps {
 }
 
 export default function Error({ error, reset }: ErrorProps) {
-  const pathname = usePathname()
-
-  useEffect(() => {
-    captureException(error, { digest: error.digest, route: pathname, boundary: 'locale-error' })
-  }, [error, pathname])
-
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 text-center">
-      <div className="space-y-4">
-        <p className="text-8xl font-bold text-danger/20">500</p>
-        <h1 className="text-2xl font-bold text-foreground">Algo deu errado</h1>
-        <p className="text-muted-foreground">
-          Ocorreu um erro inesperado. Tente novamente.
-        </p>
-        <button
-          type="button"
-          onClick={reset}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          Tentar novamente
-        </button>
-      </div>
+    <main className="min-h-dvh bg-background px-4 py-12">
+      <RouteErrorState
+        error={error}
+        reset={reset}
+        title="Algo deu errado"
+        description="Nao foi possivel carregar esta pagina. Tente novamente ou fale com suporte informando o correlation_id."
+        boundary="locale-error"
+        backHref="/dashboard"
+        backLabel="Voltar ao painel"
+      />
     </main>
   )
 }

@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { RefreshCw, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { uuidv7 } from '@/lib/utils/uuidv7'
 import { PublishErrorDrawer } from './PublishErrorDrawer'
 
 interface RetryPublishButtonProps {
@@ -32,9 +33,12 @@ export function RetryPublishButton({ postId, status, errorMessage, onSuccess }: 
       // TASK-2/ST003 (CL-135): por padrao reutiliza conteudo Claude ja gerado.
       const url = reuseContent ? `/api/v1/posts/${postId}/republish` : '/api/instagram/publish'
       const body = reuseContent ? undefined : JSON.stringify({ postId })
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      // fix REPROVADO TAREFA-008: o publish direto exige Idempotency-Key (UUID v7).
+      if (!reuseContent) headers['Idempotency-Key'] = uuidv7()
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body,
         credentials: 'include',
       })
