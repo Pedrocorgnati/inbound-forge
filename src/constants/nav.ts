@@ -45,6 +45,12 @@ export const NAV_ITEMS: NavItem[] = [
     badgeKey: null,
   },
   {
+    labelKey: 'forms',
+    href: ROUTES.FORMS,
+    icon: 'FileInput',
+    badgeKey: null,
+  },
+  {
     labelKey: 'subscribers',
     href: ROUTES.SUBSCRIBERS,
     icon: 'UserPlus',

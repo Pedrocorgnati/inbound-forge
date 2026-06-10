@@ -87,7 +87,8 @@
     "assets": "Biblioteca de Recursos",
     "compliance": "Cumplimiento",
     "subscribers": "Suscriptores",
-    "broadcasts": "Email"
+    "broadcasts": "Email",
+    "forms": "Formularios"
   },
   "breadcrumbs": {
     "home": "Inicio",
@@ -811,5 +812,57 @@
     "title": "Te has dado de baja",
     "message": "Ya no enviaremos emails a esta direccion.",
     "error": "No se pudo procesar la baja. El enlace puede no ser valido."
+  },
+  "forms": {
+    "title": "Formularios",
+    "description": "Formularios de captura de leads y suscripcion (newsletter, materiales, demo).",
+    "new": "Nuevo formulario",
+    "loading": "Cargando...",
+    "empty": "Aun no hay formularios. Crea el primero.",
+    "error": "Error al cargar.",
+    "colName": "Nombre",
+    "colSlug": "Slug",
+    "colKind": "Tipo",
+    "colStatus": "Estado",
+    "colSubmissions": "Envios",
+    "publicUrl": "URL publica",
+    "kind": {
+      "NEWSLETTER": "Newsletter",
+      "GATED_DOWNLOAD": "Descarga (gated)",
+      "DEMO_REQUEST": "Solicitar demo",
+      "GENERIC": "Generico"
+    },
+    "status": {
+      "DRAFT": "Borrador",
+      "PUBLISHED": "Publicado",
+      "ARCHIVED": "Archivado"
+    },
+    "builder": {
+      "title": "Nuevo formulario",
+      "slug": "Slug (URL)",
+      "slugHint": "solo a-z, 0-9 y guion — sera /f/<slug>",
+      "name": "Nombre interno",
+      "kind": "Tipo",
+      "status": "Estado",
+      "headline": "Titulo (publico)",
+      "description": "Descripcion (publico)",
+      "ctaLabel": "Texto del boton",
+      "successMessage": "Mensaje de exito",
+      "consentText": "Texto de consentimiento LGPD",
+      "save": "Guardar formulario",
+      "saving": "Guardando...",
+      "error": "No se pudo procesar. Intentalo de nuevo."
+    }
+  },
+  "publicForm": {
+    "emailLabel": "Email",
+    "emailPlaceholder": "voce@email.com",
+    "nameLabel": "Nombre",
+    "companyLabel": "Empresa",
+    "consentDefault": "Acepto recibir emails y la politica de privacidad.",
+    "submit": "Enviar",
+    "submitting": "Enviando...",
+    "success": "Recibido! Revisa tu email para confirmar.",
+    "error": "No se pudo procesar. Intentalo de nuevo."
   }
 }

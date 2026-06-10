@@ -87,7 +87,8 @@
     "assets": "Libreria Risorse",
     "compliance": "Compliance",
     "subscribers": "Iscritti",
-    "broadcasts": "Email"
+    "broadcasts": "Email",
+    "forms": "Moduli"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -811,5 +812,57 @@
     "title": "Sei stato disiscritto",
     "message": "Non invieremo piu email a questo indirizzo.",
     "error": "Impossibile elaborare la disiscrizione. Il link potrebbe non essere valido."
+  },
+  "forms": {
+    "title": "Moduli",
+    "description": "Moduli di acquisizione lead e iscrizione (newsletter, materiali, demo).",
+    "new": "Nuovo modulo",
+    "loading": "Caricamento...",
+    "empty": "Ancora nessun modulo. Crea il primo.",
+    "error": "Errore nel caricamento.",
+    "colName": "Nome",
+    "colSlug": "Slug",
+    "colKind": "Tipo",
+    "colStatus": "Stato",
+    "colSubmissions": "Invii",
+    "publicUrl": "URL pubblico",
+    "kind": {
+      "NEWSLETTER": "Newsletter",
+      "GATED_DOWNLOAD": "Download (gated)",
+      "DEMO_REQUEST": "Richiesta demo",
+      "GENERIC": "Generico"
+    },
+    "status": {
+      "DRAFT": "Bozza",
+      "PUBLISHED": "Pubblicato",
+      "ARCHIVED": "Archiviato"
+    },
+    "builder": {
+      "title": "Nuovo modulo",
+      "slug": "Slug (URL)",
+      "slugHint": "solo a-z, 0-9 e trattino — diventa /f/<slug>",
+      "name": "Nome interno",
+      "kind": "Tipo",
+      "status": "Stato",
+      "headline": "Titolo (pubblico)",
+      "description": "Descrizione (pubblico)",
+      "ctaLabel": "Testo del pulsante",
+      "successMessage": "Messaggio di successo",
+      "consentText": "Testo consenso LGPD",
+      "save": "Salva modulo",
+      "saving": "Salvataggio...",
+      "error": "Impossibile elaborare. Riprova."
+    }
+  },
+  "publicForm": {
+    "emailLabel": "Email",
+    "emailPlaceholder": "voce@email.com",
+    "nameLabel": "Nome",
+    "companyLabel": "Azienda",
+    "consentDefault": "Accetto di ricevere email e la privacy policy.",
+    "submit": "Invia",
+    "submitting": "Invio...",
+    "success": "Ricevuto! Controlla la tua email per confermare.",
+    "error": "Impossibile elaborare. Riprova."
   }
 }

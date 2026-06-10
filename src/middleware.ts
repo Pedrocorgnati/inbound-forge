@@ -7,8 +7,9 @@ import { verifyCsrfToken, readCsrfFromRequest } from '@/lib/auth/csrf-token'
 // Intake-Review TASK-19 ST001 (CL-OP-033): rate-limit granular em /api/blog/*.
 import { checkBlogPublicRateLimit, extractClientIp } from '@/lib/rate-limit/blog-public'
 
-// Inbound F1: /subscribe (signup + confirmed) e /unsubscribed sao paginas publicas.
-const PUBLIC_PATHS = ['/login', '/blog', '/diagnostico', '/subscribe', '/unsubscribed']
+// Inbound F1/F2: /subscribe, /unsubscribed e /f/<slug> (lead forms) sao publicas.
+// '/f/' com barra evita colidir com /fila.
+const PUBLIC_PATHS = ['/login', '/blog', '/diagnostico', '/subscribe', '/unsubscribed', '/f/']
 const API_PUBLIC_PATHS = [
   '/api/health',
   '/api/v1/health',
@@ -18,6 +19,8 @@ const API_PUBLIC_PATHS = [
   '/api/v1/subscribers',
   '/api/subscribe',
   '/api/unsubscribe',
+  // Inbound F2: config + submit publicos de lead forms.
+  '/api/f',
 ]
 const ONBOARDING_PATH = '/onboarding'
 
@@ -31,6 +34,8 @@ const CSRF_WHITELIST_PREFIXES = [
   // Inbound F1: POST publico de inscricao + POST one-click de unsubscribe (RFC 8058).
   '/api/v1/subscribers',
   '/api/unsubscribe',
+  // Inbound F2: POST publico de submit de lead form.
+  '/api/f',
 ]
 
 function requiresCsrfCheck(method: string, pathname: string): boolean {

@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   Mail,
   UserPlus,
+  FileInput,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -52,6 +53,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   ShieldCheck,
   Mail,
   UserPlus,
+  FileInput,
 }
 
 interface SidebarNavProps {

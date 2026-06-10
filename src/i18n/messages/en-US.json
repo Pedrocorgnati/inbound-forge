@@ -87,7 +87,8 @@
     "assets": "Asset Library",
     "compliance": "Compliance",
     "subscribers": "Subscribers",
-    "broadcasts": "Email"
+    "broadcasts": "Email",
+    "forms": "Forms"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -811,5 +812,57 @@
     "title": "You have been unsubscribed",
     "message": "We will no longer email this address.",
     "error": "Could not process the unsubscribe. The link may be invalid."
+  },
+  "forms": {
+    "title": "Forms",
+    "description": "Lead-capture and signup forms (newsletter, lead magnets, demo).",
+    "new": "New form",
+    "loading": "Loading...",
+    "empty": "No forms yet. Create the first one.",
+    "error": "Error loading.",
+    "colName": "Name",
+    "colSlug": "Slug",
+    "colKind": "Kind",
+    "colStatus": "Status",
+    "colSubmissions": "Submissions",
+    "publicUrl": "Public URL",
+    "kind": {
+      "NEWSLETTER": "Newsletter",
+      "GATED_DOWNLOAD": "Gated download",
+      "DEMO_REQUEST": "Demo request",
+      "GENERIC": "Generic"
+    },
+    "status": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published",
+      "ARCHIVED": "Archived"
+    },
+    "builder": {
+      "title": "New form",
+      "slug": "Slug (URL)",
+      "slugHint": "a-z, 0-9 and hyphen only — becomes /f/<slug>",
+      "name": "Internal name",
+      "kind": "Kind",
+      "status": "Status",
+      "headline": "Headline (public)",
+      "description": "Description (public)",
+      "ctaLabel": "Button text",
+      "successMessage": "Success message",
+      "consentText": "LGPD consent text",
+      "save": "Save form",
+      "saving": "Saving...",
+      "error": "Could not process. Please try again."
+    }
+  },
+  "publicForm": {
+    "emailLabel": "Email",
+    "emailPlaceholder": "voce@email.com",
+    "nameLabel": "Name",
+    "companyLabel": "Company",
+    "consentDefault": "I agree to receive emails and to the privacy policy.",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "success": "Got it! Check your email to confirm.",
+    "error": "Could not process. Please try again."
   }
 }

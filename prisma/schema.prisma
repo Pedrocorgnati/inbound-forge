@@ -106,6 +106,7 @@ enum ConversionType {
   MEETING
   PROPOSAL
   CALENDAR_BOOKING
+  FORM_SUBMISSION // Inbound F2: captura via lead form
 }
 
 enum AttributionType {
@@ -1427,4 +1428,63 @@ model BroadcastRecipient {
   @@unique([broadcastId, subscriberId], name: "UQ_broadcast_recipient")
   @@index([broadcastId, status], name: "IDX_broadcast_recipients_broadcast_status")
   @@map("broadcast_recipients")
+}
+
+// ─── Inbound F2: Lead Capture Forms ───────────────────────────────────────────
+enum FormKind {
+  NEWSLETTER
+  GATED_DOWNLOAD
+  DEMO_REQUEST
+  GENERIC
+}
+
+enum FormStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model LeadForm {
+  id              String     @id @default(uuid())
+  slug            String     @unique @db.VarChar(120)
+  name            String     @db.VarChar(160)
+  kind            FormKind   @default(NEWSLETTER)
+  status          FormStatus @default(DRAFT)
+  headline        String?    @db.VarChar(200)
+  description     String?    @db.Text
+  ctaLabel        String?    @map("cta_label") @db.VarChar(80)
+  successMessage  String?    @map("success_message") @db.Text
+  lgpdConsentText String?    @map("lgpd_consent_text") @db.Text
+  // origem default atribuida ao Lead/Subscriber criado pelo form
+  defaultChannel  Channel?   @map("default_channel")
+  submissionCount Int        @default(0) @map("submission_count")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  submissions LeadFormSubmission[]
+
+  @@index([status], name: "IDX_lead_forms_status")
+  @@map("lead_forms")
+}
+
+model LeadFormSubmission {
+  id               String   @id @default(uuid())
+  formId           String   @map("form_id")
+  form             LeadForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  // ids sem relacao dura (registros de auditoria append-only; sobrevivem a delecao do lead/subscriber)
+  leadId           String?  @map("lead_id")
+  subscriberId     String?  @map("subscriber_id")
+  encryptedPayload String   @map("encrypted_payload") @db.Text // AES-256: name/email/custom
+  correlationId    String   @unique @map("correlation_id") @db.VarChar(36)
+  utmSource        String?  @map("utm_source") @db.VarChar(120)
+  utmMedium        String?  @map("utm_medium") @db.VarChar(120)
+  utmCampaign      String?  @map("utm_campaign") @db.VarChar(120)
+  sourceIpHash     String?  @map("source_ip_hash") @db.VarChar(64)
+  userAgent        String?  @map("user_agent") @db.VarChar(500)
+  lgpdConsent      Boolean  @default(false) @map("lgpd_consent")
+  lgpdConsentAt    DateTime @map("lgpd_consent_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([formId, createdAt], name: "IDX_lead_form_submissions_form_created")
+  @@map("lead_form_submissions")
 }

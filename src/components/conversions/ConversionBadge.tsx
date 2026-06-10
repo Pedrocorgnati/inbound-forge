@@ -5,6 +5,7 @@ const CONVERSION_MAP: Record<ConversionType, { label: string; className: string 
   MEETING: { label: 'Reuniao', className: 'bg-yellow-100 text-yellow-800' },
   PROPOSAL: { label: 'Proposta', className: 'bg-green-100 text-green-800' },
   CALENDAR_BOOKING: { label: 'Agendamento', className: 'bg-purple-100 text-purple-800' },
+  FORM_SUBMISSION: { label: 'Formulario', className: 'bg-teal-100 text-teal-800' },
 }
 
 interface ConversionBadgeProps {

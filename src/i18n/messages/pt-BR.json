@@ -87,7 +87,8 @@
     "assets": "Biblioteca de Ativos",
     "compliance": "Compliance",
     "subscribers": "Inscritos",
-    "broadcasts": "Email"
+    "broadcasts": "Email",
+    "forms": "Formularios"
   },
   "breadcrumbs": {
     "home": "Início",
@@ -811,5 +812,57 @@
     "title": "Voce foi descadastrado",
     "message": "Nao enviaremos mais emails para este endereco.",
     "error": "Nao foi possivel processar o descadastro. O link pode ser invalido."
+  },
+  "forms": {
+    "title": "Formularios",
+    "description": "Formularios de captura de leads e inscricao (newsletter, materiais, demo).",
+    "new": "Novo formulario",
+    "loading": "Carregando...",
+    "empty": "Nenhum formulario ainda. Crie o primeiro.",
+    "error": "Erro ao carregar.",
+    "colName": "Nome",
+    "colSlug": "Slug",
+    "colKind": "Tipo",
+    "colStatus": "Status",
+    "colSubmissions": "Envios",
+    "publicUrl": "URL publica",
+    "kind": {
+      "NEWSLETTER": "Newsletter",
+      "GATED_DOWNLOAD": "Material (gated)",
+      "DEMO_REQUEST": "Solicitar demo",
+      "GENERIC": "Generico"
+    },
+    "status": {
+      "DRAFT": "Rascunho",
+      "PUBLISHED": "Publicado",
+      "ARCHIVED": "Arquivado"
+    },
+    "builder": {
+      "title": "Novo formulario",
+      "slug": "Slug (URL)",
+      "slugHint": "so a-z, 0-9 e hifen — vira /f/<slug>",
+      "name": "Nome interno",
+      "kind": "Tipo",
+      "status": "Status",
+      "headline": "Titulo (publico)",
+      "description": "Descricao (publico)",
+      "ctaLabel": "Texto do botao",
+      "successMessage": "Mensagem de sucesso",
+      "consentText": "Texto de consentimento LGPD",
+      "save": "Salvar formulario",
+      "saving": "Salvando...",
+      "error": "Nao foi possivel processar. Tente novamente."
+    }
+  },
+  "publicForm": {
+    "emailLabel": "Email",
+    "emailPlaceholder": "voce@email.com",
+    "nameLabel": "Nome",
+    "companyLabel": "Empresa",
+    "consentDefault": "Concordo em receber emails e com a politica de privacidade.",
+    "submit": "Enviar",
+    "submitting": "Enviando...",
+    "success": "Recebido! Verifique seu email para confirmar.",
+    "error": "Nao foi possivel processar. Tente novamente."
   }
 }

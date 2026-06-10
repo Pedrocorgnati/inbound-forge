@@ -22,6 +22,8 @@ export const ROUTES = {
   BROADCASTS: '/broadcasts',
   SUBSCRIBERS: '/subscribers',
   SUBSCRIBE: '/subscribe',
+  // Inbound F2: Lead Capture Forms
+  FORMS: '/forms',
 } as const
 
 export const PUBLIC_ROUTES = [ROUTES.LOGIN, ROUTES.BLOG_PUBLIC]
