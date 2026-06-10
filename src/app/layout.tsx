@@ -23,17 +23,29 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+  // Resolve URLs relativas de OG/Twitter (sem isto o next build avisa e usa
+  // http://localhost:3000, quebrando os social cards em producao). Usa o mesmo
+  // NEXT_PUBLIC_BASE_URL que as paginas de blog/sitemap ja consomem.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'),
   title: {
     default: 'Inbound Forge',
     template: '%s | Inbound Forge',
   },
   description: 'Ferramenta pessoal de inbound marketing automatizado',
+  openGraph: {
+    images: [{ url: '/images/og-image.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/images/og-image.png'],
+  },
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' }, // RESOLVED: G08 — placeholder SVG com iniciais IF
-      { url: '/images/logo-symbol.svg' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' }, // fallback
+      { url: '/images/logo-symbol.png' },
     ],
-    // PENDING-ACTIONS: gerar apple-icon.png 180×180px e adicionar em public/images/
+    apple: [{ url: '/images/apple-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   robots: 'noindex, nofollow',
   appleWebApp: {

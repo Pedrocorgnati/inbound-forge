@@ -1,6 +1,14 @@
+import { fileURLToPath } from 'url'
+import path from 'path'
 import createNextIntlPlugin from 'next-intl/plugin'
 import { withSentryConfig } from '@sentry/nextjs'
 import withBundleAnalyzer from '@next/bundle-analyzer'
+
+// Raiz de tracing = dir deste app. Sem isto, o Next infere /home/pedro como root
+// (lockfiles irmaos no monorepo systemForge), gerando o warning de multiple-lockfiles
+// e o ENOENT de _not-found .nft.json no collect-traces, alem de poder empacotar
+// arquivos errados nas serverless functions da Vercel.
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 const bundleAnalyzer = withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' })
 
@@ -27,6 +35,8 @@ const nextConfig = {
   },
   // Necessário para o Dockerfile multi-stage (Stage 3: runner usa .next/standalone)
   output: 'standalone',
+  // Fixa a raiz de tracing no dir do app (ver __dirname acima).
+  outputFileTracingRoot: __dirname,
   // SEC: não revelar que o servidor usa Next.js (A05)
   poweredByHeader: false,
   // Native modules que não devem ser bundled pelo webpack (movido de experimental em Next 15)
