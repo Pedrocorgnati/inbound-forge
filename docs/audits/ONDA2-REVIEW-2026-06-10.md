@@ -101,3 +101,20 @@ workers **106/106** (image 53, video 8, publishing 7, scraping 38).
 ## 4. Itens da revisão já resolvidos nesta sessão
 - WK-WRK-04 SIGINT (regressão): consumer image/video agora trata SIGTERM+SIGINT (`8876928`).
 - WK-WRK-03 reaper: rpush-first para não orfanar job em PENDING (`8876928`).
+
+## 5. Onda 3 — implantado (2026-06-10, segunda parte)
+
+Decisão do operador: "fazer todo o Onda 3 agora" + CX-06 via "worker drena as listas".
+
+| Commit | Item | Status |
+|--------|------|--------|
+| `30aa912` | **3.1 CX-06** | RESOLVIDO. App lpush em `worker:scraping:queue` (chave canônica única); scraping-worker ganhou `queue-drain.ts` (lpop REST → ponte para `enqueueBatch`/BullMQ). Trigger manual + cron de rescraping do app agora chegam ao worker. Drenador testado (43/43). |
+| `4323b89` | **3.2 Dockerfile** | RESOLVIDO (estrutural; precisa `docker build` p/ confirmar). Context=raiz + `prisma generate` ANTES do `npm run build`, espelhando image-worker. |
+| `612f652` | **3.3 BLOG adapter** | RESOLVIDO de forma conservadora: BLOG vira **assistido** (não mais 404→FAILED). Auto-publish real fica como follow-up (precisa mapear Post→ContentPiece→BlogArticle; o `/api/v1/posts/:id/publish` do app ainda é stub TODO). |
+| `aedaf1c` | **3.4 WORKER_AUTH** | RESOLVIDO. `docker-compose`/`workers/.env.example` alinhados a `WORKER_AUTH_TOKEN` (nome lido pelo código; `WORKER_AUTH_SECRET` era phantom). |
+
+### 5.1 Remanescente (não implantado — lower-impact / não-verificável aqui)
+- **`src/tests/integration/**` fora do CI:** incluir no `vitest.integration.config.ts` exige validar setup (alias `@`/MSW); risco de CI vermelho — deixado follow-up.
+- **image/video como root no container:** hardening; adicionar `USER` requer `docker build` para validar permissões (não disponível). Follow-up.
+- **`scraping-worker` BullMQ sobre TCP derivado da URL REST do Upstash:** se o endpoint TCP/credenciais divergirem do REST, BullMQ não conecta (afeta cron interno E o novo drenador igualmente). Precisa de credenciais Upstash vivas para validar/corrigir. Follow-up.
+- **Worker panel "Rodar agora" (scraping):** com o CX-06, o POST a `/api/workers/scraping/trigger` (rota estática) agora ENFILEIRA de verdade e o worker processa — o trigger funcional foi destravado. Resta nuance de qualidade (audit log + shape de resposta divergem da rota dinâmica `[worker]/trigger`). Follow-up de qualidade.
