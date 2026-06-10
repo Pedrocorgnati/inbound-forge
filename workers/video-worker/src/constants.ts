@@ -19,6 +19,8 @@ export const VIDEO_WORKER_CONFIG = {
 
 export const REDIS_VIDEO_QUEUE_KEY = 'worker:video:queue' as const
 export const REDIS_VIDEO_DEAD_LETTER_KEY = 'worker:video:dead-letter' as const
+// WK-WRK-05: sorted-set de retries persistidos (score = timestamp do proximo retry).
+export const REDIS_VIDEO_RETRY_ZSET_KEY = 'worker:video:retry' as const
 
 export const VIDEO_RETRY_BACKOFF_MS: readonly number[] = [10_000, 30_000, 60_000] as const
 

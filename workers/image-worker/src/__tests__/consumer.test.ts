@@ -1,5 +1,10 @@
 // module-9: Consumer Loop Tests
 // Rastreabilidade: TASK-1 ST002, INT-057, INT-058, CX-06, IMAGE_080
+//
+// WK-WRK-04: o loop NAO chama mais process.exit — ele apenas retorna quando
+// isShuttingDown (sleep agora e interrompivel pelo SIGTERM). Os testes aguardam
+// a Promise do loop resolver, sem mockar process.exit.
+// WK-WRK-05: o consumer chama drainDueRetries(redis) no topo do loop (mockado aqui).
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
@@ -9,7 +14,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const mockLpop = vi.fn()
 const mockRpush = vi.fn()
-const mockRedis = { lpop: mockLpop, rpush: mockRpush } as any
+// Cancel-signal checks (sismember/srem) — resolve "nao cancelado" por padrao.
+const mockSismember = vi.fn().mockResolvedValue(0)
+const mockSrem = vi.fn()
+const mockRedis = { lpop: mockLpop, rpush: mockRpush, sismember: mockSismember, srem: mockSrem } as any
 
 const mockFindUnique = vi.fn()
 const mockUpdate = vi.fn()
@@ -25,9 +33,12 @@ vi.mock('../generate', () => ({
 
 vi.mock('../retry', () => ({
   handleRetry: vi.fn(),
+  // WK-WRK-05: drain de retries persistidos — no-op nos testes do consumer.
+  drainDueRetries: vi.fn().mockResolvedValue(undefined),
 }))
 
-// Capture stdout writes for log assertions
+// Capture stdout writes for log assertions. afterEach usa clearAllMocks (nao
+// restoreAllMocks) para o spy permanecer vivo entre testes.
 const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
 
 // ---------------------------------------------------------------------------
@@ -61,17 +72,6 @@ function makeJob(overrides: Record<string, unknown> = {}) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// We cannot call startConsumerLoop directly (infinite loop + process.exit).
-// Instead we test the internal logic by importing the module and simulating
-// the loop mechanics via controlled lpop responses.
-// ---------------------------------------------------------------------------
-
-// To test processJob we re-export it or access it indirectly.
-// The consumer exposes only startConsumerLoop + registerSigtermHandler.
-// Strategy: import the module, call startConsumerLoop with a redis mock that
-// returns one job then sets isShuttingDown via SIGTERM simulation.
-
 describe('consumer', () => {
   let consumer: typeof import('../consumer')
   let retryModule: typeof import('../retry')
@@ -83,6 +83,7 @@ describe('consumer', () => {
     mockUpdate.mockReset()
     mockFindUnique.mockReset()
     mockGenerateImage.mockReset()
+    mockSismember.mockReset().mockResolvedValue(0)
     stdoutSpy.mockClear()
 
     // Re-import to get a fresh `isShuttingDown = false`
@@ -92,23 +93,15 @@ describe('consumer', () => {
 
   afterEach(() => {
     vi.useRealTimers()
-    vi.restoreAllMocks()
+    vi.clearAllMocks()
   })
 
   // ---------- SIGTERM ----------
 
   it('registerSigtermHandler sets isShuttingDown on SIGTERM', () => {
-    // registerSigtermHandler is called inside startConsumerLoop, but we can
-    // also call it directly to validate the handler registration.
     consumer.registerSigtermHandler()
-
-    // Emit SIGTERM
     process.emit('SIGTERM', 'SIGTERM')
 
-    // The only observable effect: next iteration should stop the loop.
-    // We verify indirectly by checking the log output when the loop ends.
-    // Since the flag is module-scoped and not exported, we rely on the loop
-    // exiting. For a direct test we check the stdout log.
     const logs = stdoutSpy.mock.calls.map(([arg]) => String(arg))
     expect(logs.some((l) => l.includes('sigterm_received'))).toBe(true)
   })
@@ -124,7 +117,6 @@ describe('consumer', () => {
     mockLpop.mockImplementation(async () => {
       callCount++
       if (callCount === 1) return JSON.stringify({ jobId: 'job-1' })
-      // After first job, trigger shutdown
       process.emit('SIGTERM', 'SIGTERM')
       return null
     })
@@ -133,35 +125,22 @@ describe('consumer', () => {
     mockUpdate.mockResolvedValue({})
     mockGenerateImage.mockResolvedValue('https://cdn.test/img.webp')
 
-    // Mock process.exit to prevent vitest from dying
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
-      throw new Error('__EXIT__')
-    }) as any)
+    // WK-WRK-04: loop retorna ao receber SIGTERM (sem process.exit).
+    await consumer.startConsumerLoop(mockRedis, mockDb, env)
 
-    try {
-      await consumer.startConsumerLoop(mockRedis, mockDb, env)
-    } catch (e: any) {
-      expect(e.message).toBe('__EXIT__')
-    }
-
-    // findUnique called with job-1
     expect(mockFindUnique).toHaveBeenCalledWith({
       where: { id: 'job-1' },
       include: { template: true },
     })
-
-    // Status updated to PROCESSING then DONE
     expect(mockUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'job-1' }, data: { status: 'PROCESSING' } })
+      expect.objectContaining({ where: { id: 'job-1' }, data: { status: 'PROCESSING' } }),
     )
     expect(mockUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'job-1' },
         data: expect.objectContaining({ status: 'DONE', imageUrl: 'https://cdn.test/img.webp' }),
-      })
+      }),
     )
-
-    exitSpy.mockRestore()
   })
 
   // ---------- Job not found — IMAGE_080 ----------
@@ -177,25 +156,13 @@ describe('consumer', () => {
       return null
     })
 
-    mockFindUnique.mockResolvedValue(null) // job not found
+    mockFindUnique.mockResolvedValue(null)
 
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
-      throw new Error('__EXIT__')
-    }) as any)
-
-    try {
-      await consumer.startConsumerLoop(mockRedis, mockDb, env)
-    } catch (e: any) {
-      expect(e.message).toBe('__EXIT__')
-    }
+    await consumer.startConsumerLoop(mockRedis, mockDb, env)
 
     const logs = stdoutSpy.mock.calls.map(([arg]) => String(arg))
     expect(logs.some((l) => l.includes('IMAGE_080') && l.includes('ghost-job'))).toBe(true)
-
-    // Should NOT have tried to update status
     expect(mockUpdate).not.toHaveBeenCalled()
-
-    exitSpy.mockRestore()
   })
 
   // ---------- generateImage throws — triggers handleRetry ----------
@@ -217,22 +184,12 @@ describe('consumer', () => {
     mockUpdate.mockResolvedValue({})
     mockGenerateImage.mockRejectedValue(genError)
 
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
-      throw new Error('__EXIT__')
-    }) as any)
-
-    try {
-      await consumer.startConsumerLoop(mockRedis, mockDb, env)
-    } catch (e: any) {
-      expect(e.message).toBe('__EXIT__')
-    }
+    await consumer.startConsumerLoop(mockRedis, mockDb, env)
 
     expect(retryModule.handleRetry).toHaveBeenCalledWith('job-fail', genError, mockDb)
 
     const logs = stdoutSpy.mock.calls.map(([arg]) => String(arg))
     expect(logs.some((l) => l.includes('job_failed'))).toBe(true)
-
-    exitSpy.mockRestore()
   })
 
   // ---------- AbortController timeout ----------
@@ -252,7 +209,6 @@ describe('consumer', () => {
     mockFindUnique.mockResolvedValue({ ...job, id: 'job-timeout' })
     mockUpdate.mockResolvedValue({})
 
-    // generateImage hangs long enough for the abort to fire
     mockGenerateImage.mockImplementation(async (_opts: any, _db: any, _env: any, signal: AbortSignal) => {
       return new Promise((_, reject) => {
         signal.addEventListener('abort', () => {
@@ -261,26 +217,15 @@ describe('consumer', () => {
       })
     })
 
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
-      throw new Error('__EXIT__')
-    }) as any)
-
-    try {
-      // Advance timers to trigger the abort timeout
-      const loopPromise = consumer.startConsumerLoop(mockRedis, mockDb, env)
-      await vi.advanceTimersByTimeAsync(200)
-      await loopPromise
-    } catch (e: any) {
-      expect(e.message).toBe('__EXIT__')
-    }
+    const loopPromise = consumer.startConsumerLoop(mockRedis, mockDb, env)
+    await vi.advanceTimersByTimeAsync(200)
+    await loopPromise
 
     expect(retryModule.handleRetry).toHaveBeenCalledWith(
       'job-timeout',
       expect.any(DOMException),
-      mockDb
+      mockDb,
     )
-
-    exitSpy.mockRestore()
   })
 
   // ---------- Redis lpop error — retries after polling interval ----------
@@ -292,7 +237,6 @@ describe('consumer', () => {
     mockLpop.mockImplementation(async () => {
       callCount++
       if (callCount === 1) throw new Error('ECONNRESET')
-      // Second call succeeds but empty, then shutdown
       if (callCount === 2) {
         process.emit('SIGTERM', 'SIGTERM')
         return null
@@ -300,25 +244,14 @@ describe('consumer', () => {
       return null
     })
 
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
-      throw new Error('__EXIT__')
-    }) as any)
-
-    try {
-      const loopPromise = consumer.startConsumerLoop(mockRedis, mockDb, env)
-      // Advance past the polling sleep (3000ms default)
-      await vi.advanceTimersByTimeAsync(4_000)
-      await loopPromise
-    } catch (e: any) {
-      expect(e.message).toBe('__EXIT__')
-    }
+    const loopPromise = consumer.startConsumerLoop(mockRedis, mockDb, env)
+    // Advance past the polling sleep (3000ms default, interrompivel)
+    await vi.advanceTimersByTimeAsync(4_000)
+    await loopPromise
 
     const logs = stdoutSpy.mock.calls.map(([arg]) => String(arg))
     expect(logs.some((l) => l.includes('redis_lpop_error'))).toBe(true)
-    // Should have called lpop at least twice (retry after error)
     expect(mockLpop.mock.calls.length).toBeGreaterThanOrEqual(2)
-
-    exitSpy.mockRestore()
   })
 
   // ---------- Malformed queue message ----------
@@ -334,19 +267,9 @@ describe('consumer', () => {
       return null
     })
 
-    const exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
-      throw new Error('__EXIT__')
-    }) as any)
-
-    try {
-      await consumer.startConsumerLoop(mockRedis, mockDb, env)
-    } catch (e: any) {
-      expect(e.message).toBe('__EXIT__')
-    }
+    await consumer.startConsumerLoop(mockRedis, mockDb, env)
 
     const logs = stdoutSpy.mock.calls.map(([arg]) => String(arg))
     expect(logs.some((l) => l.includes('queue_parse_error'))).toBe(true)
-
-    exitSpy.mockRestore()
   })
 })

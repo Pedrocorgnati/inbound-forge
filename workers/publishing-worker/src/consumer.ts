@@ -14,9 +14,16 @@ const POLLING_INTERVAL_MS = 60_000 // 1 min — posts agendados não precisam de
 const HEARTBEAT_INTERVAL_MS = 5 * 60_000 // 5 min
 
 let isShuttingDown = false
+// WK-WRK-04: o index.ts e o unico dono do SIGTERM. requestDrain sinaliza parada e
+// acorda o sleep de 60s (gargalo do drain, nao-interrompivel antes) de imediato.
+let wakeFromSleep: (() => void) | null = null
+
+export function requestDrain(): void {
+  isShuttingDown = true
+  if (wakeFromSleep) wakeFromSleep()
+}
 
 export async function startConsumerLoop(redis: Redis, db: PrismaClient): Promise<void> {
-  process.on('SIGTERM', () => { isShuttingDown = true })
 
   // Heartbeat via DB
   const heartbeat = setInterval(async () => {
@@ -44,6 +51,7 @@ export async function startConsumerLoop(redis: Redis, db: PrismaClient): Promise
     } catch (err) {
       log({ event: 'consumer_error', error: String(err), timestamp: new Date().toISOString() })
     }
+    if (isShuttingDown) break
     await sleep(POLLING_INTERVAL_MS)
   }
 
@@ -96,8 +104,12 @@ async function processDuePosts(redis: Redis, db: PrismaClient): Promise<void> {
   }
 }
 
+// WK-WRK-04: sleep interrompivel — requestDrain() resolve imediatamente no SIGTERM.
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => { wakeFromSleep = null; resolve() }, ms)
+    wakeFromSleep = () => { clearTimeout(timer); wakeFromSleep = null; resolve() }
+  })
 }
 
 function log(data: Record<string, unknown>): void {

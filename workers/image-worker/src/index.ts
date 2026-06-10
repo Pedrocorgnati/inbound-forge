@@ -42,16 +42,40 @@ async function main() {
     },
   }) + '\n')
 
-  // Graceful shutdown
+  // Graceful shutdown (WK-WRK-04): o index e o unico dono do encerramento.
+  // Aguarda o job em voo drenar (consumerDone) antes de db.$disconnect, com
+  // rede de seguranca para nao travar alem do grace do Railway.
   let heartbeatInterval: NodeJS.Timeout
   let reaperInterval: NodeJS.Timeout
+  let consumerDone: Promise<void> | undefined
+  let shuttingDown = false
 
-  process.on('SIGTERM', async () => {
-    clearInterval(heartbeatInterval)
-    clearInterval(reaperInterval)
-    healthServer.close()
-    await db.$disconnect()
-  })
+  const shutdown = async (signal: string): Promise<void> => {
+    if (shuttingDown) return
+    shuttingDown = true
+    process.stdout.write(JSON.stringify({ event: 'sigterm_received', signal, timestamp: new Date().toISOString() }) + '\n')
+    const forced = setTimeout(() => {
+      process.stderr.write(JSON.stringify({ event: 'forced_exit_after_drain_timeout', timestamp: new Date().toISOString() }) + '\n')
+      process.exit(1)
+    }, 25_000)
+    forced.unref()
+    try {
+      // O consumer ja setou isShuttingDown via registerSigtermHandler; aqui apenas
+      // aguardamos o loop drenar o job em voo e retornar.
+      if (consumerDone) await consumerDone
+    } finally {
+      clearInterval(heartbeatInterval)
+      clearInterval(reaperInterval)
+      clearTimeout(forced)
+      healthServer.close()
+      await db.$disconnect()
+      process.stdout.write(JSON.stringify({ event: 'graceful_shutdown_complete', timestamp: new Date().toISOString() }) + '\n')
+      process.exit(0)
+    }
+  }
+
+  process.on('SIGTERM', () => void shutdown('SIGTERM'))
+  process.on('SIGINT', () => void shutdown('SIGINT'))
 
   // Start health check server
   healthServer.listen(PORT, () => {
@@ -62,7 +86,8 @@ async function main() {
   heartbeatInterval = startHeartbeat(db)
   reaperInterval = startReaper(db, redis)
 
-  await startConsumerLoop(redis, db, env)
+  consumerDone = startConsumerLoop(redis, db, env)
+  await consumerDone
 }
 
 main().catch((err) => {

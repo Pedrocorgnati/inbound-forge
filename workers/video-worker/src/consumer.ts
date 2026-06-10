@@ -5,7 +5,7 @@ import type { Redis }        from '@upstash/redis'
 import type { PrismaClient } from '@prisma/client'
 
 import { VIDEO_WORKER_CONFIG, REDIS_VIDEO_QUEUE_KEY } from './constants'
-import { handleRetry }   from './retry'
+import { handleRetry, drainDueRetries }   from './retry'
 import { generateVideo } from './generate'
 import type { VideoWorkerEnv } from './env'
 
@@ -14,11 +14,14 @@ interface QueueMessage {
 }
 
 let isShuttingDown = false
+// WK-WRK-04: acorda o sleep do poll imediatamente no SIGTERM.
+let wakeFromSleep: (() => void) | null = null
 
 export function registerSigtermHandler(): void {
   process.on('SIGTERM', () => {
     log({ event: 'sigterm_received', timestamp: new Date().toISOString() })
     isShuttingDown = true
+    if (wakeFromSleep) wakeFromSleep()
   })
 }
 
@@ -30,17 +33,23 @@ export async function startConsumerLoop(
   registerSigtermHandler()
 
   while (!isShuttingDown) {
+    // WK-WRK-05: a cada tick, drena retries persistidos cujo backoff venceu.
+    await drainDueRetries(redis)
+    if (isShuttingDown) break
+
     let raw: string | null = null
 
     try {
       raw = await redis.lpop<string>(REDIS_VIDEO_QUEUE_KEY)
     } catch (err) {
       log({ event: 'redis_lpop_error', error: String(err), timestamp: new Date().toISOString() })
+      if (isShuttingDown) break
       await sleep(VIDEO_WORKER_CONFIG.pollingIntervalMs)
       continue
     }
 
     if (!raw) {
+      if (isShuttingDown) break
       await sleep(VIDEO_WORKER_CONFIG.pollingIntervalMs)
       continue
     }
@@ -58,8 +67,8 @@ export async function startConsumerLoop(
     await processJob(jobId, db, env)
   }
 
+  // WK-WRK-04: index.ts e o unico dono do encerramento (ver image-worker).
   log({ event: 'consumer_loop_stopped', timestamp: new Date().toISOString() })
-  process.exit(0)
 }
 
 async function processJob(
@@ -116,6 +125,10 @@ function log(data: Record<string, unknown>): void {
   process.stdout.write(JSON.stringify(data) + '\n')
 }
 
+// WK-WRK-04: sleep interrompivel — wakeFromSleep() resolve imediatamente no SIGTERM.
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => { wakeFromSleep = null; resolve() }, ms)
+    wakeFromSleep = () => { clearTimeout(timer); wakeFromSleep = null; resolve() }
+  })
 }

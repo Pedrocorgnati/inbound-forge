@@ -9,7 +9,7 @@
 import http from 'http'
 import { Redis } from '@upstash/redis'
 import { PrismaClient } from '@prisma/client'
-import { startConsumerLoop } from './consumer'
+import { startConsumerLoop, requestDrain } from './consumer'
 
 // Intake Review TASK-9 ST001 (CL-075): worker passou a rodar por padrao.
 // ENABLE_PUBLISHING_WORKER permanece aceito para compat, mas so desliga
@@ -52,19 +52,42 @@ async function main() {
 
   log({ event: 'publishing_worker_started', timestamp: new Date().toISOString() })
 
-  // Graceful shutdown
-  process.on('SIGTERM', async () => {
-    log({ event: 'sigterm_received', timestamp: new Date().toISOString() })
-    healthServer.close()
-    await db.$disconnect()
-    process.exit(0)
-  })
+  // Graceful shutdown (WK-WRK-04): aguarda a publicacao em voo drenar antes do
+  // disconnect. requestDrain sinaliza o loop e acorda o sleep de 60s; o job em
+  // voo (publishPost) e aguardado pelo proprio while antes de consumerDone resolver.
+  let consumerDone: Promise<void> | undefined
+  let shuttingDown = false
+
+  const shutdown = async (signal: string): Promise<void> => {
+    if (shuttingDown) return
+    shuttingDown = true
+    log({ event: 'sigterm_received', signal, timestamp: new Date().toISOString() })
+    requestDrain()
+    const forced = setTimeout(() => {
+      process.stderr.write(JSON.stringify({ event: 'forced_exit_after_drain_timeout', timestamp: new Date().toISOString() }) + '\n')
+      process.exit(1)
+    }, 25_000)
+    forced.unref()
+    try {
+      if (consumerDone) await consumerDone
+    } finally {
+      clearTimeout(forced)
+      healthServer.close()
+      await db.$disconnect()
+      log({ event: 'graceful_shutdown_complete', timestamp: new Date().toISOString() })
+      process.exit(0)
+    }
+  }
+
+  process.on('SIGTERM', () => void shutdown('SIGTERM'))
+  process.on('SIGINT', () => void shutdown('SIGINT'))
 
   healthServer.listen(PORT, () => {
     log({ event: 'health_server_started', port: PORT, timestamp: new Date().toISOString() })
   })
 
-  await startConsumerLoop(redis, db)
+  consumerDone = startConsumerLoop(redis, db)
+  await consumerDone
 }
 
 main().catch((err) => {

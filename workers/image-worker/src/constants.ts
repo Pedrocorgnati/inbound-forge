@@ -51,6 +51,8 @@ export const TEMPLATE_PROVIDER_MAP: Record<TemplateType, ImageProvider> = {
 // Chave consistente com src/lib/redis.ts (QUEUE_KEYS.image)
 export const REDIS_QUEUE_KEY      = 'worker:image:queue'      as const
 export const REDIS_DEAD_LETTER_KEY = 'worker:image:dead-letter' as const
+// WK-WRK-05: sorted-set de retries persistidos (score = timestamp do proximo retry).
+export const REDIS_RETRY_ZSET_KEY = 'worker:image:retry' as const
 
 export const RETRY_BACKOFF_MS: readonly number[] = [5_000, 15_000, 30_000] as const
 

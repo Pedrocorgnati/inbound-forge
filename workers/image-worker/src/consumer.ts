@@ -7,7 +7,7 @@ import type { Redis }       from '@upstash/redis'
 import type { PrismaClient } from '@prisma/client'
 
 import { IMAGE_WORKER_CONFIG, REDIS_QUEUE_KEY } from './constants'
-import { handleRetry }  from './retry'
+import { handleRetry, drainDueRetries }  from './retry'
 import { generateImage } from './generate'
 import type { WorkerEnv } from './env'
 import type { TemplateType } from './types'
@@ -22,11 +22,15 @@ interface QueueMessage {
 }
 
 let isShuttingDown = false
+// WK-WRK-04: handle para acordar o sleep do poll imediatamente no SIGTERM,
+// para o loop reavaliar isShuttingDown sem esperar o intervalo de polling inteiro.
+let wakeFromSleep: (() => void) | null = null
 
 export function registerSigtermHandler(): void {
   process.on('SIGTERM', () => {
     log({ event: 'sigterm_received', timestamp: new Date().toISOString() })
     isShuttingDown = true
+    if (wakeFromSleep) wakeFromSleep()
   })
 }
 
@@ -38,17 +42,24 @@ export async function startConsumerLoop(
   registerSigtermHandler()
 
   while (!isShuttingDown) {
+    // WK-WRK-05: a cada tick, drena retries persistidos cujo backoff venceu.
+    // Defensivo internamente (try/catch em zrange), nunca derruba o loop.
+    await drainDueRetries(redis)
+    if (isShuttingDown) break
+
     let raw: string | null = null
 
     try {
       raw = await redis.lpop<string>(REDIS_QUEUE_KEY)
     } catch (err) {
       log({ event: 'redis_lpop_error', error: String(err), timestamp: new Date().toISOString() })
+      if (isShuttingDown) break
       await sleep(IMAGE_WORKER_CONFIG.pollingIntervalMs)
       continue
     }
 
     if (!raw) {
+      if (isShuttingDown) break
       await sleep(IMAGE_WORKER_CONFIG.pollingIntervalMs)
       continue
     }
@@ -80,8 +91,10 @@ export async function startConsumerLoop(
     await processJob(jobId, db, env, redis)
   }
 
+  // WK-WRK-04: NAO chamar process.exit aqui. O index.ts e o unico dono do
+  // encerramento (aguarda o job em voo via consumerDone, fecha health server,
+  // db.$disconnect). Dois exits competindo matariam o processo antes do disconnect.
   log({ event: 'consumer_loop_stopped', timestamp: new Date().toISOString() })
-  process.exit(0)
 }
 
 async function processJob(
@@ -189,6 +202,10 @@ function log(data: Record<string, unknown>): void {
   process.stdout.write(JSON.stringify(data) + '\n')
 }
 
+// WK-WRK-04: sleep interrompivel — wakeFromSleep() resolve imediatamente no SIGTERM.
 function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => { wakeFromSleep = null; resolve() }, ms)
+    wakeFromSleep = () => { clearTimeout(timer); wakeFromSleep = null; resolve() }
+  })
 }

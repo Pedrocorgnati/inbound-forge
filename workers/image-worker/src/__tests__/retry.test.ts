@@ -1,5 +1,6 @@
 // module-9: Retry + Dead-Letter Queue Tests
 // Rastreabilidade: TASK-1 ST003, INT-059, INT-083, FEAT-creative-generation-003
+// WK-WRK-05: retries persistidos em Redis ZSET (zadd) + drenados por drainDueRetries.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
@@ -8,12 +9,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 // ---------------------------------------------------------------------------
 
 const mockRpush = vi.fn()
-const mockRedisInstance = { rpush: mockRpush }
+const mockZadd = vi.fn()
+const mockZrange = vi.fn()
+const mockZrem = vi.fn()
+const mockRedisInstance = { rpush: mockRpush, zadd: mockZadd, zrange: mockZrange, zrem: mockZrem }
 
 vi.mock('../redis-client', () => ({
   getRedisClient: () => mockRedisInstance,
 }))
 
+// afterEach usa clearAllMocks (nao restoreAllMocks): assim o spy de stdout
+// permanece vivo entre os testes (apenas o historico de chamadas e limpado),
+// senao asserts de log nos testes seguintes ao 1o falhariam.
 const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
 
 // ---------------------------------------------------------------------------
@@ -44,28 +51,29 @@ function makeDb(jobOverrides: Record<string, unknown> = {}) {
 
 describe('handleRetry', () => {
   let handleRetry: typeof import('../retry')['handleRetry']
-  let setEnqueueFn: typeof import('../retry')['setEnqueueFn']
+  let drainDueRetries: typeof import('../retry')['drainDueRetries']
 
   beforeEach(async () => {
     vi.resetModules()
-    vi.useFakeTimers()
-    mockRpush.mockReset()
+    mockRpush.mockReset().mockResolvedValue(1)
+    mockZadd.mockReset().mockResolvedValue(1)
+    mockZrange.mockReset().mockResolvedValue([])
+    mockZrem.mockReset().mockResolvedValue(1)
     stdoutSpy.mockClear()
 
     const mod = await import('../retry')
     handleRetry = mod.handleRetry
-    setEnqueueFn = mod.setEnqueueFn
+    drainDueRetries = mod.drainDueRetries
   })
 
   afterEach(() => {
-    vi.useRealTimers()
-    vi.restoreAllMocks()
+    vi.clearAllMocks()
   })
 
-  // ---------- First failure: retry with short backoff ----------
+  // ---------- First failure: persist retry in ZSET with 5s backoff score ----------
 
-  it('increments retryCount to 1 and re-enqueues with 5s backoff', async () => {
-    const { mock, update, findUniqueOrThrow } = makeDb({ retryCount: 0 })
+  it('increments retryCount to 1 and persists retry in the ZSET (5s backoff)', async () => {
+    const { mock, update } = makeDb({ retryCount: 0 })
     const error = new Error('provider_timeout')
 
     await handleRetry('job-r1', error, mock)
@@ -76,22 +84,21 @@ describe('handleRetry', () => {
       data: { status: 'PENDING', retryCount: 1 },
     })
 
-    // Re-enqueue happens after backoff (5000ms for first retry)
-    // Use the fallback Redis rpush path (no enqueue fn set)
-    await vi.advanceTimersByTimeAsync(5_000)
-
-    expect(mockRpush).toHaveBeenCalledWith(
-      'worker:image:queue',
-      JSON.stringify({ jobId: 'job-r1' })
+    // Retry persisted immediately as ZSET member; backoff is the score, not a timer.
+    expect(mockZadd).toHaveBeenCalledWith(
+      'worker:image:retry',
+      { score: expect.any(Number), member: 'job-r1' },
     )
+    // No direct requeue to the main queue at scheduling time.
+    expect(mockRpush).not.toHaveBeenCalled()
 
     const logs = stdoutSpy.mock.calls.map(([arg]) => String(arg))
     expect(logs.some((l) => l.includes('"event":"job_retry"') && l.includes('"retryCount":1'))).toBe(true)
   })
 
-  // ---------- Second failure: retryCount 2, longer backoff ----------
+  // ---------- Second failure: retryCount 2, still persisted in ZSET ----------
 
-  it('increments retryCount to 2 and uses 15s backoff', async () => {
+  it('increments retryCount to 2 and persists retry in the ZSET', async () => {
     const { mock, update } = makeDb({ retryCount: 1 })
     const error = new Error('network_error')
 
@@ -101,16 +108,11 @@ describe('handleRetry', () => {
       where: { id: 'job-r1' },
       data: { status: 'PENDING', retryCount: 2 },
     })
-
-    // Should NOT have re-enqueued yet (backoff is 15s)
-    expect(mockRpush).not.toHaveBeenCalled()
-
-    await vi.advanceTimersByTimeAsync(15_000)
-
-    expect(mockRpush).toHaveBeenCalledWith(
-      'worker:image:queue',
-      JSON.stringify({ jobId: 'job-r1' })
+    expect(mockZadd).toHaveBeenCalledWith(
+      'worker:image:retry',
+      { score: expect.any(Number), member: 'job-r1' },
     )
+    expect(mockRpush).not.toHaveBeenCalled()
   })
 
   // ---------- Third failure: dead-letter ----------
@@ -121,7 +123,6 @@ describe('handleRetry', () => {
 
     await handleRetry('job-r1', error, mock)
 
-    // DB updated to DEAD_LETTER with retryCount 3
     expect(update).toHaveBeenCalledWith({
       where: { id: 'job-r1' },
       data: {
@@ -131,16 +132,11 @@ describe('handleRetry', () => {
       },
     })
 
-    // Dead-letter payload pushed to dead-letter queue
-    expect(mockRpush).toHaveBeenCalledWith(
-      'worker:image:dead-letter',
-      expect.any(String)
-    )
+    // Dead-letter still uses rpush to the dead-letter list (not the ZSET).
+    expect(mockRpush).toHaveBeenCalledWith('worker:image:dead-letter', expect.any(String))
+    expect(mockZadd).not.toHaveBeenCalled()
 
-    // Validate dead-letter payload structure
-    const payloadStr = mockRpush.mock.calls[0][1] as string
-    const payload = JSON.parse(payloadStr)
-
+    const payload = JSON.parse(mockRpush.mock.calls[0][1] as string)
     expect(payload).toEqual(
       expect.objectContaining({
         jobId: 'job-r1',
@@ -148,49 +144,12 @@ describe('handleRetry', () => {
         retryCount: 3,
         contentPieceId: 'cp-99',
         templateId: 'tmpl-5',
-      })
+      }),
     )
     expect(payload.failedAt).toEqual(expect.any(Number))
 
     const logs = stdoutSpy.mock.calls.map(([arg]) => String(arg))
     expect(logs.some((l) => l.includes('"event":"dead_letter"'))).toBe(true)
-  })
-
-  // ---------- Dead-letter payload has all required fields ----------
-
-  it('dead-letter payload includes jobId, error, failedAt, retryCount, contentPieceId, templateId', async () => {
-    const { mock } = makeDb({
-      retryCount: 2,
-      contentPieceId: 'cp-dl',
-      templateId: 'tmpl-dl',
-    })
-
-    await handleRetry('job-r1', new Error('boom'), mock)
-
-    const payloadStr = mockRpush.mock.calls[0][1] as string
-    const payload = JSON.parse(payloadStr)
-
-    const requiredKeys = ['jobId', 'error', 'failedAt', 'retryCount', 'contentPieceId', 'templateId']
-    for (const key of requiredKeys) {
-      expect(payload).toHaveProperty(key)
-    }
-  })
-
-  // ---------- Uses custom enqueue function when set ----------
-
-  it('uses setEnqueueFn callback instead of direct Redis rpush', async () => {
-    const customEnqueue = vi.fn()
-    setEnqueueFn(customEnqueue)
-
-    const { mock } = makeDb({ retryCount: 0 })
-
-    await handleRetry('job-r1', new Error('retry-me'), mock)
-
-    await vi.advanceTimersByTimeAsync(5_000)
-
-    expect(customEnqueue).toHaveBeenCalledWith('job-r1')
-    // Direct rpush should NOT have been called
-    expect(mockRpush).not.toHaveBeenCalled()
   })
 
   // ---------- Dead-letter Redis failure is non-fatal ----------
@@ -200,14 +159,43 @@ describe('handleRetry', () => {
 
     const { mock, update } = makeDb({ retryCount: 2 })
 
-    // Should not throw
     await expect(handleRetry('job-r1', new Error('err'), mock)).resolves.toBeUndefined()
 
-    // DB was still updated to DEAD_LETTER
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: 'DEAD_LETTER' }),
-      })
+      }),
     )
+  })
+
+  // ---------- drainDueRetries: requeue due jobs ----------
+
+  describe('drainDueRetries', () => {
+    it('requeues a due job to the main queue (zrem claim succeeds)', async () => {
+      mockZrange.mockResolvedValue(['job-x'])
+      mockZrem.mockResolvedValue(1)
+
+      await drainDueRetries(mockRedisInstance as any)
+
+      expect(mockZrange).toHaveBeenCalledWith('worker:image:retry', 0, expect.any(Number), { byScore: true })
+      expect(mockZrem).toHaveBeenCalledWith('worker:image:retry', 'job-x')
+      expect(mockRpush).toHaveBeenCalledWith('worker:image:queue', JSON.stringify({ jobId: 'job-x' }))
+    })
+
+    it('does NOT requeue when zrem claim fails (already claimed by another tick)', async () => {
+      mockZrange.mockResolvedValue(['job-y'])
+      mockZrem.mockResolvedValue(0)
+
+      await drainDueRetries(mockRedisInstance as any)
+
+      expect(mockRpush).not.toHaveBeenCalled()
+    })
+
+    it('is defensive: zrange error does not throw', async () => {
+      mockZrange.mockRejectedValue(new Error('redis_down'))
+
+      await expect(drainDueRetries(mockRedisInstance as any)).resolves.toBeUndefined()
+      expect(mockRpush).not.toHaveBeenCalled()
+    })
   })
 })
