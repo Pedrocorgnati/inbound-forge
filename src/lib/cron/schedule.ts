@@ -46,4 +46,9 @@ export const CRON_JOBS: CronJobDefinition[] = [
     schedule: '0 8 * * *',
     description: 'Monitor de expiração de tokens — diário 08:00 UTC (TASK-8 / WK-WRK-07)',
   },
+  {
+    path: '/api/cron/blog-scheduler',
+    schedule: '*/5 * * * *',
+    description: 'Publica artigos de blog agendados (SCHEDULED->PUBLISHED) a cada 5 min (TASK-6 / AUDIT-5)',
+  },
 ]
