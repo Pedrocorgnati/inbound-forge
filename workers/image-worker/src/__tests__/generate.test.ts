@@ -101,7 +101,8 @@ describe('generateImage', () => {
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
+    // clearAllMocks (nao restore) para o spy de stdout sobreviver entre testes.
+    vi.clearAllMocks()
   })
 
   // ---------- Full pipeline success ----------
@@ -124,7 +125,8 @@ describe('generateImage', () => {
       { widthPx: 1080, heightPx: 1080 },
       { IDEOGRAM_API_KEY: 'ideo-key', FAL_API_KEY: 'fal-key' },
       undefined, // signal
-      '#FF0000'
+      '#FF0000',
+      { backgroundNeedsText: undefined }, // TASK-2 ST003 — 7o arg de roteamento
     )
 
     // 3. Compose final image
@@ -251,7 +253,8 @@ describe('generateImage', () => {
       expect.anything(),
       expect.anything(),
       controller.signal,
-      expect.anything()
+      expect.anything(),
+      expect.anything(),
     )
 
     // uploadImageToStorage receives the signal
@@ -275,7 +278,9 @@ describe('generateImage', () => {
     const env = makeEnv()
     const opts = makeOpts()
 
-    await expect(generateImage(opts, mock, env, controller.signal)).rejects.toThrow('AbortError')
+    // generateImage propaga o erro de generateBackground; o DOMException de abort
+    // tem name 'AbortError' e message 'aborted' — casar pela message.
+    await expect(generateImage(opts, mock, env, controller.signal)).rejects.toThrow(/abort/i)
   })
 
   // ---------- Fallback to static when providers fail ----------
@@ -379,8 +384,9 @@ describe('generateImage', () => {
       expect.anything(),
       expect.anything(),
       expect.anything(),
+      undefined, // signal (nao passado neste teste; anything() nao casa undefined)
+      '#4F46E5', // default
       expect.anything(),
-      '#4F46E5' // default
     )
   })
 })
