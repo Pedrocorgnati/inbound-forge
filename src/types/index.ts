@@ -17,6 +17,12 @@ export interface NavItem {
   badgeKey?: 'pendingEntries' | 'pendingContent' | 'pendingPublish' | 'pendingReconciliation' | null
 }
 
+/** Agrupamento da sidebar por dominio (IA). titleKey resolve em nav.sections.* */
+export interface NavSection {
+  titleKey: string
+  items: NavItem[]
+}
+
 export interface SidebarBadges {
   pendingEntries?: number
   pendingContent?: number

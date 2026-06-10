@@ -2,6 +2,12 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { prisma } from '@/lib/prisma'
 import { SequenceBuilderClient } from '@/components/sequences/SequenceBuilderClient'
+import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/EmptyState'
+
+const SEQUENCE_STATUS_VARIANT: Record<string, 'default' | 'success'> = {
+  DRAFT: 'default', ACTIVE: 'success', ARCHIVED: 'default',
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -39,25 +45,25 @@ export default async function SequencesPage({ params }: { params: Promise<{ loca
       </div>
 
       {loadError ? (
-        <p data-testid="sequences-error" className="text-sm text-red-600">{t('error')}</p>
+        <div data-testid="sequences-error"><EmptyState variant="error" title={t('error')} /></div>
       ) : sequences.length === 0 ? (
-        <p data-testid="sequences-empty" className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>
+        <div data-testid="sequences-empty"><EmptyState variant="noData" title={t('empty')} /></div>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table data-testid="sequences-table" className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-4 py-2">{t('colName')}</th>
-                <th className="px-4 py-2">{t('colStatus')}</th>
-                <th className="px-4 py-2">{t('colSteps')}</th>
-                <th className="px-4 py-2">{t('colEnrollments')}</th>
+                <th scope="col" className="px-4 py-2">{t('colName')}</th>
+                <th scope="col" className="px-4 py-2">{t('colStatus')}</th>
+                <th scope="col" className="px-4 py-2">{t('colSteps')}</th>
+                <th scope="col" className="px-4 py-2">{t('colEnrollments')}</th>
               </tr>
             </thead>
             <tbody>
               {sequences.map((s) => (
                 <tr key={s.id} className="border-t">
                   <td className="px-4 py-2 font-medium">{s.name}</td>
-                  <td className="px-4 py-2">{t(`status.${s.status}`)}</td>
+                  <td className="px-4 py-2"><Badge variant={SEQUENCE_STATUS_VARIANT[s.status] ?? 'default'}>{t(`status.${s.status}`)}</Badge></td>
                   <td className="px-4 py-2 text-muted-foreground">{s.steps}</td>
                   <td className="px-4 py-2 text-muted-foreground">{s.enrollments}</td>
                 </tr>

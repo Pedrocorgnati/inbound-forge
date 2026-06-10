@@ -3,18 +3,23 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+import { X } from 'lucide-react'
 import { uuidv7 } from '@/lib/utils/uuidv7'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { toast } from '@/components/ui/toast'
 
 const TRIGGERS = ['LEAD_CREATED', 'LEAD_STATUS_CHANGED', 'LEAD_MQL'] as const
 const ACTIONS = ['NOTIFY', 'SET_FUNNEL_STAGE', 'ENROLL_SEQUENCE'] as const
 const STAGES = ['AWARENESS', 'CONSIDERATION', 'DECISION'] as const
-type State = 'idle' | 'saving' | 'error'
 
 export function AutomationBuilderClient() {
   const t = useTranslations('automations')
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [state, setState] = useState<State>('idle')
+  const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
   const [trigger, setTrigger] = useState<string>('LEAD_CREATED')
   const [actionType, setActionType] = useState<string>('NOTIFY')
@@ -25,8 +30,8 @@ export function AutomationBuilderClient() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (state === 'saving') return
-    setState('saving')
+    if (saving) return
+    setSaving(true)
     const actionConfig: Record<string, string> = {}
     if (actionType === 'SET_FUNNEL_STAGE') actionConfig.funnelStage = funnelStage
     if (actionType === 'ENROLL_SEQUENCE') actionConfig.sequenceId = sequenceId
@@ -38,79 +43,49 @@ export function AutomationBuilderClient() {
         body: JSON.stringify({ name, trigger, actionType, enabled, actionConfig }),
       })
       if (res.ok) {
+        toast.success(t('builder.saved'))
         setOpen(false)
         setName(''); setNote(''); setSequenceId('')
         router.refresh()
-      } else setState('error')
+      } else {
+        toast.error(t('builder.error'))
+        setSaving(false)
+      }
     } catch {
-      setState('error')
-    } finally {
-      if (state !== 'error') setState('idle')
+      toast.error(t('builder.error'))
+      setSaving(false)
     }
   }
 
   if (!open) {
-    return (
-      <button type="button" onClick={() => setOpen(true)} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
-        {t('new')}
-      </button>
-    )
+    return <Button type="button" onClick={() => setOpen(true)}>{t('new')}</Button>
   }
 
-  const input = 'mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm'
   return (
     <form onSubmit={onSubmit} data-testid="automation-builder" className="space-y-3 rounded-lg border p-4">
-      <div>
-        <label className="block text-sm font-medium">{t('builder.name')}</label>
-        <input required value={name} onChange={(e) => setName(e.target.value)} className={input} />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-sm font-medium">{t('builder.trigger')}</label>
-          <select value={trigger} onChange={(e) => setTrigger(e.target.value)} className={input}>
-            {TRIGGERS.map((tr) => <option key={tr} value={tr}>{t(`trigger.${tr}`)}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium">{t('builder.action')}</label>
-          <select value={actionType} onChange={(e) => setActionType(e.target.value)} className={input}>
-            {ACTIONS.map((a) => <option key={a} value={a}>{t(`action.${a}`)}</option>)}
-          </select>
-        </div>
+      <Input label={t('builder.name')} required value={name} onChange={(e) => setName(e.target.value)} />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Select label={t('builder.trigger')} value={trigger} onChange={(e) => setTrigger(e.target.value)} options={TRIGGERS.map((tr) => ({ value: tr, label: t(`trigger.${tr}`) }))} />
+        <Select label={t('builder.action')} value={actionType} onChange={(e) => setActionType(e.target.value)} options={ACTIONS.map((a) => ({ value: a, label: t(`action.${a}`) }))} />
       </div>
 
       {actionType === 'SET_FUNNEL_STAGE' && (
-        <div>
-          <label className="block text-sm font-medium">{t('builder.funnelStage')}</label>
-          <select value={funnelStage} onChange={(e) => setFunnelStage(e.target.value)} className={input}>
-            {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
+        <Select label={t('builder.funnelStage')} value={funnelStage} onChange={(e) => setFunnelStage(e.target.value)} options={STAGES.map((s) => ({ value: s, label: s }))} />
       )}
       {actionType === 'ENROLL_SEQUENCE' && (
-        <div>
-          <label className="block text-sm font-medium">{t('builder.sequenceId')}</label>
-          <input required value={sequenceId} onChange={(e) => setSequenceId(e.target.value)} className={input} placeholder="uuid" />
-        </div>
+        <Input label={t('builder.sequenceId')} required value={sequenceId} onChange={(e) => setSequenceId(e.target.value)} placeholder="uuid" />
       )}
       {actionType === 'NOTIFY' && (
-        <div>
-          <label className="block text-sm font-medium">{t('builder.note')}</label>
-          <input value={note} onChange={(e) => setNote(e.target.value)} className={input} />
-        </div>
+        <Input label={t('builder.note')} value={note} onChange={(e) => setNote(e.target.value)} />
       )}
 
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
-        {t('builder.enabledLabel')}
-      </label>
+      <Checkbox label={t('builder.enabledLabel')} checked={enabled} onCheckedChange={(v) => setEnabled(v === true)} />
 
-      {state === 'error' && <p className="text-sm text-red-600">{t('builder.error')}</p>}
       <div className="flex gap-2">
-        <button type="submit" disabled={state === 'saving'} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
-          {state === 'saving' ? t('builder.saving') : t('builder.save')}
-        </button>
-        <button type="button" onClick={() => setOpen(false)} className="rounded-md border px-4 py-2 text-sm">×</button>
+        <Button type="submit" isLoading={saving} loadingText={t('builder.saving')}>{t('builder.save')}</Button>
+        <Button type="button" variant="ghost" size="icon" aria-label={t('builder.cancel')} onClick={() => setOpen(false)}>
+          <X className="h-4 w-4" aria-hidden />
+        </Button>
       </div>
     </form>
   )

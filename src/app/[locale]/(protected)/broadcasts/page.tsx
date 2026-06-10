@@ -3,6 +3,12 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { prisma } from '@/lib/prisma'
 import { BroadcastSendButton } from '@/components/broadcasts/BroadcastSendButton'
+import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/EmptyState'
+
+const BROADCAST_STATUS_VARIANT: Record<string, 'default' | 'info' | 'warning' | 'success' | 'danger'> = {
+  DRAFT: 'default', SCHEDULED: 'info', SENDING: 'warning', SENT: 'success', CANCELED: 'default', FAILED: 'danger',
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -41,29 +47,29 @@ export default async function BroadcastsPage({ params }: { params: Promise<{ loc
       </div>
 
       {loadError ? (
-        <p data-testid="broadcasts-error" className="text-sm text-red-600">{t('error')}</p>
+        <div data-testid="broadcasts-error"><EmptyState variant="error" title={t('error')} /></div>
       ) : broadcasts.length === 0 ? (
-        <p data-testid="broadcasts-empty" className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-          {t('empty')}
-        </p>
+        <div data-testid="broadcasts-empty">
+          <EmptyState variant="noData" title={t('empty')} actionLabel={t('new')} actionHref={`/${locale}/broadcasts/new`} />
+        </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table data-testid="broadcasts-table" className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-4 py-2">{t('colSubject')}</th>
-                <th className="px-4 py-2">{t('colStatus')}</th>
-                <th className="px-4 py-2">{t('colRecipients')}</th>
-                <th className="px-4 py-2">{t('colSent')}</th>
-                <th className="px-4 py-2">{t('colDate')}</th>
-                <th className="px-4 py-2"></th>
+                <th scope="col" className="px-4 py-2">{t('colSubject')}</th>
+                <th scope="col" className="px-4 py-2">{t('colStatus')}</th>
+                <th scope="col" className="px-4 py-2">{t('colRecipients')}</th>
+                <th scope="col" className="px-4 py-2">{t('colSent')}</th>
+                <th scope="col" className="px-4 py-2">{t('colDate')}</th>
+                <th scope="col" className="px-4 py-2"></th>
               </tr>
             </thead>
             <tbody>
               {broadcasts.map((b) => (
                 <tr key={b.id} className="border-t">
                   <td className="px-4 py-2 font-medium">{b.subject}</td>
-                  <td className="px-4 py-2">{t(`status.${b.status}`)}</td>
+                  <td className="px-4 py-2"><Badge variant={BROADCAST_STATUS_VARIANT[b.status] ?? 'default'}>{t(`status.${b.status}`)}</Badge></td>
                   <td className="px-4 py-2 text-muted-foreground">{b.totalRecipients}</td>
                   <td className="px-4 py-2 text-muted-foreground">{b.sentCount}</td>
                   <td className="px-4 py-2 text-muted-foreground">{b.createdAt.toISOString().slice(0, 10)}</td>

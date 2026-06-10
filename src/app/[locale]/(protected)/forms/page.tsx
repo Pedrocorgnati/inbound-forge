@@ -2,6 +2,12 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { prisma } from '@/lib/prisma'
 import { FormBuilderClient } from '@/components/forms/FormBuilderClient'
+import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/EmptyState'
+
+const FORM_STATUS_VARIANT: Record<string, 'default' | 'success'> = {
+  DRAFT: 'default', PUBLISHED: 'success', ARCHIVED: 'default',
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -34,19 +40,19 @@ export default async function FormsPage({ params }: { params: Promise<{ locale: 
       </div>
 
       {loadError ? (
-        <p data-testid="forms-error" className="text-sm text-red-600">{t('error')}</p>
+        <div data-testid="forms-error"><EmptyState variant="error" title={t('error')} /></div>
       ) : forms.length === 0 ? (
-        <p data-testid="forms-empty" className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>
+        <div data-testid="forms-empty"><EmptyState variant="noData" title={t('empty')} /></div>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table data-testid="forms-table" className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-4 py-2">{t('colName')}</th>
-                <th className="px-4 py-2">{t('colKind')}</th>
-                <th className="px-4 py-2">{t('colStatus')}</th>
-                <th className="px-4 py-2">{t('colSubmissions')}</th>
-                <th className="px-4 py-2">{t('publicUrl')}</th>
+                <th scope="col" className="px-4 py-2">{t('colName')}</th>
+                <th scope="col" className="px-4 py-2">{t('colKind')}</th>
+                <th scope="col" className="px-4 py-2">{t('colStatus')}</th>
+                <th scope="col" className="px-4 py-2">{t('colSubmissions')}</th>
+                <th scope="col" className="px-4 py-2">{t('publicUrl')}</th>
               </tr>
             </thead>
             <tbody>
@@ -54,7 +60,7 @@ export default async function FormsPage({ params }: { params: Promise<{ locale: 
                 <tr key={form.id} className="border-t">
                   <td className="px-4 py-2 font-medium">{form.name}</td>
                   <td className="px-4 py-2">{t(`kind.${form.kind}`)}</td>
-                  <td className="px-4 py-2">{t(`status.${form.status}`)}</td>
+                  <td className="px-4 py-2"><Badge variant={FORM_STATUS_VARIANT[form.status] ?? 'default'}>{t(`status.${form.status}`)}</Badge></td>
                   <td className="px-4 py-2 text-muted-foreground">{form.submissionCount}</td>
                   <td className="px-4 py-2">
                     {form.status === 'PUBLISHED' ? (

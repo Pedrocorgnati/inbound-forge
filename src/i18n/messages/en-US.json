@@ -87,10 +87,18 @@
     "assets": "Asset Library",
     "compliance": "Compliance",
     "subscribers": "Subscribers",
-    "broadcasts": "Email",
+    "broadcasts": "Broadcasts",
     "forms": "Forms",
     "sequences": "Sequences",
-    "automations": "Automations"
+    "automations": "Automations",
+    "sections": {
+      "overview": "Overview",
+      "content": "Content",
+      "publishing": "Publishing",
+      "emailAutomation": "Email & Automation",
+      "leadsCrm": "Leads & CRM",
+      "analysisSystem": "Analytics & System"
+    }
   },
   "breadcrumbs": {
     "home": "Home",
@@ -855,7 +863,9 @@
       "consentText": "LGPD consent text",
       "save": "Save form",
       "saving": "Saving...",
-      "error": "Could not process. Please try again."
+      "error": "Could not process. Please try again.",
+      "cancel": "Cancel",
+      "saved": "Form created"
     }
   },
   "publicForm": {
@@ -898,7 +908,9 @@
       "body": "Body (HTML)",
       "save": "Save sequence",
       "saving": "Saving...",
-      "error": "Could not save."
+      "error": "Could not save.",
+      "cancel": "Cancel",
+      "saved": "Sequence created"
     }
   },
   "automations": {
@@ -937,7 +949,9 @@
       "configHint": "Fill the field matching the chosen action.",
       "save": "Save rule",
       "saving": "Saving...",
-      "error": "Could not save."
+      "error": "Could not save.",
+      "cancel": "Cancel",
+      "saved": "Rule created"
     }
   }
 }

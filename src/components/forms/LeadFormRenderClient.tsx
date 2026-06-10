@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { uuidv7 } from '@/lib/utils/uuidv7'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface Props {
   slug: string
@@ -50,32 +53,45 @@ export function LeadFormRenderClient({ slug, kind, ctaLabel, consentText, succes
 
   if (state === 'success') {
     return (
-      <div data-testid="leadform-success" className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">
+      <div
+        role="status"
+        data-testid="leadform-success"
+        className="rounded-md border border-success-bg bg-success-bg p-4 text-sm text-success-text"
+      >
         {successMessage || t('success')}
       </div>
     )
   }
 
   return (
-    <form onSubmit={onSubmit} data-testid="leadform" className="space-y-4">
+    <form onSubmit={onSubmit} data-testid="leadform" className="space-y-4" noValidate>
       {collectName && (
-        <div>
-          <label htmlFor="lf-name" className="block text-sm font-medium text-foreground">{t('nameLabel')}</label>
-          <input id="lf-name" value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-        </div>
+        <Input id="lf-name" label={t('nameLabel')} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
       )}
-      <div>
-        <label htmlFor="lf-email" className="block text-sm font-medium text-foreground">{t('emailLabel')}</label>
-        <input id="lf-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('emailPlaceholder')} className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" />
-      </div>
-      <label className="flex items-start gap-2 text-sm text-muted-foreground">
-        <input type="checkbox" required checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" data-testid="leadform-consent" />
-        <span>{consentText || t('consentDefault')}</span>
-      </label>
-      {state === 'error' && <p data-testid="leadform-error" className="text-sm text-red-600">{t('error')}</p>}
-      <button type="submit" disabled={!consent || state === 'submitting'} className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50">
-        {state === 'submitting' ? t('submitting') : ctaLabel || t('submit')}
-      </button>
+      <Input
+        id="lf-email"
+        type="email"
+        required
+        autoComplete="email"
+        label={t('emailLabel')}
+        placeholder={t('emailPlaceholder')}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <Checkbox
+        label={consentText || t('consentDefault')}
+        checked={consent}
+        onCheckedChange={(v) => setConsent(v === true)}
+        data-testid="leadform-consent"
+      />
+      {state === 'error' && (
+        <p role="alert" data-testid="leadform-error" className="text-sm text-danger">
+          {t('error')}
+        </p>
+      )}
+      <Button type="submit" className="w-full" disabled={!consent} isLoading={state === 'submitting'} loadingText={t('submitting')}>
+        {ctaLabel || t('submit')}
+      </Button>
     </form>
   )
 }

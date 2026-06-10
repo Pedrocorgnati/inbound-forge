@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
 import { prisma } from '@/lib/prisma'
 import { AutomationBuilderClient } from '@/components/automations/AutomationBuilderClient'
+import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,19 +41,19 @@ export default async function AutomationsPage({ params }: { params: Promise<{ lo
       </div>
 
       {loadError ? (
-        <p data-testid="automations-error" className="text-sm text-red-600">{t('error')}</p>
+        <div data-testid="automations-error"><EmptyState variant="error" title={t('error')} /></div>
       ) : rules.length === 0 ? (
-        <p data-testid="automations-empty" className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">{t('empty')}</p>
+        <div data-testid="automations-empty"><EmptyState variant="noData" title={t('empty')} /></div>
       ) : (
         <div className="overflow-x-auto rounded-lg border">
           <table data-testid="automations-table" className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-4 py-2">{t('colName')}</th>
-                <th className="px-4 py-2">{t('colTrigger')}</th>
-                <th className="px-4 py-2">{t('colAction')}</th>
-                <th className="px-4 py-2">{t('colEnabled')}</th>
-                <th className="px-4 py-2">{t('colRuns')}</th>
+                <th scope="col" className="px-4 py-2">{t('colName')}</th>
+                <th scope="col" className="px-4 py-2">{t('colTrigger')}</th>
+                <th scope="col" className="px-4 py-2">{t('colAction')}</th>
+                <th scope="col" className="px-4 py-2">{t('colEnabled')}</th>
+                <th scope="col" className="px-4 py-2">{t('colRuns')}</th>
               </tr>
             </thead>
             <tbody>
@@ -60,7 +62,7 @@ export default async function AutomationsPage({ params }: { params: Promise<{ lo
                   <td className="px-4 py-2 font-medium">{r.name}</td>
                   <td className="px-4 py-2">{t(`trigger.${r.trigger}`)}</td>
                   <td className="px-4 py-2">{t(`action.${r.actionType}`)}</td>
-                  <td className="px-4 py-2 text-muted-foreground">{r.enabled ? t('enabled') : t('disabled')}</td>
+                  <td className="px-4 py-2"><Badge variant={r.enabled ? 'success' : 'default'}>{r.enabled ? t('enabled') : t('disabled')}</Badge></td>
                   <td className="px-4 py-2 text-muted-foreground">{r.runs}</td>
                 </tr>
               ))}

@@ -31,7 +31,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
-import { NAV_ITEMS } from '@/constants/nav'
+import { Separator } from '@/components/ui/separator'
+import { NAV_SECTIONS } from '@/constants/nav'
 import type { SidebarBadges } from '@/types'
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -70,10 +71,20 @@ interface SidebarNavProps {
 export function SidebarNav({ collapsed, badges = {}, locale, onItemClick }: SidebarNavProps) {
   const pathname = usePathname()
   const t = useTranslations('nav')
+  const tSections = useTranslations('nav.sections')
 
   return (
-    <nav data-testid="sidebar-nav" aria-label="Navegação principal" className="flex flex-col gap-2 px-2 py-2"> {/* RESOLVED G10: gap-1→gap-2 (8px) para WCAG touch spacing */}
-      {NAV_ITEMS.map((item) => {
+    <nav data-testid="sidebar-nav" aria-label="Navegação principal" className="flex flex-col gap-1 px-2 py-2">
+      {NAV_SECTIONS.map((section, sectionIdx) => (
+        <div key={section.titleKey} role="group" aria-label={tSections(section.titleKey)} className="flex flex-col gap-1">
+          {!collapsed ? (
+            <span className="px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {tSections(section.titleKey)}
+            </span>
+          ) : sectionIdx > 0 ? (
+            <Separator className="my-1" />
+          ) : null}
+          {section.items.map((item) => {
         const isActive = pathname?.includes(item.href) ?? false
         const Icon = ICON_MAP[item.icon] ?? LayoutDashboard
         const count = item.badgeKey ? (badges[item.badgeKey] ?? 0) : 0
@@ -124,7 +135,9 @@ export function SidebarNav({ collapsed, badges = {}, locale, onItemClick }: Side
             )}
           </Link>
         )
-      })}
+          })}
+        </div>
+      ))}
     </nav>
   )
 }

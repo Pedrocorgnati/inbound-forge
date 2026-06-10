@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { uuidv7 } from '@/lib/utils/uuidv7'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 
 type FormState = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -31,8 +34,9 @@ export function SubscribeFormClient({ source }: { source?: string }) {
   if (state === 'success') {
     return (
       <div
+        role="status"
         data-testid="subscribe-success"
-        className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800"
+        className="rounded-md border border-success-bg bg-success-bg p-4 text-sm text-success-text"
       >
         {t('success')}
       </div>
@@ -40,44 +44,37 @@ export function SubscribeFormClient({ source }: { source?: string }) {
   }
 
   return (
-    <form onSubmit={onSubmit} data-testid="subscribe-form" className="space-y-4">
-      <div>
-        <label htmlFor="sub-email" className="block text-sm font-medium text-foreground">
-          {t('emailLabel')}
-        </label>
-        <input
-          id="sub-email"
-          type="email"
-          required
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder={t('emailPlaceholder')}
-          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-        />
-      </div>
-      <label className="flex items-start gap-2 text-sm text-muted-foreground">
-        <input
-          type="checkbox"
-          required
-          checked={consent}
-          onChange={(e) => setConsent(e.target.checked)}
-          className="mt-0.5"
-          data-testid="subscribe-consent"
-        />
-        <span>{t('consentLabel')}</span>
-      </label>
+    <form onSubmit={onSubmit} data-testid="subscribe-form" className="space-y-4" noValidate>
+      <Input
+        id="sub-email"
+        type="email"
+        required
+        autoComplete="email"
+        label={t('emailLabel')}
+        placeholder={t('emailPlaceholder')}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <Checkbox
+        label={t('consentLabel')}
+        checked={consent}
+        onCheckedChange={(v) => setConsent(v === true)}
+        data-testid="subscribe-consent"
+      />
       {state === 'error' && (
-        <p data-testid="subscribe-error" className="text-sm text-red-600">
+        <p role="alert" data-testid="subscribe-error" className="text-sm text-danger">
           {t('error')}
         </p>
       )}
-      <button
+      <Button
         type="submit"
-        disabled={!consent || state === 'submitting'}
-        className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        className="w-full"
+        disabled={!consent}
+        isLoading={state === 'submitting'}
+        loadingText={t('submitting')}
       >
-        {state === 'submitting' ? t('submitting') : t('submit')}
-      </button>
+        {t('submit')}
+      </Button>
     </form>
   )
 }

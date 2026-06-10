@@ -87,10 +87,18 @@
     "assets": "Biblioteca de Ativos",
     "compliance": "Compliance",
     "subscribers": "Inscritos",
-    "broadcasts": "Email",
+    "broadcasts": "Broadcasts",
     "forms": "Formularios",
     "sequences": "Sequencias",
-    "automations": "Automacoes"
+    "automations": "Automacoes",
+    "sections": {
+      "overview": "Visão geral",
+      "content": "Conteúdo",
+      "publishing": "Publicação",
+      "emailAutomation": "Email & Automação",
+      "leadsCrm": "Leads & CRM",
+      "analysisSystem": "Análise & Sistema"
+    }
   },
   "breadcrumbs": {
     "home": "Início",
@@ -855,7 +863,9 @@
       "consentText": "Texto de consentimento LGPD",
       "save": "Salvar formulario",
       "saving": "Salvando...",
-      "error": "Nao foi possivel processar. Tente novamente."
+      "error": "Nao foi possivel processar. Tente novamente.",
+      "cancel": "Cancelar",
+      "saved": "Formulario criado"
     }
   },
   "publicForm": {
@@ -898,7 +908,9 @@
       "body": "Corpo (HTML)",
       "save": "Salvar sequencia",
       "saving": "Salvando...",
-      "error": "Nao foi possivel salvar."
+      "error": "Nao foi possivel salvar.",
+      "cancel": "Cancelar",
+      "saved": "Sequencia criada"
     }
   },
   "automations": {
@@ -937,7 +949,9 @@
       "configHint": "Preencha o campo conforme a acao escolhida.",
       "save": "Salvar regra",
       "saving": "Salvando...",
-      "error": "Nao foi possivel salvar."
+      "error": "Nao foi possivel salvar.",
+      "cancel": "Cancelar",
+      "saved": "Regra criada"
     }
   }
 }

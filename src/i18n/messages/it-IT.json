@@ -87,10 +87,18 @@
     "assets": "Libreria Risorse",
     "compliance": "Compliance",
     "subscribers": "Iscritti",
-    "broadcasts": "Email",
+    "broadcasts": "Broadcast",
     "forms": "Moduli",
     "sequences": "Sequenze",
-    "automations": "Automazioni"
+    "automations": "Automazioni",
+    "sections": {
+      "overview": "Panoramica",
+      "content": "Contenuti",
+      "publishing": "Pubblicazione",
+      "emailAutomation": "Email & Automazione",
+      "leadsCrm": "Lead & CRM",
+      "analysisSystem": "Analisi & Sistema"
+    }
   },
   "breadcrumbs": {
     "home": "Home",
@@ -855,7 +863,9 @@
       "consentText": "Testo consenso LGPD",
       "save": "Salva modulo",
       "saving": "Salvataggio...",
-      "error": "Impossibile elaborare. Riprova."
+      "error": "Impossibile elaborare. Riprova.",
+      "cancel": "Annulla",
+      "saved": "Modulo creato"
     }
   },
   "publicForm": {
@@ -898,7 +908,9 @@
       "body": "Corpo (HTML)",
       "save": "Salva sequenza",
       "saving": "Salvataggio...",
-      "error": "Impossibile salvare."
+      "error": "Impossibile salvare.",
+      "cancel": "Annulla",
+      "saved": "Sequenza creata"
     }
   },
   "automations": {
@@ -937,7 +949,9 @@
       "configHint": "Compila il campo in base all azione scelta.",
       "save": "Salva regola",
       "saving": "Salvataggio...",
-      "error": "Impossibile salvare."
+      "error": "Impossibile salvare.",
+      "cancel": "Annulla",
+      "saved": "Regola creata"
     }
   }
 }

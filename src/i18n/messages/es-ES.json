@@ -87,10 +87,18 @@
     "assets": "Biblioteca de Recursos",
     "compliance": "Cumplimiento",
     "subscribers": "Suscriptores",
-    "broadcasts": "Email",
+    "broadcasts": "Broadcasts",
     "forms": "Formularios",
     "sequences": "Secuencias",
-    "automations": "Automatizaciones"
+    "automations": "Automatizaciones",
+    "sections": {
+      "overview": "Visión general",
+      "content": "Contenido",
+      "publishing": "Publicación",
+      "emailAutomation": "Email & Automatización",
+      "leadsCrm": "Leads & CRM",
+      "analysisSystem": "Análisis & Sistema"
+    }
   },
   "breadcrumbs": {
     "home": "Inicio",
@@ -855,7 +863,9 @@
       "consentText": "Texto de consentimiento LGPD",
       "save": "Guardar formulario",
       "saving": "Guardando...",
-      "error": "No se pudo procesar. Intentalo de nuevo."
+      "error": "No se pudo procesar. Intentalo de nuevo.",
+      "cancel": "Cancelar",
+      "saved": "Formulario creado"
     }
   },
   "publicForm": {
@@ -898,7 +908,9 @@
       "body": "Cuerpo (HTML)",
       "save": "Guardar secuencia",
       "saving": "Guardando...",
-      "error": "No se pudo guardar."
+      "error": "No se pudo guardar.",
+      "cancel": "Cancelar",
+      "saved": "Secuencia creada"
     }
   },
   "automations": {
@@ -937,7 +949,9 @@
       "configHint": "Rellena el campo segun la accion elegida.",
       "save": "Guardar regla",
       "saving": "Guardando...",
-      "error": "No se pudo guardar."
+      "error": "No se pudo guardar.",
+      "cancel": "Cancelar",
+      "saved": "Regla creada"
     }
   }
 }
