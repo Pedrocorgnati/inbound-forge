@@ -5,6 +5,7 @@
 import 'server-only'
 import { prisma } from '@/lib/prisma'
 import { encryptPII, decryptPII } from '@/lib/crypto'
+import { logger } from '@/lib/logger'
 
 export type ApiProvider = 'openai' | 'ideogram' | 'flux' | 'browserless' | 'anthropic'
 
@@ -27,19 +28,38 @@ export function invalidateKeyCache(provider?: ApiProvider) {
   else cache.clear()
 }
 
+// SA-SEC-07: falhar alto. NUNCA persistir API key em base64 reversivel.
+// Se PII_ENCRYPTION_KEY estiver ausente/invalida, encryptPII lanca e o erro
+// propaga ate o caller (rotate route -> internalError), sem gravar texto plano.
 function encrypt(raw: string): string {
-  try {
-    return encryptPII(raw)
-  } catch {
-    return Buffer.from(raw, 'utf8').toString('base64')
-  }
+  return encryptPII(raw)
+}
+
+// Compat de leitura: valores legados gravados pelo fallback antigo
+// (Buffer.from(raw,'utf8').toString('base64')) quando a chave estava ausente.
+// So aceita base64 canonico que decodifica para ASCII imprimivel (API keys sao
+// ASCII); ciphertext GCM corrompido decodifica para binario -> rejeitado.
+function tryLegacyBase64Plaintext(stored: string): string | null {
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(stored)) return null
+  const decoded = Buffer.from(stored, 'base64')
+  if (decoded.toString('base64') !== stored) return null // nao canonico
+  const text = decoded.toString('utf8')
+  if (!/^[\x20-\x7E]+$/.test(text)) return null
+  return text
 }
 
 function decrypt(stored: string): string {
   try {
     return decryptPII(stored)
-  } catch {
-    return Buffer.from(stored, 'base64').toString('utf8')
+  } catch (err) {
+    const legacy = tryLegacyBase64Plaintext(stored)
+    if (legacy !== null) {
+      // Dado NAO-criptografado, marcado de forma explicita (nunca logar o valor).
+      logger.warn('key-manager', 'Valor lido via fallback base64 legado (NAO criptografado). Rotacione a chave para re-cifrar.')
+      return legacy
+    }
+    // Ciphertext real corrompido / chave errada: falhar alto em vez de retornar lixo.
+    throw err
   }
 }
 
@@ -55,6 +75,10 @@ export async function getApiKey(provider: ApiProvider): Promise<string | null> {
       if (typeof ct === 'string' && ct.length > 0) value = decrypt(ct)
     }
   } catch {
+    // SA-SEC-07 (Zero Silencio): nao engolir erro de DB/decrypt silenciosamente.
+    // decrypt() agora lanca em ciphertext corrompido -> degrada para env fallback,
+    // nunca retorna string corrompida. Nunca logar ciphertext/plaintext.
+    logger.error('key-manager', 'Falha ao ler/decifrar apiKey persistida; usando env fallback', { provider })
     value = null
   }
   if (!value) {
