@@ -46,7 +46,8 @@ export async function run(): Promise<{ enqueued: number; skipped: number }> {
   await trackJob(
     { type: 'rescraping.batch', payload: { batchId, sourceCount: sources.length, correlationId } },
     async () => {
-      await redis.lpush(REDIS_KEYS.SCRAPING_BATCH(batchId), JSON.stringify(job))
+      // CX-06: fila canonica unica drenada pelo scraping-worker (ver trigger route).
+      await redis.lpush(REDIS_KEYS.SCRAPING_QUEUE, JSON.stringify(job))
     },
   )
 

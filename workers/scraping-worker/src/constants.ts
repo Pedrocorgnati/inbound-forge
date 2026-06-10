@@ -18,6 +18,10 @@ export const SCRAPING_BATCH_SIZE = Number(process.env.SCRAPING_BATCH_SIZE ?? 10)
 export const REDIS_KEYS = {
   SCRAPING_BATCH: (batchId: string) => `scraping:${batchId}`,
   SCRAPING_RESULT: (batchId: string) => `scraping:result:${batchId}`,
+  // CX-06 fix: fila canonica unica onde o app (Next.js, via REST) lpusha ScrapingJobs.
+  // O drenador (queue-drain.ts) faz lpop daqui e faz ponte para o BullMQ do worker.
+  // Espelha REDIS_KEYS.SCRAPING_QUEUE do Next.js (src/constants/redis-keys.ts).
+  SCRAPING_QUEUE: 'worker:scraping:queue',
   WORKER_HEARTBEAT: (workerId: string) => `worker:heartbeat:${workerId}`,
   SCRAPING_WORKER_STATUS: 'worker:scraping:status',
 } as const

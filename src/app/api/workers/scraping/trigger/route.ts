@@ -67,7 +67,9 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     }
 
-    await redis.lpush(REDIS_KEYS.SCRAPING_BATCH(batchId), JSON.stringify(job))
+    // CX-06: empilhar na fila canonica unica que o scraping-worker drena (lpop),
+    // nao numa chave por-batch que ninguem consumia. O worker faz ponte para o BullMQ.
+    await redis.lpush(REDIS_KEYS.SCRAPING_QUEUE, JSON.stringify(job))
 
     // SEC-008: log sem URLs
     console.info(`[Trigger] Batch enqueued | batchId=${batchId} | sources=${activeSources.length} | userId=${user!.id}`)

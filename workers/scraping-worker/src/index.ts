@@ -11,6 +11,7 @@ import { startHeartbeat, stopHeartbeat } from './heartbeat'
 import { startCron, stopCron } from './cron'
 import { startWorker, stopWorker } from './worker'
 import { closeQueue } from './queue'
+import { startQueueDrain, stopQueueDrain } from './queue-drain'
 import { disconnectPrisma } from './db'
 import { startCleanupCron, stopCleanupCron } from './raw-text-cleanup'
 import { WORKER_ID } from './constants'
@@ -54,6 +55,10 @@ async function main() {
   // 3. BullMQ consumer
   startWorker()
 
+  // 3b. CX-06: drena a fila canonica onde o app (REST) empilha jobs e faz ponte
+  // para o BullMQ. Sem isto, trigger manual e cron de rescraping do app sao no-op.
+  startQueueDrain(redis)
+
   // 4. Health check server
   server.listen(PORT, () => {
     console.info(`[Main] Health check server listening on port ${PORT}`)
@@ -67,9 +72,10 @@ async function shutdown(signal: string) {
 
   const redis = getRedis()
 
-  // Parar em ordem: cron → worker (aguarda job atual) → heartbeat → queue → prisma
+  // Parar em ordem: cron/drain → worker (aguarda job atual) → heartbeat → queue → prisma
   stopCron()
   stopCleanupCron()
+  stopQueueDrain()
   await stopWorker()
   stopHeartbeat(redis, WORKER_ID)
   await closeQueue()

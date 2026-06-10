@@ -47,10 +47,10 @@ describe('rescraping.worker run()', () => {
       expect.objectContaining({ where: { isActive: true, antiBotBlocked: false } }),
     )
 
-    // um unico lpush, numa chave scraping:<batchId>, com payload source-based
+    // CX-06: um unico lpush na fila canonica drenada pelo worker, com payload source-based
     expect(mockLpush).toHaveBeenCalledTimes(1)
     const [key, payload] = mockLpush.mock.calls[0]
-    expect(key).toMatch(/^scraping:/)
+    expect(key).toBe('worker:scraping:queue')
     const job = JSON.parse(payload as string)
     expect(job.sourceIds).toEqual(['s1', 's2'])
     expect(job.triggeredBy).toBe('cron')
