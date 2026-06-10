@@ -1,31 +1,36 @@
 # Inbound Forge Workers
 
-Três workers independentes que rodam fora do Next.js para processamento pesado.
+Quatro workers independentes que rodam fora do Next.js para processamento pesado.
 
 ## Arquitetura
 
 ```
 Next.js (Vercel)
-    ↓ job enqueue via Redis
+    ↓ job enqueue via Upstash Redis
 ┌─────────────────────────────┐
-│  Railway (3 workers)        │
+│  Railway (4 workers)        │
 │  ┌─────────────────────┐    │
 │  │  scraping-worker    │ ←→ Firecrawl, Claude API  │
 │  ├─────────────────────┤    │
 │  │  image-worker       │ ←→ Ideogram, Flux (fal.ai)│
+│  ├─────────────────────┤    │
+│  │  video-worker       │ ←→ Replicate / Short Video Maker │
 │  ├─────────────────────┤    │
 │  │  publishing-worker  │ ←→ Instagram Graph API    │
 │  └─────────────────────┘    │
 └─────────────────────────────┘
 ```
 
+Cada worker e um service Railway independente, com seu proprio `railway.toml`
+(`workers/<worker>/railway.toml`) — NAO existe mais um agregado em `workers/railway.toml`.
+
 ## Deploy no Railway
 
 ### Pré-requisitos
 
 1. Conta Railway com projeto criado
-2. Variáveis de ambiente configuradas (ver `railway.toml`)
-3. Redis provisionado no Railway
+2. Variáveis de ambiente configuradas (ver o `railway.toml` de cada worker: `workers/<worker>/railway.toml`)
+3. Upstash Redis provisionado (REST API)
 
 ### Deploy inicial
 
@@ -36,10 +41,11 @@ npm install -g @railway/cli
 # Login
 railway login
 
-# Deploy de um worker específico
-railway up --service inbound-forge-scraping-worker
-railway up --service inbound-forge-image-worker
-railway up --service inbound-forge-publishing-worker
+# Deploy de um worker específico (de dentro do diretorio do worker)
+cd workers/scraping-worker   && railway up --service inbound-forge-scraping-worker
+cd workers/image-worker      && railway up --service inbound-forge-image-worker
+cd workers/video-worker      && railway up --service inbound-forge-video-worker
+cd workers/publishing-worker && railway up --service inbound-forge-publishing-worker
 ```
 
 ### Healthcheck
@@ -66,12 +72,16 @@ docker-compose up scraping-worker
 
 | Variável | Workers | Descrição |
 |----------|---------|-----------|
-| `REDIS_URL` | Todos | URL do Redis (Railway ou Upstash) |
+| `UPSTASH_REDIS_REST_URL` | Todos | URL REST do Upstash Redis |
+| `UPSTASH_REDIS_REST_TOKEN` | Todos | Token REST do Upstash Redis |
 | `DATABASE_URL` | Todos | PostgreSQL (Supabase) |
-| `WORKER_TOKEN` | Todos | Token de autenticação entre Next.js e workers |
+| `WORKER_AUTH_TOKEN` | Todos | Token de autenticação entre Next.js e workers |
+| `NEXT_PUBLIC_SUPABASE_URL` | image, video | URL do projeto Supabase (Storage) |
+| `SUPABASE_SERVICE_ROLE_KEY` | image, video | Service role key (upload no Storage) |
 | `ANTHROPIC_API_KEY` | scraping | Claude API para análise de conteúdo |
 | `IDEOGRAM_API_KEY` | image | Geração de imagens com texto |
 | `FAL_API_KEY` | image | Flux 2 Schnell para backgrounds |
+| `REPLICATE_API_TOKEN` | video | Short Video Maker (Replicate) |
 | `INSTAGRAM_ACCESS_TOKEN` | publishing | Token Graph API |
 
 ## Custos Estimados (Railway)

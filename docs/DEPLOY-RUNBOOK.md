@@ -36,8 +36,8 @@ railway up --service inbound-forge-image-worker
 
 ### 2.3 Env vars por worker
 
-Ver `workers/railway.toml`. Minimo comum:
-- `DATABASE_URL`, `REDIS_URL`, `WORKER_TOKEN`, `NODE_ENV=production`, `LOG_LEVEL=info`
+Ver os comentarios de env em cada `workers/<worker>/railway.toml`. Minimo comum:
+- `DATABASE_URL`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `WORKER_AUTH_TOKEN`, `NODE_ENV=production`
 - `RESEND_API_KEY`, `ALERT_EMAIL_TO` — para alertas via `sendAlertEmail`.
 
 ---

@@ -12,6 +12,22 @@
     {
       "path": "/api/cron/lgpd-purge",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/budget-check",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/rescraping",
+      "schedule": "0 3 * * 2"
+    },
+    {
+      "path": "/api/cron/reconciliation",
+      "schedule": "0 12 * * 1"
+    },
+    {
+      "path": "/api/cron/token-expiration",
+      "schedule": "0 8 * * *"
     }
   ]
 }
