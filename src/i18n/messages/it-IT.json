@@ -85,7 +85,9 @@
     "themes": "Temi",
     "nicheOpportunities": "Opportunità",
     "assets": "Libreria Risorse",
-    "compliance": "Compliance"
+    "compliance": "Compliance",
+    "subscribers": "Iscritti",
+    "broadcasts": "Email"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -729,5 +731,85 @@
       "ASSISTED_TOUCH": "Assistito",
       "INFERRED": "Inferito"
     }
+  },
+  "subscribers": {
+    "title": "Iscritti",
+    "description": "La tua lista email — iscritti confermati via double opt-in.",
+    "loading": "Caricamento...",
+    "empty": "Ancora nessun iscritto. Condividi la pagina di iscrizione.",
+    "error": "Errore nel caricamento iscritti.",
+    "status": {
+      "PENDING": "In attesa",
+      "CONFIRMED": "Confermato",
+      "UNSUBSCRIBED": "Disiscritto",
+      "BOUNCED": "Bounce",
+      "COMPLAINED": "Reclamo"
+    },
+    "colEmail": "Email",
+    "colStatus": "Stato",
+    "colChannel": "Origine",
+    "colDate": "Data",
+    "masked": "•••"
+  },
+  "broadcasts": {
+    "title": "Email",
+    "description": "Newsletter e campagne one-time per i tuoi iscritti.",
+    "new": "Nuovo broadcast",
+    "loading": "Caricamento...",
+    "empty": "Ancora nessun broadcast. Crea il primo.",
+    "error": "Errore nel caricamento broadcast.",
+    "status": {
+      "DRAFT": "Bozza",
+      "SCHEDULED": "Programmato",
+      "SENDING": "Invio",
+      "SENT": "Inviato",
+      "CANCELED": "Annullato",
+      "FAILED": "Fallito"
+    },
+    "colSubject": "Oggetto",
+    "colStatus": "Stato",
+    "colRecipients": "Destinatari",
+    "colSent": "Inviati",
+    "colDate": "Data",
+    "composer": {
+      "title": "Nuovo broadcast",
+      "subject": "Oggetto",
+      "subjectPlaceholder": "Oggetto dell email",
+      "preheader": "Preheader (anteprima)",
+      "bodyHtml": "Corpo (HTML)",
+      "bodyPlaceholder": "Scrivi il contenuto... usa {{unsubscribe}} per il link di disiscrizione (aggiunto automaticamente se assente).",
+      "fromName": "Nome mittente",
+      "replyTo": "Rispondi a",
+      "save": "Salva bozza",
+      "saving": "Invio...",
+      "saved": "Broadcast creato",
+      "error": "Impossibile elaborare. Riprova."
+    },
+    "send": "Invia ora",
+    "sending": "In coda...",
+    "sendConfirm": "Inviare questo broadcast a tutti gli iscritti confermati?",
+    "sendSuccess": "Invio in coda",
+    "sendError": "Errore in coda invio"
+  },
+  "subscribe": {
+    "title": "Iscriviti",
+    "description": "Ricevi i nostri contenuti via email.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "voce@email.com",
+    "consentLabel": "Accetto di ricevere email e la privacy policy.",
+    "submit": "Iscriviti",
+    "submitting": "Invio...",
+    "success": "Ci siamo quasi! Controlla la tua email per confermare.",
+    "error": "Impossibile elaborare. Riprova.",
+    "confirmed": {
+      "title": "Iscrizione confermata!",
+      "message": "Grazie per aver confermato. Riceverai presto i nostri contenuti.",
+      "error": "Link non valido o scaduto. Iscriviti di nuovo."
+    }
+  },
+  "unsubscribed": {
+    "title": "Sei stato disiscritto",
+    "message": "Non invieremo piu email a questo indirizzo.",
+    "error": "Impossibile elaborare la disiscrizione. Il link potrebbe non essere valido."
   }
 }

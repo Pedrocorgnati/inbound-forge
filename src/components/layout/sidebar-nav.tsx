@@ -23,6 +23,8 @@ import {
   Target,
   Image as ImageIcon,
   ShieldCheck,
+  Mail,
+  UserPlus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -48,6 +50,8 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Target,
   Image: ImageIcon,
   ShieldCheck,
+  Mail,
+  UserPlus,
 }
 
 interface SidebarNavProps {

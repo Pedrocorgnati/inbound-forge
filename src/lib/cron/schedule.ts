@@ -51,4 +51,9 @@ export const CRON_JOBS: CronJobDefinition[] = [
     schedule: '*/5 * * * *',
     description: 'Publica artigos de blog agendados (SCHEDULED->PUBLISHED) a cada 5 min (TASK-6 / AUDIT-5)',
   },
+  {
+    path: '/api/cron/broadcast-sender',
+    schedule: '*/5 * * * *',
+    description: 'Envia broadcasts de email (SCHEDULED->SENDING->SENT) em lotes a cada 5 min (Inbound F1)',
+  },
 ]

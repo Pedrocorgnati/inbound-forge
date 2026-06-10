@@ -45,6 +45,18 @@ export const NAV_ITEMS: NavItem[] = [
     badgeKey: null,
   },
   {
+    labelKey: 'subscribers',
+    href: ROUTES.SUBSCRIBERS,
+    icon: 'UserPlus',
+    badgeKey: null,
+  },
+  {
+    labelKey: 'broadcasts',
+    href: ROUTES.BROADCASTS,
+    icon: 'Mail',
+    badgeKey: null,
+  },
+  {
     labelKey: 'reconciliation',
     href: ROUTES.RECONCILIATION,
     icon: 'GitCompareArrows',

@@ -1,0 +1,79 @@
+import type { Metadata } from 'next'
+import { getTranslations } from 'next-intl/server'
+import { prisma } from '@/lib/prisma'
+import { decryptSubscriberEmail } from '@/lib/email/subscriber'
+
+export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'subscribers' })
+  return { title: `${t('title')} | Inbound Forge` }
+}
+
+// Mascara o email (PII): primeira letra + dominio. SEC-008: nunca expoe full por padrao.
+function maskEmail(email: string): string {
+  if (!email || !email.includes('@')) return '•••'
+  const [local, domain] = email.split('@')
+  return `${local.slice(0, 1)}•••@${domain}`
+}
+
+export default async function SubscribersPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params
+  const t = await getTranslations({ locale, namespace: 'subscribers' })
+
+  let subscribers: { id: string; email: string; status: string; channel: string | null; createdAt: Date }[] = []
+  let loadError = false
+  try {
+    const rows = await prisma.emailSubscriber.findMany({ orderBy: { createdAt: 'desc' }, take: 200 })
+    subscribers = rows.map((s) => ({
+      id: s.id,
+      email: maskEmail(decryptSubscriberEmail(s.encryptedEmail)),
+      status: s.status,
+      channel: s.channel,
+      createdAt: s.createdAt,
+    }))
+  } catch {
+    loadError = true
+  }
+
+  return (
+    <div data-testid="subscribers-page" className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t('title')}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('description')}</p>
+      </div>
+
+      {loadError ? (
+        <p data-testid="subscribers-error" className="text-sm text-red-600">{t('error')}</p>
+      ) : subscribers.length === 0 ? (
+        <p data-testid="subscribers-empty" className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+          {t('empty')}
+        </p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border">
+          <table data-testid="subscribers-table" className="w-full text-sm">
+            <thead className="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+              <tr>
+                <th className="px-4 py-2">{t('colEmail')}</th>
+                <th className="px-4 py-2">{t('colStatus')}</th>
+                <th className="px-4 py-2">{t('colChannel')}</th>
+                <th className="px-4 py-2">{t('colDate')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subscribers.map((s) => (
+                <tr key={s.id} className="border-t">
+                  <td className="px-4 py-2 font-mono">{s.email}</td>
+                  <td className="px-4 py-2">{t(`status.${s.status}`)}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{s.channel ?? '—'}</td>
+                  <td className="px-4 py-2 text-muted-foreground">{s.createdAt.toISOString().slice(0, 10)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}

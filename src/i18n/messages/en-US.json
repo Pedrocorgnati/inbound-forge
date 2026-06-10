@@ -85,7 +85,9 @@
     "themes": "Themes",
     "nicheOpportunities": "Opportunities",
     "assets": "Asset Library",
-    "compliance": "Compliance"
+    "compliance": "Compliance",
+    "subscribers": "Subscribers",
+    "broadcasts": "Email"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -729,5 +731,85 @@
       "ASSISTED_TOUCH": "Assisted",
       "INFERRED": "Inferred"
     }
+  },
+  "subscribers": {
+    "title": "Subscribers",
+    "description": "Your email list — subscribers confirmed via double opt-in.",
+    "loading": "Loading...",
+    "empty": "No subscribers yet. Share your signup page.",
+    "error": "Error loading subscribers.",
+    "status": {
+      "PENDING": "Pending",
+      "CONFIRMED": "Confirmed",
+      "UNSUBSCRIBED": "Unsubscribed",
+      "BOUNCED": "Bounced",
+      "COMPLAINED": "Complained"
+    },
+    "colEmail": "Email",
+    "colStatus": "Status",
+    "colChannel": "Source",
+    "colDate": "Date",
+    "masked": "•••"
+  },
+  "broadcasts": {
+    "title": "Email",
+    "description": "Newsletters and one-time campaigns to your subscribers.",
+    "new": "New broadcast",
+    "loading": "Loading...",
+    "empty": "No broadcasts yet. Create the first one.",
+    "error": "Error loading broadcasts.",
+    "status": {
+      "DRAFT": "Draft",
+      "SCHEDULED": "Scheduled",
+      "SENDING": "Sending",
+      "SENT": "Sent",
+      "CANCELED": "Canceled",
+      "FAILED": "Failed"
+    },
+    "colSubject": "Subject",
+    "colStatus": "Status",
+    "colRecipients": "Recipients",
+    "colSent": "Sent",
+    "colDate": "Date",
+    "composer": {
+      "title": "New broadcast",
+      "subject": "Subject",
+      "subjectPlaceholder": "Email subject",
+      "preheader": "Preheader (preview)",
+      "bodyHtml": "Body (HTML)",
+      "bodyPlaceholder": "Write the content... use {{unsubscribe}} for the opt-out link (added automatically if missing).",
+      "fromName": "From name",
+      "replyTo": "Reply to",
+      "save": "Save draft",
+      "saving": "Submitting...",
+      "saved": "Broadcast created",
+      "error": "Could not process. Please try again."
+    },
+    "send": "Send now",
+    "sending": "Queuing...",
+    "sendConfirm": "Send this broadcast to all confirmed subscribers?",
+    "sendSuccess": "Send queued",
+    "sendError": "Error queuing send"
+  },
+  "subscribe": {
+    "title": "Subscribe",
+    "description": "Get our content by email.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "voce@email.com",
+    "consentLabel": "I agree to receive emails and to the privacy policy.",
+    "submit": "Subscribe",
+    "submitting": "Submitting...",
+    "success": "Almost there! Check your email to confirm.",
+    "error": "Could not process. Please try again.",
+    "confirmed": {
+      "title": "Subscription confirmed!",
+      "message": "Thanks for confirming. You will receive our content soon.",
+      "error": "Invalid or expired link. Please subscribe again."
+    }
+  },
+  "unsubscribed": {
+    "title": "You have been unsubscribed",
+    "message": "We will no longer email this address.",
+    "error": "Could not process the unsubscribe. The link may be invalid."
   }
 }

@@ -85,7 +85,9 @@
     "themes": "Temas",
     "nicheOpportunities": "Oportunidades",
     "assets": "Biblioteca de Ativos",
-    "compliance": "Compliance"
+    "compliance": "Compliance",
+    "subscribers": "Inscritos",
+    "broadcasts": "Email"
   },
   "breadcrumbs": {
     "home": "Início",
@@ -729,5 +731,85 @@
       "ASSISTED_TOUCH": "Assistida",
       "INFERRED": "Inferida"
     }
+  },
+  "subscribers": {
+    "title": "Inscritos",
+    "description": "Sua lista de email — inscritos confirmados via double-opt-in.",
+    "loading": "Carregando...",
+    "empty": "Nenhum inscrito ainda. Compartilhe sua pagina de inscricao.",
+    "error": "Erro ao carregar inscritos.",
+    "status": {
+      "PENDING": "Pendente",
+      "CONFIRMED": "Confirmado",
+      "UNSUBSCRIBED": "Descadastrado",
+      "BOUNCED": "Bounce",
+      "COMPLAINED": "Reclamacao"
+    },
+    "colEmail": "Email",
+    "colStatus": "Status",
+    "colChannel": "Origem",
+    "colDate": "Data",
+    "masked": "•••"
+  },
+  "broadcasts": {
+    "title": "Email",
+    "description": "Newsletters e campanhas one-time para seus inscritos.",
+    "new": "Novo broadcast",
+    "loading": "Carregando...",
+    "empty": "Nenhum broadcast ainda. Crie o primeiro.",
+    "error": "Erro ao carregar broadcasts.",
+    "status": {
+      "DRAFT": "Rascunho",
+      "SCHEDULED": "Agendado",
+      "SENDING": "Enviando",
+      "SENT": "Enviado",
+      "CANCELED": "Cancelado",
+      "FAILED": "Falhou"
+    },
+    "colSubject": "Assunto",
+    "colStatus": "Status",
+    "colRecipients": "Destinatarios",
+    "colSent": "Enviados",
+    "colDate": "Data",
+    "composer": {
+      "title": "Novo broadcast",
+      "subject": "Assunto",
+      "subjectPlaceholder": "Assunto do email",
+      "preheader": "Preheader (preview)",
+      "bodyHtml": "Corpo (HTML)",
+      "bodyPlaceholder": "Escreva o conteudo... use {{unsubscribe}} para o link de descadastro (adicionado automaticamente se ausente).",
+      "fromName": "Nome do remetente",
+      "replyTo": "Responder para",
+      "save": "Salvar rascunho",
+      "saving": "Enviando...",
+      "saved": "Broadcast criado",
+      "error": "Nao foi possivel processar. Tente novamente."
+    },
+    "send": "Enviar agora",
+    "sending": "Enfileirando...",
+    "sendConfirm": "Enviar este broadcast para todos os inscritos confirmados?",
+    "sendSuccess": "Envio enfileirado",
+    "sendError": "Erro ao enfileirar envio"
+  },
+  "subscribe": {
+    "title": "Inscreva-se",
+    "description": "Receba nossos conteudos por email.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "voce@email.com",
+    "consentLabel": "Concordo em receber emails e com a politica de privacidade.",
+    "submit": "Inscrever",
+    "submitting": "Enviando...",
+    "success": "Quase la! Verifique seu email para confirmar a inscricao.",
+    "error": "Nao foi possivel processar. Tente novamente.",
+    "confirmed": {
+      "title": "Inscricao confirmada!",
+      "message": "Obrigado por confirmar. Voce recebera nossos conteudos em breve.",
+      "error": "Link invalido ou expirado. Tente se inscrever novamente."
+    }
+  },
+  "unsubscribed": {
+    "title": "Voce foi descadastrado",
+    "message": "Nao enviaremos mais emails para este endereco.",
+    "error": "Nao foi possivel processar o descadastro. O link pode ser invalido."
   }
 }

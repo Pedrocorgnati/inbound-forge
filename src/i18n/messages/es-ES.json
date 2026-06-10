@@ -85,7 +85,9 @@
     "themes": "Temas",
     "nicheOpportunities": "Oportunidades",
     "assets": "Biblioteca de Recursos",
-    "compliance": "Cumplimiento"
+    "compliance": "Cumplimiento",
+    "subscribers": "Suscriptores",
+    "broadcasts": "Email"
   },
   "breadcrumbs": {
     "home": "Inicio",
@@ -729,5 +731,85 @@
       "ASSISTED_TOUCH": "Asistida",
       "INFERRED": "Inferida"
     }
+  },
+  "subscribers": {
+    "title": "Suscriptores",
+    "description": "Tu lista de email — suscriptores confirmados via doble opt-in.",
+    "loading": "Cargando...",
+    "empty": "Aun no hay suscriptores. Comparte tu pagina de suscripcion.",
+    "error": "Error al cargar suscriptores.",
+    "status": {
+      "PENDING": "Pendiente",
+      "CONFIRMED": "Confirmado",
+      "UNSUBSCRIBED": "Dado de baja",
+      "BOUNCED": "Rebote",
+      "COMPLAINED": "Queja"
+    },
+    "colEmail": "Email",
+    "colStatus": "Estado",
+    "colChannel": "Origen",
+    "colDate": "Fecha",
+    "masked": "•••"
+  },
+  "broadcasts": {
+    "title": "Email",
+    "description": "Newsletters y campanas puntuales para tus suscriptores.",
+    "new": "Nuevo broadcast",
+    "loading": "Cargando...",
+    "empty": "Aun no hay broadcasts. Crea el primero.",
+    "error": "Error al cargar broadcasts.",
+    "status": {
+      "DRAFT": "Borrador",
+      "SCHEDULED": "Programado",
+      "SENDING": "Enviando",
+      "SENT": "Enviado",
+      "CANCELED": "Cancelado",
+      "FAILED": "Fallido"
+    },
+    "colSubject": "Asunto",
+    "colStatus": "Estado",
+    "colRecipients": "Destinatarios",
+    "colSent": "Enviados",
+    "colDate": "Fecha",
+    "composer": {
+      "title": "Nuevo broadcast",
+      "subject": "Asunto",
+      "subjectPlaceholder": "Asunto del email",
+      "preheader": "Preheader (vista previa)",
+      "bodyHtml": "Cuerpo (HTML)",
+      "bodyPlaceholder": "Escribe el contenido... usa {{unsubscribe}} para el enlace de baja (se anade automaticamente si falta).",
+      "fromName": "Nombre del remitente",
+      "replyTo": "Responder a",
+      "save": "Guardar borrador",
+      "saving": "Enviando...",
+      "saved": "Broadcast creado",
+      "error": "No se pudo procesar. Intentalo de nuevo."
+    },
+    "send": "Enviar ahora",
+    "sending": "Encolando...",
+    "sendConfirm": "Enviar este broadcast a todos los suscriptores confirmados?",
+    "sendSuccess": "Envio en cola",
+    "sendError": "Error al encolar el envio"
+  },
+  "subscribe": {
+    "title": "Suscribete",
+    "description": "Recibe nuestro contenido por email.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "voce@email.com",
+    "consentLabel": "Acepto recibir emails y la politica de privacidad.",
+    "submit": "Suscribirse",
+    "submitting": "Enviando...",
+    "success": "Casi listo! Revisa tu email para confirmar.",
+    "error": "No se pudo procesar. Intentalo de nuevo.",
+    "confirmed": {
+      "title": "Suscripcion confirmada!",
+      "message": "Gracias por confirmar. Pronto recibiras nuestro contenido.",
+      "error": "Enlace invalido o caducado. Suscribete de nuevo."
+    }
+  },
+  "unsubscribed": {
+    "title": "Te has dado de baja",
+    "message": "Ya no enviaremos emails a esta direccion.",
+    "error": "No se pudo procesar la baja. El enlace puede no ser valido."
   }
 }
