@@ -24,6 +24,15 @@ export const LEGAL_VERSIONS: Record<LegalDoc, LegalVersion> = {
   },
 }
 
+// IB-I18N-01: cabecalho de versao localizado por locale (antes era PT fixo dentro
+// de paginas traduzidas). Sem travessao na copy ao usuario (house style).
+const HEADER_FORMATS: Record<string, (version: string, date: string) => string> = {
+  'pt-BR': (version, date) => `Versao ${version} - ultima atualizacao: ${date}`,
+  'en-US': (version, date) => `Version ${version} - last updated: ${date}`,
+  'it-IT': (version, date) => `Versione ${version} - ultimo aggiornamento: ${date}`,
+  'es-ES': (version, date) => `Version ${version} - ultima actualizacion: ${date}`,
+}
+
 export function formatLegalHeader(doc: LegalDoc, locale: string): string {
   const v = LEGAL_VERSIONS[doc]
   const dateFmt = new Intl.DateTimeFormat(locale, {
@@ -31,5 +40,6 @@ export function formatLegalHeader(doc: LegalDoc, locale: string): string {
     month: 'long',
     day: '2-digit',
   })
-  return `Versao ${v.version} — ultima atualizacao: ${dateFmt.format(new Date(v.lastUpdated))}`
+  const fmt = HEADER_FORMATS[locale] ?? HEADER_FORMATS['pt-BR']
+  return fmt(v.version, dateFmt.format(new Date(v.lastUpdated)))
 }
