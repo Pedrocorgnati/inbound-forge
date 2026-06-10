@@ -29,3 +29,7 @@ Sentry.init({
     Sentry.replayIntegration(),
   ],
 })
+
+// Instrumenta transicoes de navegacao do App Router (Sentry exige este hook
+// exportado; sem ele o next build avisa ACTION REQUIRED e navegacoes nao geram spans).
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart
