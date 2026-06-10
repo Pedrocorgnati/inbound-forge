@@ -13,6 +13,7 @@ import { subscribe } from '@/lib/email/subscriber'
 import { sendLeadCapturedEmail } from '@/lib/notifications/lead-captured.email'
 import { trackServerEvent } from '@/lib/ga4-measurement-protocol'
 import { GA4_EVENTS } from '@/constants/ga4-events'
+import { recomputeLeadScore } from '@/lib/leads/lead-score'
 
 export interface CaptureInput {
   formId: string
@@ -92,9 +93,10 @@ export async function createLeadFromCapture(input: CaptureInput): Promise<Captur
     leadResult = { leadId: null, duplicate: false }
   }
 
-  // 3. Vincula subscriber <-> lead quando ambos existem.
+  // 3. Vincula subscriber <-> lead quando ambos existem + recalcula score (F3).
   if (leadResult.leadId) {
     await prisma.emailSubscriber.update({ where: { id: sub.subscriberId }, data: { leadId: leadResult.leadId } }).catch(() => undefined)
+    await recomputeLeadScore(leadResult.leadId).catch(() => undefined)
   }
 
   // 4. Registra a submissao (auditoria append-only) + incrementa contador do form.

@@ -414,7 +414,9 @@
       "TOFU": "Topo do Funil",
       "MOFU": "Meio do Funil",
       "BOFU": "Fundo do Funil"
-    }
+    },
+    "scoreBadge": "Score do lead",
+    "mqlBadge": "Lead qualificado (MQL)"
   },
   "blog": {
     "title": "Blog",

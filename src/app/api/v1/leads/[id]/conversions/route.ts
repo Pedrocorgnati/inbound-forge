@@ -9,6 +9,7 @@ import { prisma } from '@/lib/prisma'
 import { requireSession, ok, notFound, validationError, internalError } from '@/lib/api-auth'
 import { CreateConversionSchema } from '@/schemas/lead.schema'
 import { updateThemeConversionScore } from '@/lib/conversion-score'
+import { recomputeLeadScore } from '@/lib/leads/lead-score'
 import { auditLog } from '@/lib/audit'
 import { trackServerEvent } from '@/lib/ga4-measurement-protocol'
 import { GA4_EVENTS } from '@/constants/ga4-events'
@@ -65,6 +66,9 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     // CX-01: OBRIGATÓRIO — atualizar score do tema após conversão
     await updateThemeConversionScore(lead.firstTouchThemeId)
+
+    // Inbound F3: recalcular lead score (pode promover NEW->MQL). Best-effort.
+    await recomputeLeadScore(id).catch(() => undefined)
 
     // Audit log (COMP-001) — SEC-008: sem PII
     await auditLog({

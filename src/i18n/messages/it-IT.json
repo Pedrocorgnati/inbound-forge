@@ -345,7 +345,9 @@
       "TOFU": "Cima del funnel",
       "MOFU": "Metà del funnel",
       "BOFU": "Fondo del funnel"
-    }
+    },
+    "scoreBadge": "Punteggio lead",
+    "mqlBadge": "Lead qualificato (MQL)"
   },
   "blog": {
     "title": "Blog",

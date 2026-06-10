@@ -112,6 +112,14 @@ export function LeadCard({ lead, editHref, onEdit, onDelete }: LeadCardProps) {
             {funnelInfo && (
               <Badge variant={funnelInfo.variant}>{funnelInfo.label}</Badge>
             )}
+            {/* Inbound F3: score do lead (destaque quando MQL) */}
+            <Badge
+              variant={lead.mqlAt ? 'success' : 'info'}
+              data-testid={`lead-score-${lead.id}`}
+              title={lead.mqlAt ? t('leads.mqlBadge') : t('leads.scoreBadge')}
+            >
+              {lead.mqlAt ? '🔥 ' : ''}{lead.score ?? 0} pts
+            </Badge>
             <span>{fmt.date(lead.firstTouchAt)}</span>
           </div>
         </div>

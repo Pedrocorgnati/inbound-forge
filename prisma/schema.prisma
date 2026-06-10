@@ -1007,6 +1007,10 @@ model Lead {
   lossReason        LeadLossReason?  @map("loss_reason")
   lossReasonDetail  String?          @map("loss_reason_detail") @db.VarChar(500)
   statusUpdatedAt   DateTime?        @map("status_updated_at")
+  // Inbound F3: lead scoring comportamental
+  score             Int          @default(0)
+  scoreUpdatedAt    DateTime?    @map("score_updated_at")
+  mqlAt             DateTime?    @map("mql_at")
   lgpdConsent       Boolean      @default(false) @map("lgpd_consent")
   lgpdConsentAt     DateTime?    @map("lgpd_consent_at")
   firstTouchAt      DateTime?    @map("first_touch_at")
@@ -1024,12 +1028,15 @@ model Lead {
   piiRevealAudits     PIIRevealAudit[]
   // Inbound F1: subscribers de email marketing vinculados a este lead.
   emailSubscribers    EmailSubscriber[]
+  // Inbound F3: ledger de eventos de score.
+  scoreEvents         LeadScoreEvent[]
 
   @@index([firstTouchPostId], name: "IDX_leads_first_touch_post")
   @@index([firstTouchThemeId], name: "IDX_leads_first_touch_theme")
   @@index([channel], name: "IDX_leads_channel")
   @@index([funnelStage], name: "IDX_leads_funnel_stage")
   @@index([status], name: "IDX_leads_status")
+  @@index([score], name: "IDX_leads_score")
   @@map("leads")
 }
 
@@ -1487,4 +1494,18 @@ model LeadFormSubmission {
 
   @@index([formId, createdAt], name: "IDX_lead_form_submissions_form_created")
   @@map("lead_form_submissions")
+}
+
+// ─── Inbound F3: Lead Scoring (ledger) ────────────────────────────────────────
+model LeadScoreEvent {
+  id        String   @id @default(uuid())
+  leadId    String   @map("lead_id")
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  delta     Int // pontos adicionados/removidos neste evento
+  newTotal  Int      @map("new_total")
+  reason    String   @db.VarChar(120) // ex: recompute, mql_reached
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([leadId, createdAt], name: "IDX_lead_score_events_lead_created")
+  @@map("lead_score_events")
 }

@@ -18,6 +18,9 @@ export interface Lead {
   channel: Channel | null
   funnelStage: FunnelStage | null
   status: LeadStatus
+  /** Inbound F3: lead scoring comportamental */
+  score?: number
+  mqlAt?: Date | null
   lgpdConsent: boolean
   lgpdConsentAt: Date | null
   firstTouchAt: Date | null

@@ -345,7 +345,9 @@
       "TOFU": "Parte superior del embudo",
       "MOFU": "Parte media del embudo",
       "BOFU": "Parte inferior del embudo"
-    }
+    },
+    "scoreBadge": "Puntuacion del lead",
+    "mqlBadge": "Lead cualificado (MQL)"
   },
   "blog": {
     "title": "Blog",
