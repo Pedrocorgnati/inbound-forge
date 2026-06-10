@@ -24,8 +24,14 @@ const EnvSchema = z.object({
   // ─── Segurança ────────────────────────────────────────────────────────────
   WORKER_AUTH_TOKEN: z.string().min(32),
   PII_ENCRYPTION_KEY: z.string().min(1),
+  // TAREFA-002: TTL (ms) de revelacao de PII no front. Default 5 min (300000).
+  PII_REVEAL_TTL_MS: z.coerce.number().int().positive().default(300_000),
   // INTERNAL_HEALTH_SECRET protege /api/v1/health/internal
   INTERNAL_HEALTH_SECRET: z.string().min(1),
+  // AUDIT-6: CSRF_SECRET — src/lib/csrf.ts.getSecret() lanca se ausente/<32, o que
+  // quebraria TODA mutacao autenticada. Validar no startup (validateEnv via
+  // instrumentation) faz falhar rapido em vez de na 1a request.
+  CSRF_SECRET: z.string().min(32),
 
   // ─── Anthropic (Claude AI) ────────────────────────────────────────────────
   // Usado diretamente em angle-generation.service.ts e channel-adaptation.service.ts
