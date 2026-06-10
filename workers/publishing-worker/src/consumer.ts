@@ -8,6 +8,7 @@ import type { Redis } from '@upstash/redis'
 import type { PrismaClient } from '@prisma/client'
 import { publishPost } from './publisher'
 import { assertChannelLocale, ChannelLocaleGateError } from './channel-locale-gate'
+import { reapStalledPublishing } from './reaper'
 
 const POLLING_INTERVAL_MS = 60_000 // 1 min — posts agendados não precisam de polling rápido
 const HEARTBEAT_INTERVAL_MS = 5 * 60_000 // 5 min
@@ -31,6 +32,13 @@ export async function startConsumerLoop(redis: Redis, db: PrismaClient): Promise
   log({ event: 'consumer_loop_started', timestamp: new Date().toISOString() })
 
   while (!isShuttingDown) {
+    // WK-WRK-03: antes de processar a fila, recuperar entradas presas em
+    // PROCESSING (worker morto no meio de uma publicacao). Reusa o tick de 60s.
+    try {
+      await reapStalledPublishing(db)
+    } catch (err) {
+      log({ event: 'reaper_error', error: String(err), timestamp: new Date().toISOString() })
+    }
     try {
       await processDuePosts(redis, db)
     } catch (err) {

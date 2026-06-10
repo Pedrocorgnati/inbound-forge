@@ -24,6 +24,11 @@ export const IMAGE_WORKER_CONFIG = {
   heartbeatIntervalMs: 30_000,
   blpopTimeoutSec:     5,
   costLogMaxEntries:   100,
+  // WK-WRK-03: reaper de jobs presos em PROCESSING (worker crash/restart).
+  // staleProcessingMs (15min) e muito maior que timeoutMs (60s), entao nunca
+  // reapa um job legitimamente em execucao.
+  reaperIntervalMs:    5 * 60_000,
+  staleProcessingMs:   15 * 60_000,
 } as const
 
 export const IMAGE_PROVIDERS: Record<ImageProvider, { costUsd: number }> = {

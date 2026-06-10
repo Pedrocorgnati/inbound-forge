@@ -10,6 +10,11 @@ export const VIDEO_WORKER_CONFIG = {
   heartbeatIntervalMs: 30_000,
   blpopTimeoutSec:     5,
   costLogMaxEntries:   100,
+  // WK-WRK-03: reaper de jobs presos em PROCESSING (worker crash/restart).
+  // staleProcessingMs (20min) e maior que timeoutMs (300s/5min), entao nunca
+  // reapa um job legitimamente em execucao.
+  reaperIntervalMs:    5 * 60_000,
+  staleProcessingMs:   20 * 60_000,
 } as const
 
 export const REDIS_VIDEO_QUEUE_KEY = 'worker:video:queue' as const

@@ -26,6 +26,7 @@ async function main() {
   const { PrismaClient } = await import('@prisma/client')
   const { startConsumerLoop } = await import('./consumer')
   const { startHeartbeat } = await import('./health')
+  const { startReaper } = await import('./reaper')
   const { getRedisClient } = await import('./redis-client')
 
   const db    = new PrismaClient()
@@ -42,9 +43,11 @@ async function main() {
   }) + '\n')
 
   let heartbeatInterval: NodeJS.Timeout
+  let reaperInterval: NodeJS.Timeout
 
   process.on('SIGTERM', async () => {
     clearInterval(heartbeatInterval)
+    clearInterval(reaperInterval)
     healthServer.close()
     await db.$disconnect()
   })
@@ -54,6 +57,7 @@ async function main() {
   })
 
   heartbeatInterval = startHeartbeat(db)
+  reaperInterval = startReaper(db, redis)
 
   await startConsumerLoop(redis, db, env)
 }
