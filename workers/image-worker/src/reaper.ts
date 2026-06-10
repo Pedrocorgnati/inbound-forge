@@ -44,17 +44,18 @@ export async function reapStalledJobs(db: PrismaClient, redis: Redis): Promise<n
         log({ event: 'reaper_deadletter_enqueue_failed', jobId: job.id, error: String(err), timestamp: new Date().toISOString() })
       }
     } else {
+      // rpush ANTES do update: se o rpush falhar, o job continua PROCESSING e o
+      // proximo tick do reaper o reve (evita orfanar em PENDING sem entrada na fila).
+      try {
+        await redis.rpush(REDIS_QUEUE_KEY, JSON.stringify({ jobId: job.id }))
+      } catch (err) {
+        log({ event: 'reaper_requeue_failed', jobId: job.id, error: String(err), timestamp: new Date().toISOString() })
+        continue
+      }
       await db.imageJob.update({
         where: { id: job.id },
         data: { status: 'PENDING', retryCount: newRetryCount },
       })
-      try {
-        await redis.rpush(REDIS_QUEUE_KEY, JSON.stringify({ jobId: job.id }))
-      } catch (err) {
-        // best-effort: o proximo tick do reaper nao reve este job (ja PENDING), mas
-        // o sinal fica registrado para diagnostico (Zero Silencio).
-        log({ event: 'reaper_requeue_failed', jobId: job.id, error: String(err), timestamp: new Date().toISOString() })
-      }
     }
 
     log({ event: 'job_reaped', jobId: job.id, retryCount: newRetryCount, deadLetter, timestamp: new Date().toISOString() })

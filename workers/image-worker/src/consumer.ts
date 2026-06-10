@@ -27,11 +27,16 @@ let isShuttingDown = false
 let wakeFromSleep: (() => void) | null = null
 
 export function registerSigtermHandler(): void {
-  process.on('SIGTERM', () => {
-    log({ event: 'sigterm_received', timestamp: new Date().toISOString() })
+  // WK-WRK-04 fix: trata SIGTERM E SIGINT. O index registra shutdown() em ambos e
+  // aguarda consumerDone; sem o SIGINT aqui, SIGINT nao setava isShuttingDown e o
+  // loop nunca encerrava (hang ate o forced-exit de 25s). SIGTERM e o sinal do Railway.
+  const onStop = (signal: string) => {
+    log({ event: 'sigterm_received', signal, timestamp: new Date().toISOString() })
     isShuttingDown = true
     if (wakeFromSleep) wakeFromSleep()
-  })
+  }
+  process.on('SIGTERM', () => onStop('SIGTERM'))
+  process.on('SIGINT', () => onStop('SIGINT'))
 }
 
 export async function startConsumerLoop(

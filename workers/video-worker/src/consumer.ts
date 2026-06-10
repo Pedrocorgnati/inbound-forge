@@ -18,11 +18,15 @@ let isShuttingDown = false
 let wakeFromSleep: (() => void) | null = null
 
 export function registerSigtermHandler(): void {
-  process.on('SIGTERM', () => {
-    log({ event: 'sigterm_received', timestamp: new Date().toISOString() })
+  // WK-WRK-04 fix: trata SIGTERM E SIGINT (ver image-worker). Sem SIGINT, o
+  // shutdown() do index aguardava consumerDone que nunca resolvia em SIGINT.
+  const onStop = (signal: string) => {
+    log({ event: 'sigterm_received', signal, timestamp: new Date().toISOString() })
     isShuttingDown = true
     if (wakeFromSleep) wakeFromSleep()
-  })
+  }
+  process.on('SIGTERM', () => onStop('SIGTERM'))
+  process.on('SIGINT', () => onStop('SIGINT'))
 }
 
 export async function startConsumerLoop(
