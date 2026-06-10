@@ -1,0 +1,110 @@
+# E2E + Performance — Inbound Forge (TQ-TST-06)
+# Roda nightly (cron) ou em PR com label `e2e`/`perf`. Custoso (Playwright + DB +
+# seed) — separado do ci.yml para nao re-disparar typecheck/lint/build/deploy a cada cron.
+name: E2E
+
+on:
+  schedule:
+    - cron: '0 3 * * *'  # 3h UTC nightly
+  pull_request:
+    types: [labeled, synchronize]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  e2e:
+    name: E2E (Playwright)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'e2e')
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: inbound_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+      - name: Migrate + Seed
+        run: npx prisma migrate deploy && npm run db:seed:test
+        env:
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: Run E2E
+        run: npm run test:e2e
+        env:
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          UPSTASH_REDIS_REST_URL: 'redis://localhost:6379'
+          UPSTASH_REDIS_REST_TOKEN: 'placeholder'
+          NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co'
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder'
+          NEXTAUTH_SECRET: 'test-secret'
+          NEXTAUTH_URL: 'http://localhost:3000'
+          PII_ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+
+  perf:
+    name: Performance (nightly)
+    if: github.event_name == 'schedule' || contains(github.event.pull_request.labels.*.name, 'perf')
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: inbound_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+      - name: Migrate + Seed
+        run: npx prisma migrate deploy && npm run db:seed:test
+        env:
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+      - name: Run Perf
+        run: npm run test:perf
+        env:
+          NODE_ENV: 'test'
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          PII_ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'

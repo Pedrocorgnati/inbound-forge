@@ -24,6 +24,7 @@
     "test:integration:watch": "vitest --config vitest.integration.config.ts",
     "test:perf": "vitest run --config vitest.perf.config.ts",
     "test:all": "vitest run && vitest run --config vitest.integration.config.ts && vitest run --config vitest.perf.config.ts",
+    "test:e2e": "playwright test",
     "validate:i18n": "npx ts-node scripts/validate-i18n.ts",
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",

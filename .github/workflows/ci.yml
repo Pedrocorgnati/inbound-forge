@@ -139,6 +139,95 @@ jobs:
           name: test-results
           path: test-results/
 
+  # TQ-TST-06: testes de integracao (DB + Redis reais). O job `test` acima roda
+  # vitest default que EXCLUI integration/perf/e2e/workers — por isso este job.
+  integration:
+    name: Integration Tests (DB real)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: inbound_test
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+      - name: Run DB Migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+      - name: Run Integration Tests
+        run: npm run test:integration
+        env:
+          NODE_ENV: 'test'
+          DATABASE_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          DIRECT_URL: 'postgresql://test:test@localhost:5432/inbound_test'
+          UPSTASH_REDIS_REST_URL: 'redis://localhost:6379'
+          UPSTASH_REDIS_REST_TOKEN: 'placeholder'
+          NEXT_PUBLIC_SUPABASE_URL: 'https://placeholder.supabase.co'
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: 'placeholder'
+          SUPABASE_SERVICE_ROLE_KEY: 'placeholder'
+          WORKER_AUTH_TOKEN: 'test-worker-token'
+          INTERNAL_HEALTH_SECRET: 'test-health-secret'
+          # Chave AES-256 valida (64 hex = 32 bytes); a do job `test` (62 a's) e invalida.
+          PII_ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
+          NEXTAUTH_SECRET: 'test-secret'
+          NEXTAUTH_URL: 'http://localhost:3000'
+
+  # TQ-TST-06: testes dos workers (packages isolados, fora do vitest da raiz).
+  # Os 4 workers tem suite vitest (TQ-TST-07/08). scraping-worker nao tem
+  # package-lock -> npm ci falha, cai no npm install.
+  workers:
+    name: Worker Tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: [image-worker, video-worker, publishing-worker, scraping-worker]
+    defaults:
+      run:
+        working-directory: workers/${{ matrix.worker }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install dependencies
+        run: npm ci || npm install
+      - name: Run tests
+        run: npm test
+
   validate-openapi:
     name: OpenAPI Validation
     runs-on: ubuntu-latest
