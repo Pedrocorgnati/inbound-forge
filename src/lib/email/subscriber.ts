@@ -102,7 +102,7 @@ async function dispatchConfirmEmail(subscriberId: string, email: string): Promis
   }).catch(() => undefined)
 }
 
-export async function confirmSubscriber(token: string): Promise<{ ok: boolean; reason?: string }> {
+export async function confirmSubscriber(token: string): Promise<{ ok: boolean; reason?: string; subscriberId?: string }> {
   const v = verifySubscriberToken(token, 'confirm')
   if (!v.ok) return { ok: false, reason: v.reason }
   const sub = await prisma.emailSubscriber.findUnique({ where: { id: v.subscriberId } })
@@ -114,7 +114,7 @@ export async function confirmSubscriber(token: string): Promise<{ ok: boolean; r
       data: { status: 'CONFIRMED', confirmedAt: new Date() },
     })
   }
-  return { ok: true }
+  return { ok: true, subscriberId: sub.id }
 }
 
 export async function unsubscribeByToken(token: string): Promise<{ ok: boolean; reason?: string }> {

@@ -88,7 +88,8 @@
     "compliance": "Compliance",
     "subscribers": "Iscritti",
     "broadcasts": "Email",
-    "forms": "Moduli"
+    "forms": "Moduli",
+    "sequences": "Sequenze"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -866,5 +867,37 @@
     "submitting": "Invio...",
     "success": "Ricevuto! Controlla la tua email per confermare.",
     "error": "Impossibile elaborare. Riprova."
+  },
+  "sequences": {
+    "title": "Sequenze",
+    "description": "Sequenze di nurture (drip) — email automatiche dopo la conferma.",
+    "new": "Nuova sequenza",
+    "loading": "Caricamento...",
+    "empty": "Ancora nessuna sequenza. Crea la prima.",
+    "error": "Errore nel caricamento.",
+    "colName": "Nome",
+    "colStatus": "Stato",
+    "colSteps": "Passi",
+    "colEnrollments": "Iscritti",
+    "status": {
+      "DRAFT": "Bozza",
+      "ACTIVE": "Attiva",
+      "ARCHIVED": "Archiviata"
+    },
+    "builder": {
+      "title": "Nuova sequenza",
+      "name": "Nome",
+      "status": "Stato",
+      "autoEnroll": "Auto-iscrizione alla conferma",
+      "addStep": "Aggiungi passo",
+      "removeStep": "Rimuovi",
+      "step": "Passo",
+      "delayHours": "Ritardo (ore)",
+      "subject": "Oggetto",
+      "body": "Corpo (HTML)",
+      "save": "Salva sequenza",
+      "saving": "Salvataggio...",
+      "error": "Impossibile salvare."
+    }
   }
 }

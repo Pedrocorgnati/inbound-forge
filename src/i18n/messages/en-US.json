@@ -88,7 +88,8 @@
     "compliance": "Compliance",
     "subscribers": "Subscribers",
     "broadcasts": "Email",
-    "forms": "Forms"
+    "forms": "Forms",
+    "sequences": "Sequences"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -866,5 +867,37 @@
     "submitting": "Submitting...",
     "success": "Got it! Check your email to confirm.",
     "error": "Could not process. Please try again."
+  },
+  "sequences": {
+    "title": "Sequences",
+    "description": "Nurture (drip) sequences — automated emails after confirmation.",
+    "new": "New sequence",
+    "loading": "Loading...",
+    "empty": "No sequences yet. Create the first one.",
+    "error": "Error loading.",
+    "colName": "Name",
+    "colStatus": "Status",
+    "colSteps": "Steps",
+    "colEnrollments": "Enrolled",
+    "status": {
+      "DRAFT": "Draft",
+      "ACTIVE": "Active",
+      "ARCHIVED": "Archived"
+    },
+    "builder": {
+      "title": "New sequence",
+      "name": "Name",
+      "status": "Status",
+      "autoEnroll": "Auto-enroll on confirm",
+      "addStep": "Add step",
+      "removeStep": "Remove",
+      "step": "Step",
+      "delayHours": "Delay (hours)",
+      "subject": "Subject",
+      "body": "Body (HTML)",
+      "save": "Save sequence",
+      "saving": "Saving...",
+      "error": "Could not save."
+    }
   }
 }

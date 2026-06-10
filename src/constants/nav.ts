@@ -63,6 +63,12 @@ export const NAV_ITEMS: NavItem[] = [
     badgeKey: null,
   },
   {
+    labelKey: 'sequences',
+    href: ROUTES.SEQUENCES,
+    icon: 'Workflow',
+    badgeKey: null,
+  },
+  {
     labelKey: 'reconciliation',
     href: ROUTES.RECONCILIATION,
     icon: 'GitCompareArrows',

@@ -56,4 +56,9 @@ export const CRON_JOBS: CronJobDefinition[] = [
     schedule: '*/5 * * * *',
     description: 'Envia broadcasts de email (SCHEDULED->SENDING->SENT) em lotes a cada 5 min (Inbound F1)',
   },
+  {
+    path: '/api/cron/nurture-tick',
+    schedule: '*/5 * * * *',
+    description: 'Envia os steps de nurture devidos (drip) a cada 5 min (Inbound F4)',
+  },
 ]

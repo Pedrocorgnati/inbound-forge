@@ -1509,3 +1509,77 @@ model LeadScoreEvent {
   @@index([leadId, createdAt], name: "IDX_lead_score_events_lead_created")
   @@map("lead_score_events")
 }
+
+// ─── Inbound F4: Nurture Sequences (drip) ─────────────────────────────────────
+enum SequenceStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELED
+}
+
+model NurtureSequence {
+  id         String         @id @default(uuid())
+  name       String         @db.VarChar(160)
+  status     SequenceStatus @default(DRAFT)
+  // auto-enroll dispara quando um subscriber confirma (double-opt-in)
+  autoEnroll Boolean        @default(true) @map("auto_enroll")
+  createdAt  DateTime       @default(now()) @map("created_at")
+  updatedAt  DateTime       @updatedAt @map("updated_at")
+
+  steps       NurtureStep[]
+  enrollments NurtureEnrollment[]
+
+  @@index([status], name: "IDX_nurture_sequences_status")
+  @@map("nurture_sequences")
+}
+
+model NurtureStep {
+  id         String          @id @default(uuid())
+  sequenceId String          @map("sequence_id")
+  sequence   NurtureSequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  order      Int // 0-based
+  delayHours Int             @default(0) @map("delay_hours") // atraso desde o step anterior (ou enrollment p/ order 0)
+  subject    String          @db.VarChar(255)
+  bodyHtml   String          @map("body_html") @db.Text
+
+  @@unique([sequenceId, order], name: "UQ_nurture_step_order")
+  @@map("nurture_steps")
+}
+
+model NurtureEnrollment {
+  id           String           @id @default(uuid())
+  sequenceId   String           @map("sequence_id")
+  sequence     NurtureSequence  @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  // id do EmailSubscriber (sem relacao dura — auditoria sobrevive a delecao)
+  subscriberId String           @map("subscriber_id")
+  status       EnrollmentStatus @default(ACTIVE)
+  currentStep  Int              @default(0) @map("current_step")
+  nextStepAt   DateTime?        @map("next_step_at")
+  enrolledAt   DateTime         @default(now()) @map("enrolled_at")
+  completedAt  DateTime?        @map("completed_at")
+
+  sendLogs NurtureSendLog[]
+
+  @@unique([sequenceId, subscriberId], name: "UQ_nurture_enrollment")
+  @@index([status, nextStepAt], name: "IDX_nurture_enrollments_status_next")
+  @@map("nurture_enrollments")
+}
+
+model NurtureSendLog {
+  id           String            @id @default(uuid())
+  enrollmentId String            @map("enrollment_id")
+  enrollment   NurtureEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  stepOrder    Int               @map("step_order")
+  status       String            @db.VarChar(20) // SENT | FAILED | SKIPPED
+  detail       String?           @db.VarChar(500)
+  sentAt       DateTime          @default(now()) @map("sent_at")
+
+  @@index([enrollmentId], name: "IDX_nurture_send_logs_enrollment")
+  @@map("nurture_send_logs")
+}

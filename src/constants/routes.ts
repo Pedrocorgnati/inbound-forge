@@ -24,6 +24,8 @@ export const ROUTES = {
   SUBSCRIBE: '/subscribe',
   // Inbound F2: Lead Capture Forms
   FORMS: '/forms',
+  // Inbound F4: Nurture Sequences
+  SEQUENCES: '/sequences',
 } as const
 
 export const PUBLIC_ROUTES = [ROUTES.LOGIN, ROUTES.BLOG_PUBLIC]
