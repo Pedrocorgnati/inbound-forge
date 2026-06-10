@@ -479,7 +479,9 @@
   "header": {
     "openMenu": "Open navigation menu",
     "logoutLabel": "Sign out",
-    "reconciliationPending": "{count} pending reconciliation items"
+    "reconciliationPending": "{count} pending reconciliation items",
+    "profileLabel": "Profile",
+    "settingsLabel": "Settings"
   },
   "settings": {
     "title": "Settings",
@@ -487,7 +489,68 @@
     "security": "Security",
     "integrations": "Integrations",
     "saved": "Settings saved",
-    "saveError": "Error saving settings"
+    "saveError": "Error saving settings",
+    "profile": {
+      "title": "Profile",
+      "description": "Manage your account information.",
+      "name": "Name",
+      "email": "Email",
+      "save": "Save",
+      "saved": "Profile saved"
+    },
+    "api": {
+      "title": "API Keys",
+      "description": "Configure the AI provider and service keys.",
+      "configured": "Configured",
+      "masked": "Masked key",
+      "newKey": "New key",
+      "notConfigured": "Not configured",
+      "replaceKey": "Replace key",
+      "save": "Save",
+      "saved": "Key saved",
+      "saving": "Saving...",
+      "test": "Test connection",
+      "testFail": "Connection failed",
+      "testSuccess": "Connection successful",
+      "testing": "Testing...",
+      "confirmReplace": {
+        "title": "Replace existing key?",
+        "body": "The current key will be permanently overwritten. This action cannot be undone.",
+        "confirm": "Replace",
+        "cancel": "Cancel"
+      }
+    },
+    "preferences": {
+      "title": "Preferences",
+      "description": "Adjust language, theme and notifications.",
+      "darkMode": "Dark mode",
+      "degradedMode": "Degraded mode",
+      "emailNotifications": "Email notifications",
+      "language": "Language"
+    },
+    "schedule": {
+      "title": "Publishing schedule",
+      "description": "Set default publishing times per weekday.",
+      "addSlot": "Add slot",
+      "removeSlot": "Remove",
+      "timezone": "Timezone",
+      "weekday": {
+        "mon": "Monday",
+        "tue": "Tuesday",
+        "wed": "Wednesday",
+        "thu": "Thursday",
+        "fri": "Friday",
+        "sat": "Saturday",
+        "sun": "Sunday"
+      }
+    },
+    "nav": {
+      "api": "API Keys",
+      "schedule": "Schedule",
+      "preferences": "Preferences",
+      "costs": "Costs",
+      "system": "System"
+    }
   },
   "onboarding": {
     "tour": {

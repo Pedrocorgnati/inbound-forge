@@ -479,7 +479,9 @@
   "header": {
     "openMenu": "Apri menu di navigazione",
     "logoutLabel": "Esci dall'applicazione",
-    "reconciliationPending": "{count} elementi di riconciliazione in sospeso"
+    "reconciliationPending": "{count} elementi di riconciliazione in sospeso",
+    "profileLabel": "Profilo",
+    "settingsLabel": "Impostazioni"
   },
   "settings": {
     "title": "Impostazioni",
@@ -487,7 +489,68 @@
     "security": "Sicurezza",
     "integrations": "Integrazioni",
     "saved": "Impostazioni salvate",
-    "saveError": "Errore nel salvataggio delle impostazioni"
+    "saveError": "Errore nel salvataggio delle impostazioni",
+    "profile": {
+      "title": "Profilo",
+      "description": "Gestisci le informazioni del tuo account.",
+      "name": "Nome",
+      "email": "Email",
+      "save": "Salva",
+      "saved": "Profilo salvato"
+    },
+    "api": {
+      "title": "Chiavi API",
+      "description": "Configura le chiavi dei provider IA e dei servizi.",
+      "configured": "Configurata",
+      "masked": "Chiave mascherata",
+      "newKey": "Nuova chiave",
+      "notConfigured": "Non configurata",
+      "replaceKey": "Sostituisci chiave",
+      "save": "Salva",
+      "saved": "Chiave salvata",
+      "saving": "Salvataggio...",
+      "test": "Prova connessione",
+      "testFail": "Connessione fallita",
+      "testSuccess": "Connessione riuscita",
+      "testing": "Test in corso...",
+      "confirmReplace": {
+        "title": "Sostituire la chiave esistente?",
+        "body": "La chiave attuale verrà sovrascritta in modo permanente. Questa azione non può essere annullata.",
+        "confirm": "Sostituisci",
+        "cancel": "Annulla"
+      }
+    },
+    "preferences": {
+      "title": "Preferenze",
+      "description": "Regola lingua, tema e notifiche.",
+      "darkMode": "Modalità scura",
+      "degradedMode": "Modalità ridotta",
+      "emailNotifications": "Notifiche email",
+      "language": "Lingua"
+    },
+    "schedule": {
+      "title": "Pianificazione pubblicazione",
+      "description": "Imposta gli orari di pubblicazione predefiniti per giorno.",
+      "addSlot": "Aggiungi orario",
+      "removeSlot": "Rimuovi",
+      "timezone": "Fuso orario",
+      "weekday": {
+        "mon": "Lunedì",
+        "tue": "Martedì",
+        "wed": "Mercoledì",
+        "thu": "Giovedì",
+        "fri": "Venerdì",
+        "sat": "Sabato",
+        "sun": "Domenica"
+      }
+    },
+    "nav": {
+      "api": "Chiavi API",
+      "schedule": "Pianificazione",
+      "preferences": "Preferenze",
+      "costs": "Costi",
+      "system": "Sistema"
+    }
   },
   "onboarding": {
     "tour": {

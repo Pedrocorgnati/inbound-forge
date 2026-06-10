@@ -130,7 +130,68 @@
     "security": "Segurança",
     "integrations": "Integrações",
     "saved": "Configurações salvas",
-    "saveError": "Erro ao salvar configurações"
+    "saveError": "Erro ao salvar configurações",
+    "profile": {
+      "title": "Perfil",
+      "description": "Gerencie as informações da sua conta.",
+      "name": "Nome",
+      "email": "E-mail",
+      "save": "Salvar",
+      "saved": "Perfil salvo"
+    },
+    "api": {
+      "title": "Chaves de API",
+      "description": "Configure as chaves dos provedores de IA e serviços.",
+      "configured": "Configurada",
+      "masked": "Chave mascarada",
+      "newKey": "Nova chave",
+      "notConfigured": "Não configurada",
+      "replaceKey": "Substituir chave",
+      "save": "Salvar",
+      "saved": "Chave salva",
+      "saving": "Salvando...",
+      "test": "Testar conexão",
+      "testFail": "Falha na conexão",
+      "testSuccess": "Conexão bem-sucedida",
+      "testing": "Testando...",
+      "confirmReplace": {
+        "title": "Substituir chave existente?",
+        "body": "A chave atual será sobrescrita permanentemente. Esta ação não pode ser desfeita.",
+        "confirm": "Substituir",
+        "cancel": "Cancelar"
+      }
+    },
+    "preferences": {
+      "title": "Preferências",
+      "description": "Ajuste idioma, tema e notificações.",
+      "darkMode": "Modo escuro",
+      "degradedMode": "Modo degradado",
+      "emailNotifications": "Notificações por e-mail",
+      "language": "Idioma"
+    },
+    "schedule": {
+      "title": "Agenda de publicação",
+      "description": "Defina os horários padrão de publicação por dia da semana.",
+      "addSlot": "Adicionar horário",
+      "removeSlot": "Remover",
+      "timezone": "Fuso horário",
+      "weekday": {
+        "mon": "Segunda-feira",
+        "tue": "Terça-feira",
+        "wed": "Quarta-feira",
+        "thu": "Quinta-feira",
+        "fri": "Sexta-feira",
+        "sat": "Sábado",
+        "sun": "Domingo"
+      }
+    },
+    "nav": {
+      "api": "Chaves de API",
+      "schedule": "Agenda",
+      "preferences": "Preferências",
+      "costs": "Custos",
+      "system": "Sistema"
+    }
   },
   "auth": {
     "login": "Entrar",
@@ -487,7 +548,9 @@
   "header": {
     "openMenu": "Abrir menu de navegação",
     "logoutLabel": "Sair da aplicação",
-    "reconciliationPending": "{count} itens de reconciliação pendentes"
+    "reconciliationPending": "{count} itens de reconciliação pendentes",
+    "profileLabel": "Perfil",
+    "settingsLabel": "Configurações"
   },
   "onboarding": {
     "tour": {

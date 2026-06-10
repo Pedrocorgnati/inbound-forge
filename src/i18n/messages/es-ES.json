@@ -479,7 +479,9 @@
   "header": {
     "openMenu": "Abrir menú de navegación",
     "logoutLabel": "Cerrar sesión",
-    "reconciliationPending": "{count} elementos de reconciliación pendientes"
+    "reconciliationPending": "{count} elementos de reconciliación pendientes",
+    "profileLabel": "Perfil",
+    "settingsLabel": "Configuración"
   },
   "settings": {
     "title": "Configuración",
@@ -487,7 +489,68 @@
     "security": "Seguridad",
     "integrations": "Integraciones",
     "saved": "Configuración guardada",
-    "saveError": "Error al guardar la configuración"
+    "saveError": "Error al guardar la configuración",
+    "profile": {
+      "title": "Perfil",
+      "description": "Gestiona la información de tu cuenta.",
+      "name": "Nombre",
+      "email": "Correo electrónico",
+      "save": "Guardar",
+      "saved": "Perfil guardado"
+    },
+    "api": {
+      "title": "Claves de API",
+      "description": "Configura las claves de los proveedores de IA y servicios.",
+      "configured": "Configurada",
+      "masked": "Clave enmascarada",
+      "newKey": "Nueva clave",
+      "notConfigured": "No configurada",
+      "replaceKey": "Reemplazar clave",
+      "save": "Guardar",
+      "saved": "Clave guardada",
+      "saving": "Guardando...",
+      "test": "Probar conexión",
+      "testFail": "Conexión fallida",
+      "testSuccess": "Conexión exitosa",
+      "testing": "Probando...",
+      "confirmReplace": {
+        "title": "¿Reemplazar la clave existente?",
+        "body": "La clave actual se sobrescribirá permanentemente. Esta acción no se puede deshacer.",
+        "confirm": "Reemplazar",
+        "cancel": "Cancelar"
+      }
+    },
+    "preferences": {
+      "title": "Preferencias",
+      "description": "Ajusta idioma, tema y notificaciones.",
+      "darkMode": "Modo oscuro",
+      "degradedMode": "Modo degradado",
+      "emailNotifications": "Notificaciones por correo",
+      "language": "Idioma"
+    },
+    "schedule": {
+      "title": "Programación de publicación",
+      "description": "Define los horarios de publicación por día de la semana.",
+      "addSlot": "Añadir horario",
+      "removeSlot": "Eliminar",
+      "timezone": "Zona horaria",
+      "weekday": {
+        "mon": "Lunes",
+        "tue": "Martes",
+        "wed": "Miércoles",
+        "thu": "Jueves",
+        "fri": "Viernes",
+        "sat": "Sábado",
+        "sun": "Domingo"
+      }
+    },
+    "nav": {
+      "api": "Claves de API",
+      "schedule": "Programación",
+      "preferences": "Preferencias",
+      "costs": "Costes",
+      "system": "Sistema"
+    }
   },
   "onboarding": {
     "tour": {
