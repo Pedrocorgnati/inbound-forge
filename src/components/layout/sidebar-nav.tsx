@@ -27,6 +27,7 @@ import {
   UserPlus,
   FileInput,
   Workflow,
+  Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -56,6 +57,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   UserPlus,
   FileInput,
   Workflow,
+  Zap,
 }
 
 interface SidebarNavProps {

@@ -89,7 +89,8 @@
     "subscribers": "Inscritos",
     "broadcasts": "Email",
     "forms": "Formularios",
-    "sequences": "Sequencias"
+    "sequences": "Sequencias",
+    "automations": "Automacoes"
   },
   "breadcrumbs": {
     "home": "Início",
@@ -896,6 +897,45 @@
       "subject": "Assunto",
       "body": "Corpo (HTML)",
       "save": "Salvar sequencia",
+      "saving": "Salvando...",
+      "error": "Nao foi possivel salvar."
+    }
+  },
+  "automations": {
+    "title": "Automacoes",
+    "description": "Regras quando-isto-entao-aquilo que orquestram leads, sequencias e notificacoes.",
+    "new": "Nova regra",
+    "loading": "Carregando...",
+    "empty": "Nenhuma regra ainda. Crie a primeira.",
+    "error": "Erro ao carregar.",
+    "colName": "Nome",
+    "colTrigger": "Gatilho",
+    "colAction": "Acao",
+    "colEnabled": "Ativa",
+    "colRuns": "Execucoes",
+    "enabled": "Sim",
+    "disabled": "Nao",
+    "trigger": {
+      "LEAD_CREATED": "Lead criado",
+      "LEAD_STATUS_CHANGED": "Status do lead mudou",
+      "LEAD_MQL": "Lead virou MQL"
+    },
+    "action": {
+      "NOTIFY": "Notificar",
+      "SET_FUNNEL_STAGE": "Definir estagio do funil",
+      "ENROLL_SEQUENCE": "Inscrever em sequencia"
+    },
+    "builder": {
+      "title": "Nova regra",
+      "name": "Nome",
+      "trigger": "Gatilho",
+      "action": "Acao",
+      "enabledLabel": "Ativa",
+      "funnelStage": "Estagio do funil (AWARENESS/CONSIDERATION/DECISION)",
+      "sequenceId": "ID da sequencia",
+      "note": "Nota (opcional)",
+      "configHint": "Preencha o campo conforme a acao escolhida.",
+      "save": "Salvar regra",
       "saving": "Salvando...",
       "error": "Nao foi possivel salvar."
     }

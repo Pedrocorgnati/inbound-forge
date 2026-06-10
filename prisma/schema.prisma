@@ -1583,3 +1583,52 @@ model NurtureSendLog {
   @@index([enrollmentId], name: "IDX_nurture_send_logs_enrollment")
   @@map("nurture_send_logs")
 }
+
+// ─── Inbound F5: Marketing Automation (trigger -> action) ─────────────────────
+enum AutomationTrigger {
+  LEAD_CREATED
+  LEAD_STATUS_CHANGED
+  LEAD_MQL
+}
+
+enum AutomationActionType {
+  NOTIFY
+  SET_FUNNEL_STAGE
+  ENROLL_SEQUENCE
+}
+
+enum AutomationRunStatus {
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+model AutomationRule {
+  id           String               @id @default(uuid())
+  name         String               @db.VarChar(160)
+  enabled      Boolean              @default(true)
+  trigger      AutomationTrigger
+  actionType   AutomationActionType
+  actionConfig Json?                @map("action_config") // { funnelStage } | { sequenceId } | { note }
+  createdAt    DateTime             @default(now()) @map("created_at")
+  updatedAt    DateTime             @updatedAt @map("updated_at")
+
+  runs AutomationRun[]
+
+  @@index([trigger, enabled], name: "IDX_automation_rules_trigger_enabled")
+  @@map("automation_rules")
+}
+
+model AutomationRun {
+  id        String              @id @default(uuid())
+  ruleId    String              @map("rule_id")
+  rule      AutomationRule      @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  trigger   AutomationTrigger
+  entityId  String?             @map("entity_id") // leadId
+  status    AutomationRunStatus
+  detail    String?             @db.VarChar(500)
+  createdAt DateTime            @default(now()) @map("created_at")
+
+  @@index([ruleId, createdAt], name: "IDX_automation_runs_rule_created")
+  @@map("automation_runs")
+}

@@ -4,6 +4,7 @@
 import 'server-only'
 import { prisma } from '@/lib/prisma'
 import { sendAlertEmail } from '@/lib/alert-email'
+import { emitAutomationEvent } from '@/lib/automation/engine'
 
 export interface ScoringConfig {
   mqlThreshold: number
@@ -108,6 +109,8 @@ export async function recomputeLeadScore(leadId: string): Promise<RecomputeResul
       logType: 'lead_mql',
       metadata: { leadId, score: newScore },
     }).catch(() => undefined)
+    // F5: dispara automacoes do trigger LEAD_MQL (notify/enroll/set-stage).
+    void emitAutomationEvent('LEAD_MQL', { leadId }).catch(() => undefined)
   }
 
   return { score: newScore, mqlReached }

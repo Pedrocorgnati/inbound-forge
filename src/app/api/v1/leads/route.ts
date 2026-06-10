@@ -18,6 +18,7 @@ import { buildSearchWhere } from '@/lib/search/text-search'
 import { NextResponse } from 'next/server'
 import { sendLeadCapturedEmail } from '@/lib/notifications/lead-captured.email'
 import { trackServerEvent } from '@/lib/ga4-measurement-protocol'
+import { emitAutomationEvent } from '@/lib/automation/engine'
 import { GA4_EVENTS } from '@/constants/ga4-events'
 
 // GET /api/v1/leads
@@ -189,6 +190,9 @@ export async function POST(request: NextRequest) {
         firstTouchThemeId: lead.firstTouchThemeId,
       },
     })
+
+    // F5: dispara automacoes do trigger LEAD_CREATED (fire-and-forget).
+    void emitAutomationEvent('LEAD_CREATED', { leadId: lead.id }).catch(() => void 0)
 
     // PA-04: incrementar UTMLink.clicks apenas quando postId veio explícito no payload
     // (não quando foi resolvido por fallback) — evita inflate de métricas

@@ -89,7 +89,8 @@
     "subscribers": "Subscribers",
     "broadcasts": "Email",
     "forms": "Forms",
-    "sequences": "Sequences"
+    "sequences": "Sequences",
+    "automations": "Automations"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -896,6 +897,45 @@
       "subject": "Subject",
       "body": "Body (HTML)",
       "save": "Save sequence",
+      "saving": "Saving...",
+      "error": "Could not save."
+    }
+  },
+  "automations": {
+    "title": "Automations",
+    "description": "When-this-then-that rules orchestrating leads, sequences and notifications.",
+    "new": "New rule",
+    "loading": "Loading...",
+    "empty": "No rules yet. Create the first one.",
+    "error": "Error loading.",
+    "colName": "Name",
+    "colTrigger": "Trigger",
+    "colAction": "Action",
+    "colEnabled": "Enabled",
+    "colRuns": "Runs",
+    "enabled": "Yes",
+    "disabled": "No",
+    "trigger": {
+      "LEAD_CREATED": "Lead created",
+      "LEAD_STATUS_CHANGED": "Lead status changed",
+      "LEAD_MQL": "Lead became MQL"
+    },
+    "action": {
+      "NOTIFY": "Notify",
+      "SET_FUNNEL_STAGE": "Set funnel stage",
+      "ENROLL_SEQUENCE": "Enroll in sequence"
+    },
+    "builder": {
+      "title": "New rule",
+      "name": "Name",
+      "trigger": "Trigger",
+      "action": "Action",
+      "enabledLabel": "Enabled",
+      "funnelStage": "Funnel stage (AWARENESS/CONSIDERATION/DECISION)",
+      "sequenceId": "Sequence ID",
+      "note": "Note (optional)",
+      "configHint": "Fill the field matching the chosen action.",
+      "save": "Save rule",
       "saving": "Saving...",
       "error": "Could not save."
     }

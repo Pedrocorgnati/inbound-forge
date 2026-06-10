@@ -89,7 +89,8 @@
     "subscribers": "Iscritti",
     "broadcasts": "Email",
     "forms": "Moduli",
-    "sequences": "Sequenze"
+    "sequences": "Sequenze",
+    "automations": "Automazioni"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -896,6 +897,45 @@
       "subject": "Oggetto",
       "body": "Corpo (HTML)",
       "save": "Salva sequenza",
+      "saving": "Salvataggio...",
+      "error": "Impossibile salvare."
+    }
+  },
+  "automations": {
+    "title": "Automazioni",
+    "description": "Regole quando-questo-allora-quello che orchestrano lead, sequenze e notifiche.",
+    "new": "Nuova regola",
+    "loading": "Caricamento...",
+    "empty": "Ancora nessuna regola. Crea la prima.",
+    "error": "Errore nel caricamento.",
+    "colName": "Nome",
+    "colTrigger": "Trigger",
+    "colAction": "Azione",
+    "colEnabled": "Attiva",
+    "colRuns": "Esecuzioni",
+    "enabled": "Si",
+    "disabled": "No",
+    "trigger": {
+      "LEAD_CREATED": "Lead creato",
+      "LEAD_STATUS_CHANGED": "Stato lead cambiato",
+      "LEAD_MQL": "Lead diventato MQL"
+    },
+    "action": {
+      "NOTIFY": "Notifica",
+      "SET_FUNNEL_STAGE": "Imposta fase del funnel",
+      "ENROLL_SEQUENCE": "Iscrivi a sequenza"
+    },
+    "builder": {
+      "title": "Nuova regola",
+      "name": "Nome",
+      "trigger": "Trigger",
+      "action": "Azione",
+      "enabledLabel": "Attiva",
+      "funnelStage": "Fase funnel (AWARENESS/CONSIDERATION/DECISION)",
+      "sequenceId": "ID sequenza",
+      "note": "Nota (opzionale)",
+      "configHint": "Compila il campo in base all azione scelta.",
+      "save": "Salva regola",
       "saving": "Salvataggio...",
       "error": "Impossibile salvare."
     }

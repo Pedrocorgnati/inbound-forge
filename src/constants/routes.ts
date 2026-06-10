@@ -26,6 +26,8 @@ export const ROUTES = {
   FORMS: '/forms',
   // Inbound F4: Nurture Sequences
   SEQUENCES: '/sequences',
+  // Inbound F5: Marketing Automation
+  AUTOMATIONS: '/automations',
 } as const
 
 export const PUBLIC_ROUTES = [ROUTES.LOGIN, ROUTES.BLOG_PUBLIC]

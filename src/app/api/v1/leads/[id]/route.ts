@@ -11,6 +11,7 @@ import { encryptPII, decryptPII } from '@/lib/crypto'
 import { auditLog } from '@/lib/audit'
 import { updateThemeConversionScore } from '@/lib/conversion-score'
 import { hashContactInfo, parseContactInfo } from '@/lib/leads/contact-hash'
+import { emitAutomationEvent } from '@/lib/automation/engine'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -112,6 +113,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         changedFields: Object.keys(parsed.data).filter((k) => k !== 'contactInfo'),
       },
     })
+
+    // F5: dispara automacoes do trigger LEAD_STATUS_CHANGED (fire-and-forget).
+    if (statusChanged) {
+      void emitAutomationEvent('LEAD_STATUS_CHANGED', { leadId: id, newStatus: parsed.data.status }).catch(() => void 0)
+    }
 
     return ok({ ...updated, contactInfo: updated.contactInfo ? '●●●●●●' : null })
   } catch {

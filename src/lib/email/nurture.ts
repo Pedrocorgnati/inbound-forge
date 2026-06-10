@@ -33,6 +33,22 @@ export async function enrollSubscriber(subscriberId: string): Promise<number> {
   return enrolled
 }
 
+/** Inscreve um subscriber numa sequence ESPECIFICA (idempotente). Usado por F5. */
+export async function enrollInSequence(subscriberId: string, sequenceId: string): Promise<boolean> {
+  const seq = await prisma.nurtureSequence.findUnique({
+    where: { id: sequenceId },
+    include: { steps: { orderBy: { order: 'asc' }, take: 1 } },
+  })
+  if (!seq || seq.status === 'ARCHIVED' || seq.steps.length === 0) return false
+  const nextStepAt = new Date(Date.now() + seq.steps[0].delayHours * HOUR_MS)
+  try {
+    await prisma.nurtureEnrollment.create({ data: { sequenceId, subscriberId, currentStep: 0, nextStepAt } })
+    return true
+  } catch {
+    return false // ja inscrito
+  }
+}
+
 /** Drena enrollments com step devido. Envia, loga e avanca. Idempotente por step. */
 export async function processNurtureTick(batchSize = 50): Promise<{ processed: number; sent: number; failed: number }> {
   const now = new Date()
