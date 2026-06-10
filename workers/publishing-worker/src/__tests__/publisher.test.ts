@@ -38,14 +38,13 @@ describe('publishPost', () => {
     vi.unstubAllGlobals()
   })
 
-  it('BLOG (auto): marca PROCESSING, chama API interna de blog e conclui DONE/PUBLISHED', async () => {
+  it('BLOG (assisted): marca PROCESSING, NAO chama fetch (rota auto inexistente), loga assisted e conclui DONE', async () => {
     await publishPost('post-1', 'BLOG', mockDb, mockRedis)
 
     expect(mockPqUpdate).toHaveBeenCalledWith({ where: { postId: 'post-1' }, data: { status: 'PROCESSING' } })
-    expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:3000/api/v1/blog/articles/post-1/publish',
-      expect.objectContaining({ method: 'POST', headers: expect.objectContaining({ 'Content-Type': 'application/json' }) }),
-    )
+    // Onda3: BLOG virou assistido (auto via fila nao implementado) — sem fetch, sem 404->FAILED.
+    expect(mockFetch).not.toHaveBeenCalled()
+    expect(logs().some((l) => l.includes('assisted_publish_ready') && l.includes('BLOG'))).toBe(true)
     expect(mockTransaction).toHaveBeenCalled()
     expect(mockPqUpdate).toHaveBeenCalledWith({ where: { postId: 'post-1' }, data: { status: 'DONE' } })
     expect(mockPostUpdate).toHaveBeenCalledWith(
@@ -87,7 +86,8 @@ describe('publishPost', () => {
     mockFetch.mockResolvedValue({ ok: false, status: 500, text: async () => 'boom' })
     mockPqFindUnique.mockResolvedValue({ attempts: 2, maxAttempts: 3 })
 
-    await publishPost('post-5', 'BLOG', mockDb, mockRedis)
+    // INSTAGRAM e canal 'auto' (faz fetch); BLOG virou assistido e nao falharia por fetch.
+    await publishPost('post-5', 'INSTAGRAM', mockDb, mockRedis)
 
     expect(mockPqUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ where: { postId: 'post-5' }, data: expect.objectContaining({ status: 'FAILED', attempts: 3 }) }),

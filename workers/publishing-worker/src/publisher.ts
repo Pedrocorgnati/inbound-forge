@@ -29,8 +29,16 @@ type WorkerChannelAdapter = {
 
 const WORKER_ADAPTERS: Record<string, WorkerChannelAdapter> = {
   BLOG: {
-    mode: 'auto',
-    route: (postId) => callInternalApi(`/api/v1/blog/articles/${postId}/publish`, 'POST'),
+    // Onda3: BLOG era 'auto' chamando /api/v1/blog/articles/:id/publish — rota
+    // INEXISTENTE (a real e /api/v1/blog/[idOrSlug]/publish, por BlogArticle.id,
+    // nao Post.id) -> 404 -> handleFailure -> FAILED enganoso em todo post BLOG.
+    // Auto-publish de BLOG via fila NAO esta implementado (o proprio
+    // /api/v1/posts/:id/publish do app ainda e stub TODO). Tratado como assistido
+    // ate o pipeline real existir (precisa mapear Post->ContentPiece->BlogArticle).
+    mode: 'assisted',
+    route: async (postId) => {
+      log({ event: 'assisted_publish_ready', postId, channel: 'BLOG', note: 'manual publish required (auto via fila nao implementado)', timestamp: new Date().toISOString() })
+    },
   },
   INSTAGRAM: {
     mode: 'auto',
