@@ -6,7 +6,47 @@
  * para evitar mock pesado de Supabase/NextResponse. Cobre todas as branches do guard.
  */
 import { describe, it, expect } from 'vitest'
-import { shouldRedirectToOnboarding } from '@/middleware'
+import { shouldRedirectToOnboarding, isCronExemptPath, isWorkerTokenRequest } from '@/middleware'
+
+// AUDIT-1: helpers que destravam crons (Vercel Cron, Bearer CRON_SECRET) e chamadas
+// backend->backend dos workers (Bearer WORKER_AUTH_TOKEN) do gate de sessao fail-closed.
+function reqWithAuth(value: string | null) {
+  return { headers: { get: (k: string) => (k.toLowerCase() === 'authorization' ? value : null) } } as never
+}
+
+describe('middleware — AUDIT-1 cron/worker exemptions', () => {
+  it('[CRON] todos os crons declarados sao isentos do gate de sessao', () => {
+    for (const p of [
+      '/api/cron/token-expiration', '/api/cron/lgpd-purge', '/api/cron/reconciliation',
+      '/api/cron/ga4-sync', '/api/cron/rescraping', '/api/cron/budget-check',
+      '/api/cron/worker-silence-check', '/api/cron/blog-scheduler',
+    ]) {
+      expect(isCronExemptPath(p)).toBe(true)
+    }
+  })
+
+  it('[CRON] rotas nao-cron NAO sao isentas', () => {
+    expect(isCronExemptPath('/api/dashboard')).toBe(false)
+    expect(isCronExemptPath('/api/v1/themes')).toBe(false)
+    expect(isCronExemptPath('/api/cronfake')).toBe(false)
+  })
+
+  it('[WORKER] rotas worker-token com Bearer passam (handler valida o token)', () => {
+    expect(isWorkerTokenRequest('/api/instagram/publish', reqWithAuth('Bearer wtok'))).toBe(true)
+    expect(isWorkerTokenRequest('/api/v1/health/heartbeat', reqWithAuth('Bearer wtok'))).toBe(true)
+    expect(isWorkerTokenRequest('/api/workers/scraping/trigger', reqWithAuth('Bearer wtok'))).toBe(true)
+  })
+
+  it('[WORKER] sem Bearer NAO pula o gate (sessao continua exigida)', () => {
+    expect(isWorkerTokenRequest('/api/instagram/publish', reqWithAuth(null))).toBe(false)
+    expect(isWorkerTokenRequest('/api/instagram/publish', reqWithAuth('Cookie abc'))).toBe(false)
+  })
+
+  it('[WORKER] rota nao-worker com Bearer NAO e isenta (escopo restrito)', () => {
+    expect(isWorkerTokenRequest('/api/v1/themes', reqWithAuth('Bearer wtok'))).toBe(false)
+    expect(isWorkerTokenRequest('/api/dashboard', reqWithAuth('Bearer wtok'))).toBe(false)
+  })
+})
 
 describe('middleware — shouldRedirectToOnboarding (onboarding guard)', () => {
   describe('dev mode bypass', () => {

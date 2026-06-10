@@ -7,14 +7,15 @@ import { verifyCsrfToken, readCsrfFromRequest } from '@/lib/auth/csrf-token'
 // Intake-Review TASK-19 ST001 (CL-OP-033): rate-limit granular em /api/blog/*.
 import { checkBlogPublicRateLimit, extractClientIp } from '@/lib/rate-limit/blog-public'
 
-const PUBLIC_PATHS = ['/login', '/blog']
-const API_PUBLIC_PATHS = ['/api/health', '/api/v1/health', '/api/auth']
+const PUBLIC_PATHS = ['/login', '/blog', '/diagnostico']
+const API_PUBLIC_PATHS = ['/api/health', '/api/v1/health', '/api/auth', '/api/v1/diagnostico']
 const ONBOARDING_PATH = '/onboarding'
 
 const CSRF_MUTATIVE_METHODS = new Set(['POST', 'PUT', 'DELETE', 'PATCH'])
 const CSRF_WHITELIST_PREFIXES = [
   '/api/v1/csrf',
   '/api/v1/auth',
+  '/api/v1/diagnostico',
   '/api/webhooks',
   '/api/auth',
 ]
@@ -26,6 +27,20 @@ function requiresCsrfCheck(method: string, pathname: string): boolean {
   return true
 }
 
+// AUDIT-1: rotas que aceitam Bearer WORKER_AUTH_TOKEN (chamadas backend->backend dos
+// workers Railway, SEM cookie de sessao). O proprio handler valida via requireWorkerToken;
+// sem esta isencao o gate de sessao 401-ava o worker antes (ex.: publishing-worker ->
+// /api/instagram/publish). So pula o gate de SESSAO quando ha header Bearer; o handler
+// continua sendo o gate de auth real (rejeita Bearer invalido).
+const WORKER_TOKEN_PATHS = ['/api/instagram/publish', '/api/v1/health/heartbeat', '/api/workers/']
+export function isCronExemptPath(pathname: string): boolean {
+  return pathname.startsWith('/api/cron/')
+}
+export function isWorkerTokenRequest(pathname: string, request: Pick<NextRequest, 'headers'>): boolean {
+  if (!WORKER_TOKEN_PATHS.some((p) => pathname.startsWith(p))) return false
+  return request.headers.get('authorization')?.startsWith('Bearer ') ?? false
+}
+
 function isPublicPath(pathname: string): boolean {
   // Remove locale prefix
   const withoutLocale = pathname.replace(/^\/(pt-BR|en-US|it-IT|es-ES)/, '')
@@ -33,6 +48,39 @@ function isPublicPath(pathname: string): boolean {
     PUBLIC_PATHS.some((p) => withoutLocale.startsWith(p)) ||
     API_PUBLIC_PATHS.some((p) => withoutLocale.startsWith(p) || pathname.startsWith(p))
   )
+}
+
+// loop 05-27 TAREFA-028 (P3): a propria pagina de desafio MFA nao pode ser gateada
+// pelo proprio gate de AAL (evita loop de redirect).
+function isMfaChallengePath(pathname: string): boolean {
+  const withoutLocale = pathname.replace(/^\/(pt-BR|en-US|it-IT|es-ES)/, '')
+  return withoutLocale === '/mfa-challenge' || withoutLocale.startsWith('/mfa-challenge/')
+}
+
+// loop 05-27 TAREFA-028 (fix REPROVADO): o gate de AAL2 deve cobrir TAMBEM as APIs
+// protegidas (a versao anterior so gateava paginas, permitindo bypass por sessao AAL1
+// chamando /api/*). Apenas o proprio fluxo de enrolamento/recovery do MFA + health
+// permanecem acessiveis em AAL1, senao o usuario nunca conseguiria completar/desativar
+// o segundo fator. Mantem-se a isencao de /onboarding e da pagina de desafio.
+const MFA_GATE_EXEMPT_API_PREFIXES = [
+  '/api/health',
+  '/api/v1/health',
+  '/api/auth',
+  '/api/v1/auth', // login + mfa setup/verify/challenge/disable (enroll + recovery)
+  '/api/v1/csrf',
+]
+
+function isMfaGateExempt(pathname: string): boolean {
+  if (isMfaChallengePath(pathname)) return true
+  const withoutLocale = pathname.replace(/^\/(pt-BR|en-US|it-IT|es-ES)/, '')
+  if (
+    withoutLocale === ONBOARDING_PATH ||
+    withoutLocale.startsWith(`${ONBOARDING_PATH}/`)
+  ) {
+    return true
+  }
+  if (MFA_GATE_EXEMPT_API_PREFIXES.some((p) => pathname.startsWith(p))) return true
+  return false
 }
 
 function buildCSP(nonce: string): string {
@@ -85,7 +133,12 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/favicon') ||
     pathname.startsWith('/images') ||
     pathname === '/api/v1/health' ||
-    pathname === '/api/health'
+    pathname === '/api/health' ||
+    // AUDIT-1: crons sao autenticados pelo PROPRIO handler (Bearer CRON_SECRET).
+    // Vercel Cron dispara GET sem cookie de sessao; sem este skip o gate fail-closed
+    // 401-ava TODOS os crons (lgpd-purge, reconciliation, token-expiration, etc.) antes
+    // do handler rodar — ou seja, nenhum cron executava em producao.
+    isCronExemptPath(pathname)
   ) {
     return NextResponse.next()
   }
@@ -121,6 +174,17 @@ export async function middleware(request: NextRequest) {
   // Check if path has locale prefix (API routes nunca levam prefixo de locale)
   const hasLocale = SUPPORTED_LOCALES.some((l) => pathname.startsWith(`/${l}`))
   if (!hasLocale && !pathname.startsWith('/api/')) {
+    // TASK-15 ST001 (CL-319): detectar locale inválido (ex: /zz-ZZ/...) e redirecionar 308
+    const LOCALE_PATTERN = /^\/([a-z]{2}(?:-[A-Z]{2})?)(\/.*)$/
+    const localeMatch = pathname.match(LOCALE_PATTERN)
+    if (localeMatch) {
+      // Parece locale mas não está na lista suportada — redirect 308 para default
+      const rest = localeMatch[2] ?? '/'
+      const acceptLang = request.headers.get('accept-language') ?? ''
+      const preferred = SUPPORTED_LOCALES.find((l) => acceptLang.includes(l.split('-')[0]))
+      const target = preferred ?? DEFAULT_LOCALE
+      return NextResponse.redirect(new URL(`/${target}${rest}${request.nextUrl.search}`, request.url), 308)
+    }
     return NextResponse.redirect(new URL(`/${DEFAULT_LOCALE}${pathname}`, request.url))
   }
 
@@ -166,6 +230,11 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (!user) {
+      // AUDIT-1: chamadas backend->backend dos workers (Bearer token, sem cookie)
+      // passam direto — o handler valida via requireWorkerToken.
+      if (isWorkerTokenRequest(pathname, request)) {
+        return NextResponse.next()
+      }
       // Fail-closed: sem sessão → redirect login com returnTo (SEC-003)
       if (pathname.startsWith('/api/')) {
         return NextResponse.json(
@@ -180,6 +249,52 @@ export async function middleware(request: NextRequest) {
       loginUrl.searchParams.set('redirect', sanitized)
       loginUrl.searchParams.set('returnTo', sanitized)
       return NextResponse.redirect(loginUrl)
+    }
+
+    // loop 05-27 TAREFA-028 (fix REPROVADO): gate de MFA — usuario autenticado em
+    // AAL1 que possui um fator TOTP verificado deve completar o desafio (AAL2) antes
+    // de acessar QUALQUER recurso protegido, paginas OU APIs. A versao anterior so
+    // gateava paginas (`!pathname.startsWith('/api/')`), o que permitia bypass: uma
+    // sessao AAL1 com MFA ativo chamava /api/* protegido sem TOTP. Agora o gate
+    // cobre as APIs e e FAIL-CLOSED: se a checagem de AAL falhar, bloqueamos (403 em
+    // API, redirect ao desafio em pagina) em vez de liberar. So o fluxo de
+    // enrolamento/recovery do MFA, onboarding, health e a pagina de desafio ficam
+    // isentos (ver isMfaGateExempt).
+    if (!isMfaGateExempt(pathname)) {
+      let mustChallenge = false
+      try {
+        const { data: aal, error: aalError } =
+          await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+        if (aalError || !aal) {
+          // Fail-closed (SEC, fix residual do finding security/fail_open): o cliente
+          // Supabase devolve `{ data, error }` SEM lancar excecao. A versao anterior
+          // so capturava `data` e caia no catch apenas em throw real; um erro
+          // nao-throw (ou data ausente) deixava `mustChallenge=false` e LIBERAVA o
+          // recurso protegido enquanto o MFA podia estar ativo. Agora qualquer falha
+          // da checagem AAL forca o desafio. Setup/recovery seguem isentos acima.
+          mustChallenge = true
+        } else {
+          mustChallenge = aal.nextLevel === 'aal2' && aal.currentLevel === 'aal1'
+        }
+      } catch {
+        // Fail-closed (SEC, fix do finding security/fail_open): indisponibilidade da
+        // checagem AAL nao pode liberar recurso protegido enquanto o MFA pode estar
+        // ativo. O fluxo de enrolamento/recovery esta isento acima, entao um usuario
+        // sem MFA nunca fica preso aqui em rota de setup.
+        mustChallenge = true
+      }
+      if (mustChallenge) {
+        if (pathname.startsWith('/api/')) {
+          return NextResponse.json(
+            { code: 'MFA_REQUIRED', message: 'Verificacao MFA (AAL2) necessaria' },
+            { status: 403 }
+          )
+        }
+        const { sanitized } = validateCallbackUrl(pathname)
+        const challengeUrl = new URL(`/${locale}/mfa-challenge`, request.url)
+        challengeUrl.searchParams.set('redirect', sanitized)
+        return NextResponse.redirect(challengeUrl)
+      }
     }
 
     // CSRF check em rotas mutativas protegidas (CL-272)
