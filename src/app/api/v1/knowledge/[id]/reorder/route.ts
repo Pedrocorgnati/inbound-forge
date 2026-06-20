@@ -19,12 +19,12 @@ const TYPE_TO_DELEGATE = {
   objections: 'objection',
 } as const
 
-type Params = { params: Promise<{ type: string }> }
+type Params = { params: Promise<{ id: string }> }
 
 export async function POST(request: NextRequest, { params }: Params) {
   const { response } = await requireSession()
   if (response) return response
-  const { type } = await params
+  const { id: type } = await params
   const delegateName = TYPE_TO_DELEGATE[type as keyof typeof TYPE_TO_DELEGATE]
   if (!delegateName) return notFound('Tipo invalido')
 

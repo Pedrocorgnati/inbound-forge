@@ -54,8 +54,16 @@ export function QuotaWidget() {
 
   useEffect(() => {
     fetch('/api/cost/quotas')
-      .then((r) => r.json() as Promise<QuotasResponse>)
-      .then(setQuotas)
+      .then(async (r) => {
+        // Um 500 retorna JSON válido sem `providers`; tratar como erro explícito
+        // em vez de deixar o render quebrar (Zero Estados Indefinidos).
+        if (!r.ok) throw new Error('quotas request failed')
+        return (await r.json()) as QuotasResponse
+      })
+      .then((data) => {
+        if (!data?.providers) throw new Error('quotas payload inválido')
+        setQuotas(data)
+      })
       .catch(() => setError(true))
   }, [])
 
@@ -71,7 +79,7 @@ export function QuotaWidget() {
   return (
     <div className="rounded-md border border-border p-3 space-y-3" data-testid="quota-widget">
       <h3 className="text-sm font-medium">Quota de Imagens (mês atual)</h3>
-      {Object.values(quotas.providers).map((p) => (
+      {Object.values(quotas.providers ?? {}).map((p) => (
         <ProviderBar key={p.provider} data={p} />
       ))}
     </div>

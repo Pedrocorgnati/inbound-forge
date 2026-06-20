@@ -6,6 +6,7 @@ import { validateCallbackUrl } from '@/lib/auth/callback-validation'
 import { verifyCsrfToken, readCsrfFromRequest } from '@/lib/auth/csrf-token'
 // Intake-Review TASK-19 ST001 (CL-OP-033): rate-limit granular em /api/blog/*.
 import { checkBlogPublicRateLimit, extractClientIp } from '@/lib/rate-limit/blog-public'
+import { SUPABASE_AUTH_COOKIE_NAME } from '@/lib/supabase-cookie'
 
 // Inbound F1/F2: /subscribe, /unsubscribed e /f/<slug> (lead forms) sao publicas.
 // '/f/' com barra evita colidir com /fila.
@@ -21,6 +22,8 @@ const API_PUBLIC_PATHS = [
   '/api/unsubscribe',
   // Inbound F2: config + submit publicos de lead forms.
   '/api/f',
+  // Telemetria anonima de Web Vitals (sendBeacon, sem sessao nem CSRF).
+  '/api/v1/vitals',
 ]
 const ONBOARDING_PATH = '/onboarding'
 
@@ -36,6 +39,8 @@ const CSRF_WHITELIST_PREFIXES = [
   '/api/unsubscribe',
   // Inbound F2: POST publico de submit de lead form.
   '/api/f',
+  // Telemetria anonima de Web Vitals (sendBeacon nao envia header CSRF).
+  '/api/v1/vitals',
 ]
 
 function requiresCsrfCheck(method: string, pathname: string): boolean {
@@ -101,8 +106,23 @@ function isMfaGateExempt(pathname: string): boolean {
   return false
 }
 
+// Origem do Supabase derivada do env, para liberar tanto o projeto remoto
+// (https://*.supabase.co) quanto um Supabase local em dev (ex.: http://127.0.0.1:54421).
+function supabaseCspSources(): { http: string; ws: string } {
+  try {
+    const u = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? '')
+    const ws = `${u.protocol === 'https:' ? 'wss' : 'ws'}://${u.host}`
+    return { http: u.origin, ws }
+  } catch {
+    return { http: '', ws: '' }
+  }
+}
+
 function buildCSP(nonce: string): string {
   const isDev = process.env.NODE_ENV === 'development'
+  const sb = supabaseCspSources()
+  const sbImg = sb.http ? ` ${sb.http}` : ''
+  const sbConnect = sb.http ? ` ${sb.http} ${sb.ws}` : ''
   return [
     "default-src 'self'",
     // GA4 (googletagmanager) + Vercel live preview
@@ -110,9 +130,9 @@ function buildCSP(nonce: string): string {
     `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ''} https://vercel.live https://www.googletagmanager.com`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://*.supabase.co https://www.googletagmanager.com",
+    `img-src 'self' data: blob: https://*.supabase.co https://www.googletagmanager.com${sbImg}`,
     // Sentry tunnel em /monitoring (não *.ingest.sentry.io diretamente)
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.upstash.io https://app.posthog.com https://*.ingest.sentry.io https://www.google-analytics.com",
+    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.upstash.io https://app.posthog.com https://*.ingest.sentry.io https://www.google-analytics.com${sbConnect}`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -240,6 +260,7 @@ export async function middleware(request: NextRequest) {
             )
           },
         },
+        cookieOptions: { name: SUPABASE_AUTH_COOKIE_NAME },
       }
     )
 

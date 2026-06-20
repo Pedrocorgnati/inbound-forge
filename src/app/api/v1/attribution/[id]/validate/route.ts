@@ -16,7 +16,7 @@ import {
 import { updateThemeConversionScore } from '@/lib/conversion-score'
 import { auditLog } from '@/lib/audit'
 
-type Params = { params: Promise<{ eventId: string }> }
+type Params = { params: Promise<{ id: string }> }
 
 const bodySchema = z.object({
   manuallyValidated: z.boolean(),
@@ -25,7 +25,7 @@ const bodySchema = z.object({
 export async function PATCH(req: NextRequest, { params }: Params) {
   const { user, response } = await requireSession()
   if (response) return response
-  const { eventId } = await params
+  const { id: eventId } = await params
 
   let body: unknown
   try {

@@ -4,13 +4,13 @@ import { requireSession, ok, notFound, validationError, internalError } from '@/
 import { UpdateBlogArticleSchema } from '@/schemas/blog.schema'
 import { BLOG_STATUS } from '@/constants/status'
 
-type Params = { params: Promise<{ idOrSlug: string }> }
+type Params = { params: Promise<{ id: string }> }
 
 // GET /api/v1/blog/[idOrSlug] — público por slug
 // TASK-21 ST001 (CL-287): se artigo existe mas status=DELETED, retorna 410
 // Gone (permite ao Google remover do indice mais rapido que um 404).
 export async function GET(_request: NextRequest, { params }: Params) {
-  const { idOrSlug } = await params
+  const { id: idOrSlug } = await params
 
   try {
     // Busca sem filtro de status para detectar DELETED separadamente.
@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const { response } = await requireSession()
   if (response) return response
 
-  const { idOrSlug } = await params
+  const { id: idOrSlug } = await params
 
   let body: unknown
   try { body = await request.json() } catch { return validationError(new Error('Body inválido')) }

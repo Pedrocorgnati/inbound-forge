@@ -9,14 +9,14 @@ import { calculateFirstTouchAttribution, calculateAssistedTouchAttribution } fro
 import { applyFogMitigation } from '@/lib/attribution-fog'
 import type { AttributionDetail } from '@/types/leads'
 
-type Params = { params: Promise<{ leadId: string }> }
+type Params = { params: Promise<{ id: string }> }
 
 // GET /api/v1/attribution/[leadId]
 export async function GET(_request: NextRequest, { params }: Params) {
   const { response } = await requireSession()
   if (response) return response
 
-  const { leadId } = await params
+  const { id: leadId } = await params
 
   try {
     const lead = await prisma.lead.findUnique({

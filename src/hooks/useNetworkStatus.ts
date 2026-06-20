@@ -11,12 +11,14 @@ export interface NetworkStatus {
   lastOfflineAt: Date | null
 }
 
+// Estado inicial DETERMINISTICO (igual no server e no primeiro render do client)
+// para evitar hydration mismatch. O valor real de navigator.onLine so e lido
+// apos a montagem, dentro do useEffect.
 function initialStatus(): NetworkStatus {
-  const online = typeof navigator !== 'undefined' ? navigator.onLine : true
   return {
-    isOnline: online,
-    lastOnlineAt: online ? new Date() : null,
-    lastOfflineAt: online ? null : new Date(),
+    isOnline: true,
+    lastOnlineAt: null,
+    lastOfflineAt: null,
   }
 }
 
@@ -24,6 +26,18 @@ export function useNetworkStatus(): NetworkStatus {
   const [status, setStatus] = useState<NetworkStatus>(initialStatus)
 
   useEffect(() => {
+    // Sincroniza com o estado real do navegador apos a hidratacao.
+    const syncNow = () => {
+      const online = navigator.onLine
+      setStatus((s) => ({
+        ...s,
+        isOnline: online,
+        lastOnlineAt: online ? new Date() : s.lastOnlineAt,
+        lastOfflineAt: online ? s.lastOfflineAt : new Date(),
+      }))
+    }
+    syncNow()
+
     const onOnline = () =>
       setStatus((s) => ({ ...s, isOnline: true, lastOnlineAt: new Date() }))
     const onOffline = () =>

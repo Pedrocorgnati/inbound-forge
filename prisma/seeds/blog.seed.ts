@@ -79,7 +79,7 @@ Resultado: escopo claro, preço fixo, entrega previsível.
 ## Próximo passo
 
 Se você quer entender quanto custaria automatizar o processo que mais dói na sua empresa, agende um diagnóstico gratuito de 30 minutos.`,
-      metaTitle: 'Quanto Custa Software Personalizado em 2026 — Valores Reais | Pedro Corgnati',
+      metaTitle: 'Quanto Custa Software Personalizado em 2026 — Valores Reais',
       metaDescription: 'Guia transparente com preços reais de software personalizado no Brasil: MVP (R$20-50k), sistema médio (R$80-200k), plataforma complexa (R$200k+). Cases e ROI.',
       tags: ['custos', 'software personalizado', 'PME', 'investimento', 'ROI', 'preços'],
       status: 'DRAFT' as const,
@@ -138,7 +138,7 @@ Projeto desenvolvido com metodologia documentation-first (SystemForge):
 2. Documentação completa antes do código
 3. MVP funcional em 30 dias
 4. Iteração baseada em dados reais da clínica`,
-      metaTitle: 'Case: Clínica Reduziu No-Show em 40% com Sistema Próprio | Pedro Corgnati',
+      metaTitle: 'Case: Clínica Reduziu No-Show em 40% com Sistema Próprio',
       metaDescription: 'Caso real: clínica de fisioterapia substituiu agendamento manual por sistema com lembretes automatizados. No-show caiu 40%, recepção recuperou 3h/dia.',
       canonicalUrl: 'https://corgnati.com/blog/case-clinica-fisioterapia-reduziu-noshow-40-porcento',
       tags: ['case', 'saúde', 'clínica', 'agendamento', 'automação', 'resultados'],
@@ -206,7 +206,7 @@ Se respondeu "5+" na pergunta 1 e "não" na pergunta 5, provavelmente já passou
 ## Próximo passo
 
 Ofereço um diagnóstico gratuito de 30 minutos onde mapeamos suas ferramentas atuais e calculamos se faz sentido construir. Sem compromisso.`,
-      metaTitle: 'Construir vs. Comprar Software: Framework de Decisão para PMEs | Pedro Corgnati',
+      metaTitle: 'Construir vs. Comprar Software: Framework de Decisão para PMEs',
       metaDescription: 'Framework prático para decidir entre SaaS genérico e software personalizado. Inclui 5 perguntas-chave e cálculo de TCO para PMEs brasileiras.',
       canonicalUrl: 'https://corgnati.com/blog/construir-vs-comprar-software-quando-saas-nao-resolve',
       schemaTypes: ['BlogPosting', 'HowTo'],

@@ -1,26 +1,25 @@
 import { NextRequest } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { requireSession, ok, notFound, internalError } from '@/lib/api-auth'
-import { BLOG_STATUS } from '@/constants/status'
 
-type Params = { params: Promise<{ idOrSlug: string }> }
+type Params = { params: Promise<{ id: string }> }
 
-// POST /api/v1/blog/[id]/publish
+// POST /api/v1/blog/[id]/revalidate
 export async function POST(_request: NextRequest, { params }: Params) {
   const { response } = await requireSession()
   if (response) return response
 
-  const { idOrSlug } = await params
+  const { id: idOrSlug } = await params
 
   try {
     const article = await prisma.blogArticle.findUnique({ where: { id: idOrSlug } })
     if (!article) return notFound('Artigo não encontrado')
 
-    const updated = await prisma.blogArticle.update({
-      where: { id: idOrSlug },
-      data: { status: BLOG_STATUS.PUBLISHED, publishedAt: new Date() },
-    })
-    return ok(updated)
+    revalidatePath(`/blog/${article.slug}`)
+    revalidatePath('/blog')
+
+    return ok({ message: 'Revalidação solicitada' })
   } catch {
     return internalError()
   }

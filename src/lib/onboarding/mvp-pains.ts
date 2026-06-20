@@ -111,28 +111,39 @@ export async function seedMvpPains(client: PrismaClient): Promise<{
   let existing = 0
 
   for (const pain of MVP_PAINS) {
-    const result = await client.painLibraryEntry.upsert({
+    // Idempotente por title. Usamos findFirst + update/create em vez de upsert
+    // porque o unique nomeado @@unique([title], name: "UQ_pain_library_title")
+    // expoe selectors inconsistentes entre os tipos gerados e o query engine.
+    const existingRow = await client.painLibraryEntry.findFirst({
       where: { title: pain.title },
-      update: {
-        isDefault: true,
-        description: pain.description,
-        sectors: pain.sectors,
-        relevanceScore: pain.relevanceScore,
-        sortOrder: pain.sortOrder,
-      },
-      create: {
-        title: pain.title,
-        description: pain.description,
-        sectors: pain.sectors,
-        relevanceScore: pain.relevanceScore,
-        sortOrder: pain.sortOrder,
-        status: 'VALIDATED',
-        isDefault: true,
-      },
-      select: { createdAt: true, updatedAt: true },
+      select: { id: true },
     })
-    if (result.createdAt.getTime() === result.updatedAt.getTime()) inserted++
-    else existing++
+    if (existingRow) {
+      await client.painLibraryEntry.update({
+        where: { id: existingRow.id },
+        data: {
+          isDefault: true,
+          description: pain.description,
+          sectors: pain.sectors,
+          relevanceScore: pain.relevanceScore,
+          sortOrder: pain.sortOrder,
+        },
+      })
+      existing++
+    } else {
+      await client.painLibraryEntry.create({
+        data: {
+          title: pain.title,
+          description: pain.description,
+          sectors: pain.sectors,
+          relevanceScore: pain.relevanceScore,
+          sortOrder: pain.sortOrder,
+          status: 'VALIDATED',
+          isDefault: true,
+        },
+      })
+      inserted++
+    }
   }
 
   return { inserted, existing, total: MVP_PAINS.length }

@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies'
+import { SUPABASE_AUTH_COOKIE_NAME } from './supabase-cookie'
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -23,6 +24,7 @@ export async function createClient() {
           }
         },
       },
+      cookieOptions: { name: SUPABASE_AUTH_COOKIE_NAME },
     }
   )
 }

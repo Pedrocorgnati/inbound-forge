@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { sanitizeRedirect } from '@/lib/auth/session-expired-handler'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
@@ -28,7 +28,6 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ locale }: LoginFormProps) {
-  const router = useRouter()
   const searchParams = useSearchParams()
   // Intake Review TASK-6 ST003 (CL-276): preserva URL de retorno.
   // Aceita `redirect` (novo) e `returnTo` (mantido para compat com middleware legado).
@@ -69,8 +68,11 @@ export function LoginForm({ locale }: LoginFormProps) {
     }
 
     // Success — redirect para URL original (TASK-6 ST003) ou dashboard default.
-    router.push(redirectParam ?? `/${locale}/dashboard`)
-    router.refresh()
+    // Navegação HARD (full document load) em vez de router.push: o cookie de sessão
+    // acabou de ser escrito pelo cliente Supabase, e uma soft-navigation do App Router
+    // pode servir um RSC prefetchado/cacheado do destino de ANTES da sessão existir,
+    // voltando para o login. Um full load re-executa o middleware com o cookie novo.
+    window.location.assign(redirectParam ?? `/${locale}/dashboard`)
   }
 
   const isLocked = lockState?.locked ?? false
