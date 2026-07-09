@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { AlertTriangle, Inbox, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -54,6 +55,7 @@ interface ApprovalsInboxProps {
 
 export function ApprovalsInbox({ locale }: ApprovalsInboxProps) {
   const router = useRouter()
+  const tToast = useTranslations('toasts')
   const [type, setType] = useState<ApprovalTypeFilter>('all')
   const [priority, setPriority] = useState<ApprovalPriorityFilter>('all')
   const [age, setAge] = useState<ApprovalAgeFilter>('all')
@@ -121,12 +123,12 @@ export function ApprovalsInbox({ locale }: ApprovalsInboxProps) {
       if (!response.ok || payload?.success === false) {
         throw new Error(payload?.error ?? payload?.message ?? `HTTP ${response.status}`)
       }
-      toast.success('Aprovação registrada')
+      toast.success(tToast('approvals.registered'))
       setPendingApproval(null)
       router.push(detailHref(item))
       router.refresh()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Não foi possível aprovar.')
+      toast.error(err instanceof Error ? err.message : tToast('approvals.approve_failed'))
     } finally {
       setApprovingId(null)
     }

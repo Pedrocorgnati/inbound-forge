@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { MoreHorizontal, GripVertical, Instagram, Linkedin, Pause, Play, Download, Trash2 } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { useFormatters } from '@/lib/i18n/formatters'
 import { ChannelBadge } from '@/components/publishing/ChannelBadge'
@@ -53,6 +54,7 @@ export function PostMiniCard({
   onChanged,
 }: PostMiniCardProps) {
   const fmt = useFormatters()
+  const tToast = useTranslations('toasts')
   const truncatedCaption =
     post.caption.length > 40 ? post.caption.slice(0, 40) + '...' : post.caption
 
@@ -136,10 +138,10 @@ export function PostMiniCard({
         body: JSON.stringify({ status: isPaused ? 'PENDING' : 'PAUSED' }),
       })
       if (!res.ok) throw new Error(String(res.status))
-      toast.success(isPaused ? 'Retomado' : 'Pausado')
+      toast.success(isPaused ? tToast('calendar.resumed') : tToast('calendar.paused'))
       onChanged?.()
     } catch {
-      toast.error('Falha ao atualizar item')
+      toast.error(tToast('calendar.update_item_failed'))
     } finally {
       setBusy(false)
     }
@@ -159,14 +161,14 @@ export function PostMiniCard({
         credentials: 'include',
       })
       if (res.status === 409) {
-        toast.error('Item ja publicado nao pode ser removido')
+        toast.error(tToast('calendar.published_cannot_remove'))
         return
       }
       if (!res.ok) throw new Error(String(res.status))
-      toast.success('Removido da fila')
+      toast.success(tToast('calendar.removed_from_queue'))
       onChanged?.()
     } catch {
-      toast.error('Falha ao remover')
+      toast.error(tToast('common.remove_failed'))
     } finally {
       setBusy(false)
       setConfirmOpen(false)

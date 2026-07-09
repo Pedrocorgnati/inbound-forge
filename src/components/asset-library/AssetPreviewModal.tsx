@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { FileImage, X, Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { ResponsiveSheet } from '@/components/ui/responsive-sheet'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -42,6 +43,7 @@ export function AssetPreviewModal({ asset, open, onClose }: AssetPreviewModalPro
   const [tagInput, setTagInput]   = useState('')
   const [isSavingTag, setSavingTag] = useState(false)
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const tToast                    = useTranslations('toasts')
 
   useEffect(() => {
     if (asset) {
@@ -63,14 +65,14 @@ export function AssetPreviewModal({ asset, open, onClose }: AssetPreviewModalPro
           body: JSON.stringify({ altText: value }),
         })
         if (!res.ok) throw new Error('Falha ao salvar texto alternativo')
-        toast.success('Texto alternativo salvo')
+        toast.success(tToast('asset.alt_saved'))
       } catch {
-        toast.error('Erro ao salvar texto alternativo')
+        toast.error(tToast('asset.alt_save_failed'))
       } finally {
         setIsSaving(false)
       }
     },
-    [asset],
+    [asset, tToast],
   )
 
   const handleAltTextChange = useCallback(
@@ -103,12 +105,12 @@ export function AssetPreviewModal({ asset, open, onClose }: AssetPreviewModalPro
         })
         if (!res.ok) throw new Error('Falha ao salvar tags')
       } catch {
-        toast.error('Erro ao salvar tags')
+        toast.error(tToast('asset.tags_save_failed'))
       } finally {
         setSavingTag(false)
       }
     },
-    [asset],
+    [asset, tToast],
   )
 
   const commitTagInput = useCallback(

@@ -5,6 +5,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 import { RefreshCw, CheckCircle, AlertCircle } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -27,6 +28,7 @@ function SkeletonRow() {
 }
 
 export function ReconciliationPanel() {
+  const tToast = useTranslations('toasts')
   const [filter, setFilter] = useState<FilterMode>('pending')
   const [items, setItems] = useState<ReconciliationItemData[]>([])
   const [total, setTotal] = useState(0)
@@ -52,12 +54,12 @@ export function ReconciliationPanel() {
       setItems(json.data ?? [])
       setTotal(json.pagination?.total ?? json.meta?.total ?? 0)
     } catch {
-      toast.error('Erro ao carregar painel de reconciliação')
+      toast.error(tToast('analytics.recon_load_failed'))
       setItems([])
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [tToast])
 
   useEffect(() => {
     fetchItems(filter, page)
@@ -99,7 +101,7 @@ export function ReconciliationPanel() {
       // Recarregar lista após sync
       fetchItems(filter, page)
     } catch {
-      toast.error('Erro ao sincronizar reconciliação')
+      toast.error(tToast('analytics.recon_sync_failed'))
     } finally {
       setIsSyncing(false)
     }

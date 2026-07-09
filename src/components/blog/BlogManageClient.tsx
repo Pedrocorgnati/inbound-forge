@@ -28,6 +28,7 @@ export function BlogManageClient({ locale }: BlogManageClientProps) {
   const t = useTranslations('blog.manage')
   const tCommon = useTranslations('common')
   const tBlogStatus = useTranslations('blog.status')
+  const tToast = useTranslations('toasts')
 
   const STATUS_BADGE_MAP: Record<string, { label: string; variant: 'warning' | 'info' | 'success' | 'default' }> = {
     DRAFT: { label: tBlogStatus('DRAFT'), variant: 'warning' },
@@ -68,11 +69,11 @@ export function BlogManageClient({ locale }: BlogManageClientProps) {
       }
       setData(result)
     } catch {
-      toast.error('Falha ao carregar artigos')
+      toast.error(tToast('blog.load_articles_failed'))
     } finally {
       setIsLoading(false)
     }
-  }, [page, statusFilter])
+  }, [page, statusFilter, tToast])
 
   React.useEffect(() => {
     fetchArticles()
@@ -92,11 +93,11 @@ export function BlogManageClient({ locale }: BlogManageClientProps) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.message ?? 'Erro ao deletar')
       }
-      toast.success('Artigo deletado com sucesso')
+      toast.success(tToast('blog.article_deleted'))
       setDeleteTarget(null)
       fetchArticles()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao deletar artigo')
+      toast.error(err instanceof Error ? err.message : tToast('blog.delete_failed'))
     } finally {
       setIsDeleting(false)
     }
@@ -115,11 +116,11 @@ export function BlogManageClient({ locale }: BlogManageClientProps) {
         // BLOG_050: cannot publish without approval
         throw new Error(err.message ?? 'Erro ao publicar')
       }
-      toast.success('Artigo publicado com sucesso!')
+      toast.success(tToast('blog.article_published'))
       setPublishTarget(null)
       fetchArticles()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao publicar artigo')
+      toast.error(err instanceof Error ? err.message : tToast('blog.publish_failed'))
     } finally {
       setIsPublishing(false)
     }

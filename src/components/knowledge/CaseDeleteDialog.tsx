@@ -7,6 +7,7 @@ import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 interface Props {
   caseId: string
@@ -17,6 +18,7 @@ interface Props {
 export function CaseDeleteDialog({ caseId, caseTitle, children }: Props) {
   const [open, setOpen] = useState(false)
   const qc = useQueryClient()
+  const tToast = useTranslations('toasts')
 
   const unarchive = async () => {
     await fetch(`/api/v1/knowledge/cases/${caseId}/unarchive`, { method: 'POST' })
@@ -32,12 +34,12 @@ export function CaseDeleteDialog({ caseId, caseTitle, children }: Props) {
     onSuccess: () => {
       setOpen(false)
       qc.invalidateQueries({ queryKey: ['knowledge', 'cases'] })
-      toast.success('Case arquivado', {
+      toast.success(tToast('knowledge.case_archived'), {
         action: { label: 'Desfazer', onClick: () => void unarchive() },
         duration: 10_000,
       })
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Erro ao arquivar'),
+    onError: (e) => toast.error(e instanceof Error ? e.message : tToast('knowledge.case_archive_failed')),
   })
 
   return (

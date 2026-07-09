@@ -37,7 +37,7 @@ function DiffPanel({
               return (
                 <span
                   key={i}
-                  className="bg-[#FEE2E2] line-through text-foreground"
+                  className="bg-danger-bg line-through text-foreground"
                 >
                   {part.value}
                 </span>

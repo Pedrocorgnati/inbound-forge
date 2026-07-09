@@ -5,6 +5,7 @@
 // PipelineBoard.
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 export interface LeadStatusMutationInput {
@@ -41,6 +42,7 @@ async function updateLeadStatus({ id, status }: LeadStatusMutationInput) {
 }
 
 export function useLeadStatusMutation() {
+  const tToast = useTranslations('toasts')
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -62,10 +64,10 @@ export function useLeadStatusMutation() {
       if (context?.previous) {
         queryClient.setQueryData(LEADS_KEY, context.previous)
       }
-      toast.error(err instanceof Error ? err.message : 'Erro ao mover lead')
+      toast.error(err instanceof Error ? err.message : tToast('lead.move_failed'))
     },
     onSuccess: () => {
-      toast.success('Lead movido')
+      toast.success(tToast('lead.moved'))
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: LEADS_KEY })

@@ -7,6 +7,8 @@
  */
 'use client'
 import { useCallback, useRef, useState } from 'react'
+import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { useAssetUpload, type AssetUploadResult } from '@/hooks/useAssetUpload'
 
 export interface AssetUploadDialogProps {
@@ -22,6 +24,7 @@ const MAX_MB = 10
 
 export function AssetUploadDialog(props: AssetUploadDialogProps) {
   const { open, onClose, onUploaded, onInvalidate } = props
+  const tToast = useTranslations('toasts')
   const [dragOver, setDragOver] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -40,12 +43,12 @@ export function AssetUploadDialog(props: AssetUploadDialogProps) {
 
   const handleFile = useCallback((file: File) => {
     if (file.size > MAX_MB * 1024 * 1024) {
-      alert(`Arquivo excede ${MAX_MB} MB`)
+      toast.error(tToast('asset.file_too_large', { mb: MAX_MB }))
       return
     }
     setSelectedFile(file)
     setPreview(URL.createObjectURL(file))
-  }, [])
+  }, [tToast])
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
@@ -133,7 +136,7 @@ export function AssetUploadDialog(props: AssetUploadDialogProps) {
           <div className="mt-4">
             <div className="h-2 w-full rounded bg-gray-200">
               <div
-                className="h-2 rounded bg-blue-600 transition-all"
+                className="h-2 rounded bg-blue-600 transition-[width]"
                 style={{ width: `${progress}%` }}
                 role="progressbar"
                 aria-valuenow={progress}

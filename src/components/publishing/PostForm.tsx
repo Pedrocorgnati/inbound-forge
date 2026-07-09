@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useId, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, Upload } from 'lucide-react'
@@ -36,6 +37,7 @@ function toDateTimeLocalValue(date?: Date): string | undefined {
 }
 
 export function PostForm({ onSuccess, defaultDate }: PostFormProps) {
+  const tToast = useTranslations('toasts')
   const formId = useId()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -87,7 +89,7 @@ export function PostForm({ onSuccess, defaultDate }: PostFormProps) {
         throw new Error(message)
       }
 
-      toast.success('Post criado com sucesso!')
+      toast.success(tToast('publishing.post_created'))
       reset()
       onSuccess?.()
     } catch (err) {
@@ -117,7 +119,7 @@ export function PostForm({ onSuccess, defaultDate }: PostFormProps) {
 
       const { data } = await res.json()
       setValue('imageUrl', data.url, { shouldValidate: true })
-      toast.success('Imagem enviada com sucesso')
+      toast.success(tToast('publishing.image_uploaded'))
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro no upload'
       toast.error(message)

@@ -47,13 +47,13 @@ export function ContentRejectModal({ open, onClose, onConfirm }: ContentRejectMo
         />
         <div className="flex items-center justify-between">
           <span
-            className={`text-xs ${isValid ? 'text-muted-foreground' : 'text-[#991B1B]'}`}
+            className={`text-xs ${isValid ? 'text-muted-foreground' : 'text-danger-text'}`}
             data-testid="reject-char-count"
           >
             {reason.trim().length} / 10 caracteres mínimos
           </span>
           {!isValid && reason.length > 0 && (
-            <span className="text-xs text-[#991B1B]">Mínimo de 10 caracteres</span>
+            <span className="text-xs text-danger-text">Mínimo de 10 caracteres</span>
           )}
         </div>
       </div>

@@ -6,7 +6,7 @@
  */
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { ListChecks } from 'lucide-react'
 import { toast } from 'sonner'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -51,6 +51,7 @@ function formatDuration(started: string | null, completed: string | null): strin
 
 export function WorkerJobsTable() {
   const locale = useLocale()
+  const tToast = useTranslations('toasts')
   const [filters, setFilters] = useState<Filters>({ page: 1 })
   const queryClient = useQueryClient()
 
@@ -79,10 +80,10 @@ export function WorkerJobsTable() {
       return res.json()
     },
     onSuccess: () => {
-      toast.success('Job reprocessado')
+      toast.success(tToast('health.job_reprocessed'))
       queryClient.invalidateQueries({ queryKey: ['worker-jobs'] })
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Erro'),
+    onError: (e) => toast.error(e instanceof Error ? e.message : tToast('common.error_generic')),
   })
 
   return (

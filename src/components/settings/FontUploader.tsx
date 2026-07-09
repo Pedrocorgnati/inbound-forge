@@ -3,6 +3,7 @@
 // FontUploader — upload de TTF/OTF/WOFF para Satori (TASK-13 ST002 / CL-105)
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 interface FontRow {
@@ -18,6 +19,7 @@ interface FontRow {
 const MAX_MB = 5
 
 export function FontUploader() {
+  const tToast = useTranslations('toasts')
   const [fonts, setFonts] = useState<FontRow[] | null>(null)
   const [uploading, setUploading] = useState(false)
   const [family, setFamily] = useState('')
@@ -32,7 +34,7 @@ export function FontUploader() {
       const data = (await res.json()) as { data?: { fonts: FontRow[] } } | { fonts: FontRow[] }
       setFonts((data as { fonts?: FontRow[] }).fonts ?? (data as { data?: { fonts: FontRow[] } }).data?.fonts ?? [])
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao listar')
+      toast.error(e instanceof Error ? e.message : tToast('settings.fonts_list_failed'))
     }
   }
 
@@ -43,7 +45,7 @@ export function FontUploader() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!file) {
-      toast.error('Selecione um arquivo')
+      toast.error(tToast('common.select_file'))
       return
     }
     if (file.size > MAX_MB * 1024 * 1024) {
@@ -66,12 +68,12 @@ export function FontUploader() {
         const err = (await res.json().catch(() => ({}))) as { message?: string }
         throw new Error(err.message ?? `HTTP ${res.status}`)
       }
-      toast.success('Fonte registrada')
+      toast.success(tToast('settings.font_registered'))
       setFile(null)
       setFamily('')
       void load()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Falha no upload')
+      toast.error(e instanceof Error ? e.message : tToast('settings.font_upload_failed'))
     } finally {
       setUploading(false)
     }

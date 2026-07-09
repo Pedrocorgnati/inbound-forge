@@ -7,6 +7,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 const Schema = z.object({
@@ -17,6 +18,7 @@ const Schema = z.object({
 type FormData = z.infer<typeof Schema>
 
 export function ChangeEmailForm() {
+  const tToast = useTranslations('toasts')
   const {
     register,
     handleSubmit,
@@ -31,18 +33,18 @@ export function ChangeEmailForm() {
       body: JSON.stringify(data),
     })
     if (res.status === 401) {
-      toast.error('Senha atual invalida')
+      toast.error(tToast('auth.current_password_invalid'))
       return
     }
     if (res.status === 429) {
-      toast.error('Muitas tentativas. Aguarde 15 minutos.')
+      toast.error(tToast('auth.too_many_attempts'))
       return
     }
     if (!res.ok) {
       toast.error(`Falha (${res.status})`)
       return
     }
-    toast.success('Email de confirmacao enviado ao novo endereco.')
+    toast.success(tToast('auth.email_confirmation_sent'))
     reset()
   }
 

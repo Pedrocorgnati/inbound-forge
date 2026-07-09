@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -11,6 +12,7 @@ interface CopyContextButtonProps {
 }
 
 export function CopyContextButton({ themeId, disabled }: CopyContextButtonProps) {
+  const tToast = useTranslations('toasts')
   const [copied, setCopied] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -19,7 +21,7 @@ export function CopyContextButton({ themeId, disabled }: CopyContextButtonProps)
     try {
       const res = await fetch(`/api/v1/themes/${themeId}`)
       if (!res.ok) {
-        toast.error('Erro ao carregar dados do tema')
+        toast.error(tToast('content.load_failed'))
         return
       }
 
@@ -58,10 +60,10 @@ export function CopyContextButton({ themeId, disabled }: CopyContextButtonProps)
 
       await navigator.clipboard.writeText(lines.join('\n'))
       setCopied(true)
-      toast.success('Contexto copiado para a área de transferência')
+      toast.success(tToast('content.context_copied'))
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error('Falha ao copiar contexto')
+      toast.error(tToast('content.copy_context_failed'))
     } finally {
       setIsLoading(false)
     }

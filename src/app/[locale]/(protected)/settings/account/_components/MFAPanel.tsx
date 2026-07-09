@@ -14,6 +14,7 @@
  */
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 type Status = 'loading' | 'error' | 'disabled' | 'enrolling' | 'showing-codes' | 'enabled'
 
@@ -47,6 +48,7 @@ function describeError(code: string | undefined, status: number): string {
 }
 
 export function MFAPanel() {
+  const tToast = useTranslations('toasts')
   const [status, setStatus] = useState<Status>('loading')
   const [remaining, setRemaining] = useState(0)
   const [factorId, setFactorId] = useState('')
@@ -94,7 +96,7 @@ export function MFAPanel() {
       setCode('')
       setStatus('enrolling')
     } catch {
-      toast.error('Falha de rede ao iniciar o MFA.')
+      toast.error(tToast('mfa.network_start'))
     } finally {
       setBusy(false)
     }
@@ -116,7 +118,7 @@ export function MFAPanel() {
 
   async function confirmEnroll() {
     if (!/^[0-9]{6}$/.test(code)) {
-      toast.error('Digite os 6 digitos do app autenticador.')
+      toast.error(tToast('mfa.enter_6_digits'))
       return
     }
     setBusy(true)
@@ -134,9 +136,9 @@ export function MFAPanel() {
       setBackupCodes(json.data.backupCodes)
       setRemaining(json.data.backupCodes.length)
       setStatus('showing-codes')
-      toast.success('MFA ativado. Guarde seus backup codes.')
+      toast.success(tToast('mfa.enabled'))
     } catch {
-      toast.error('Falha de rede ao verificar o codigo.')
+      toast.error(tToast('mfa.network_verify'))
     } finally {
       setBusy(false)
     }
@@ -144,7 +146,7 @@ export function MFAPanel() {
 
   async function disable() {
     if (!/^[0-9]{6}$/.test(code)) {
-      toast.error('Digite os 6 digitos para confirmar a desativacao.')
+      toast.error(tToast('mfa.enter_6_digits_disable'))
       return
     }
     setBusy(true)
@@ -159,12 +161,12 @@ export function MFAPanel() {
         toast.error(describeError(json.error, res.status))
         return
       }
-      toast.success('MFA desativado.')
+      toast.success(tToast('mfa.disabled'))
       setCode('')
       setBackupCodes([])
       setStatus('disabled')
     } catch {
-      toast.error('Falha de rede ao desativar o MFA.')
+      toast.error(tToast('mfa.network_disable'))
     } finally {
       setBusy(false)
     }
@@ -173,8 +175,8 @@ export function MFAPanel() {
   function copyBackupCodes() {
     void navigator.clipboard
       ?.writeText(backupCodes.join('\n'))
-      .then(() => toast.success('Backup codes copiados.'))
-      .catch(() => toast.error('Nao foi possivel copiar.'))
+      .then(() => toast.success(tToast('mfa.backup_codes_copied')))
+      .catch(() => toast.error(tToast('common.copy_not_possible')))
   }
 
   const inputClass =

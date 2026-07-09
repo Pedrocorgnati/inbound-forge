@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { AlertCircle } from 'lucide-react'
 import { ResponsiveSheet } from '@/components/ui/responsive-sheet'
 import { Label } from '@/components/ui/label'
@@ -42,6 +43,7 @@ export function ObjectionForm({
   onSuccess,
   locale: _locale,
 }: ObjectionFormProps) {
+  const tToast = useTranslations('toasts')
   const [form, setForm] = useState<FormData>({
     content: initialData?.content ?? '',
     type: initialData?.type ?? 'PRICE',
@@ -138,7 +140,7 @@ export function ObjectionForm({
       resetForm()
       onSuccess()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro inesperado')
+      toast.error(err instanceof Error ? err.message : tToast('common.unexpected_error'))
     } finally {
       setIsSubmitting(false)
     }

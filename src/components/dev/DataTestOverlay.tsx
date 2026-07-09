@@ -181,7 +181,7 @@ export function DevDataTestOverlay() {
           position: 'fixed',
           top: `${pos.y}px`,
           left: `${pos.x}px`,
-          zIndex: 9999, // dev-only: acima de todos os elementos de produção (modais usam z-50=50)
+          zIndex: 50, // dev-only: z-50 (Tailwind semântico, acima de modais z-40)
           padding: '6px 12px',
           fontSize: '12px',
           fontWeight: 600,
@@ -213,7 +213,7 @@ export function DevDataTestOverlay() {
               position: 'fixed',
               top: `${el.rect.top}px`,
               left: `${el.rect.left}px`,
-              zIndex: 9998, // dev-only: abaixo do botão trigger mas acima de tudo em produção
+              zIndex: 40, // dev-only: z-40 (Tailwind semântico, abaixo do botão trigger z-50)
               padding: '2px 6px',
               fontSize: '10px',
               fontWeight: 600,

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { Instagram, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -57,6 +58,7 @@ interface InstagramPublishButtonProps {
 }
 
 export function InstagramPublishButton({ postId, post, onRetrySuccess }: InstagramPublishButtonProps) {
+  const tToast = useTranslations('toasts')
   const [state, setState] = useState<ButtonState>('idle')
   // TASK-15 ST006 (G-007) — bloqueia botao quando rate-limit Instagram saturou.
   const [rateLimitBlocked, setRateLimitBlocked] = useState(false)
@@ -102,7 +104,7 @@ export function InstagramPublishButton({ postId, post, onRetrySuccess }: Instagr
       }
 
       setState('done')
-      toast.success('Post publicado no Instagram!')
+      toast.success(tToast('publishing.instagram_published'))
     } catch (err) {
       setState('error')
       const message = err instanceof Error ? err.message : 'Erro ao publicar'
@@ -110,7 +112,7 @@ export function InstagramPublishButton({ postId, post, onRetrySuccess }: Instagr
       // After error, go back to idle so user can retry
       setTimeout(() => setState('idle'), UI_TIMING.PUBLISH_STATE_RESET_MS)
     }
-  }, [postId])
+  }, [postId, tToast])
 
   const isDone = state === 'done'
   const isPublishing = state === 'publishing'

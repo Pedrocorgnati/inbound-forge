@@ -56,7 +56,7 @@ export function VersionItem({ version, onRestore }: VersionItemProps) {
         <div className="flex items-center gap-2">
           {confirmRestore ? (
             <>
-              <span className="text-xs text-[#92400E]">Tem certeza?</span>
+              <span className="text-xs text-warning-text">Tem certeza?</span>
               <Button
                 variant="outline"
                 size="sm"

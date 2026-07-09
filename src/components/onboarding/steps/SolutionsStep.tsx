@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { ArrowLeft, ArrowRight, Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,7 @@ interface SolutionsStepProps {
 }
 
 export function SolutionsStep({ onComplete, onBack }: SolutionsStepProps) {
+  const tToast = useTranslations('toasts')
   const [pains, setPains] = useState<PainItem[]>([])
   const [cases, setCases] = useState<CaseItem[]>([])
   const [loadingData, setLoadingData] = useState(true)
@@ -56,30 +58,30 @@ export function SolutionsStep({ onComplete, onBack }: SolutionsStepProps) {
           setCases(casesData.data ?? [])
         }
       } catch {
-        toast.error('Erro ao carregar dados')
+        toast.error(tToast('onboarding.load_data_failed'))
       } finally {
         setLoadingData(false)
       }
     }
 
     loadData()
-  }, [])
+  }, [tToast])
 
   async function handleAdd() {
     if (name.length < 3) {
-      toast.error('Nome deve ter no minimo 3 caracteres')
+      toast.error(tToast('onboarding.name_min'))
       return
     }
     if (description.length < 10) {
-      toast.error('Descricao deve ter no minimo 10 caracteres')
+      toast.error(tToast('onboarding.desc_min'))
       return
     }
     if (!selectedPainId) {
-      toast.error('Selecione uma dor')
+      toast.error(tToast('onboarding.select_pain'))
       return
     }
     if (!selectedCaseId) {
-      toast.error('Selecione um case')
+      toast.error(tToast('onboarding.select_case'))
       return
     }
 
@@ -102,13 +104,13 @@ export function SolutionsStep({ onComplete, onBack }: SolutionsStepProps) {
       }
 
       setSavedPatterns((prev) => [...prev, { name }])
-      toast.success('Padrao de solucao registrado')
+      toast.success(tToast('onboarding.solution_registered'))
       setName('')
       setDescription('')
       setSelectedPainId('')
       setSelectedCaseId('')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar padrao')
+      toast.error(err instanceof Error ? err.message : tToast('onboarding.solution_save_failed'))
     } finally {
       setSubmitting(false)
     }

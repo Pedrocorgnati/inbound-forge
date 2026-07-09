@@ -8,6 +8,7 @@
  * Só exibido quando Post.status === 'FAILED'.
  */
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { RefreshCw, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -22,6 +23,7 @@ interface RetryPublishButtonProps {
 }
 
 export function RetryPublishButton({ postId, status, errorMessage, onSuccess }: RetryPublishButtonProps) {
+  const tToast = useTranslations('toasts')
   const [isRetrying, setIsRetrying] = useState(false)
   const [errorsOpen, setErrorsOpen] = useState(false)
 
@@ -48,7 +50,7 @@ export function RetryPublishButton({ postId, status, errorMessage, onSuccess }: 
         throw new Error(data?.error?.message ?? 'Falha ao republicar')
       }
 
-      toast.success(reuseContent ? 'Post re-enfileirado (conteudo reutilizado)' : 'Post reenviado para publicação!')
+      toast.success(reuseContent ? tToast('publishing.retry_requeued') : tToast('publishing.retry_resent'))
       onSuccess?.()
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro ao tentar publicar novamente'

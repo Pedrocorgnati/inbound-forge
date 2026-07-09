@@ -5,6 +5,7 @@
  * Intake Review TASK-5 ST004 (CL-238, CL-239, CL-094).
  */
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Pencil, Trash2, ShieldCheck } from 'lucide-react'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export function ConversionsTable({ rows, onChanged }: Props) {
+  const tToast = useTranslations('toasts')
   const [editing, setEditing] = useState<ConversionRow | null>(null)
   const [removing, setRemoving] = useState<ConversionRow | null>(null)
   const [busy, setBusy] = useState(false)
@@ -39,10 +41,10 @@ export function ConversionsTable({ rows, onChanged }: Props) {
         credentials: 'include',
       })
       if (!res.ok) throw new Error(String(res.status))
-      toast.success('Conversao removida')
+      toast.success(tToast('analytics.conversion_removed'))
       onChanged?.()
     } catch {
-      toast.error('Falha ao remover')
+      toast.error(tToast('common.remove_failed'))
     } finally {
       setBusy(false)
       setRemoving(null)
@@ -58,10 +60,10 @@ export function ConversionsTable({ rows, onChanged }: Props) {
         body: JSON.stringify({ manuallyValidated: !row.manuallyValidated }),
       })
       if (!res.ok) throw new Error(String(res.status))
-      toast.success('Validacao atualizada')
+      toast.success(tToast('analytics.validation_updated'))
       onChanged?.()
     } catch {
-      toast.error('Falha ao validar')
+      toast.error(tToast('analytics.validate_failed'))
     }
   }
 
@@ -159,6 +161,7 @@ function EditConversionDialog({
   onClose: () => void
   onSaved: () => void
 }) {
+  const tToast = useTranslations('toasts')
   const [amountBrl, setAmount] = useState(row.amountBrl?.toString() ?? '')
   const [channel, setChannel] = useState(row.channel ?? '')
   const [notes, setNotes] = useState(row.notes ?? '')
@@ -179,10 +182,10 @@ function EditConversionDialog({
         body: JSON.stringify(body),
       })
       if (!res.ok) throw new Error(String(res.status))
-      toast.success('Atualizado')
+      toast.success(tToast('common.updated'))
       onSaved()
     } catch {
-      toast.error('Falha ao salvar')
+      toast.error(tToast('common.save_failed'))
     } finally {
       setBusy(false)
     }

@@ -113,7 +113,7 @@ export function HealthCard({
         {errorMessage && (
           <p
             data-testid={`health-error-${service.toLowerCase()}`}
-            className="mt-2 rounded bg-danger-bg px-2 py-1 text-xs text-[#991B1B]"
+            className="mt-2 rounded bg-danger-bg px-2 py-1 text-xs text-danger-text"
           >
             {errorMessage}
           </p>

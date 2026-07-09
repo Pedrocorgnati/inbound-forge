@@ -4,6 +4,7 @@
 // Separado de blog-admin/RollbackConfirmModal (version rollback, distinto de unpublish).
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import * as Dialog from '@radix-ui/react-dialog'
 import { toast } from 'sonner'
 
@@ -24,6 +25,7 @@ export function BlogArticleUnpublishDialog({
   slug,
   onUnpublished,
 }: Props) {
+  const tToast = useTranslations('toasts')
   const [ack, setAck] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -38,7 +40,7 @@ export function BlogArticleUnpublishDialog({
         const json = await res.json().catch(() => ({}))
         throw new Error(json?.error ?? `Falha (${res.status})`)
       }
-      toast.success('Artigo despublicado')
+      toast.success(tToast('blog.article_unpublished'))
       onUnpublished?.()
       onOpenChange(false)
     } catch (err) {

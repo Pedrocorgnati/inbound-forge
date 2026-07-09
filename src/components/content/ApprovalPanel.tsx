@@ -59,8 +59,8 @@ export function ApprovalPanel({
         className={cn('flex items-center gap-3 p-4 border-success-bg bg-success-bg/10', className)}
         data-testid="approval-success-banner"
       >
-        <CheckCircle className="h-5 w-5 text-[#065F46]" />
-        <span className="text-sm font-medium text-[#065F46]">Conteúdo aprovado</span>
+        <CheckCircle className="h-5 w-5 text-success-text" />
+        <span className="text-sm font-medium text-success-text">Conteúdo aprovado</span>
       </Card>
     )
   }

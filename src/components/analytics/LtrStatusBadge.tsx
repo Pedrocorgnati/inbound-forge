@@ -59,7 +59,7 @@ export function LtrStatusBadge() {
           <span className="w-20 text-gray-500">Posts</span>
           <div className="h-1.5 flex-1 rounded-full bg-gray-200">
             <div
-              className="h-1.5 rounded-full bg-blue-400 transition-all"
+              className="h-1.5 rounded-full bg-blue-400 transition-[width]"
               style={{ width: `${postsPercent}%` }}
               aria-label={`${status.postsCount}/${status.thresholds.postsRequired} posts`}
             />
@@ -72,7 +72,7 @@ export function LtrStatusBadge() {
           <span className="w-20 text-gray-500">Conversões</span>
           <div className="h-1.5 flex-1 rounded-full bg-gray-200">
             <div
-              className="h-1.5 rounded-full bg-blue-400 transition-all"
+              className="h-1.5 rounded-full bg-blue-400 transition-[width]"
               style={{ width: `${conversionsPercent}%` }}
               aria-label={`${status.conversionsCount}/${status.thresholds.conversionsRequired} conversões`}
             />

@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 const UtmSchema = z.object({
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export function UtmEditDialog({ utmId, postId, initial, children }: Props) {
+  const tToast = useTranslations('toasts')
   const [open, setOpen] = useState(false)
   const qc = useQueryClient()
   const { register, handleSubmit, reset, formState: { errors } } = useForm<UtmForm>({
@@ -52,9 +54,9 @@ export function UtmEditDialog({ utmId, postId, initial, children }: Props) {
     onSuccess: () => {
       setOpen(false)
       qc.invalidateQueries({ queryKey: ['utms'] })
-      toast.success('UTM atualizado')
+      toast.success(tToast('utm.updated'))
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Erro'),
+    onError: (e) => toast.error(e instanceof Error ? e.message : tToast('common.error_generic')),
   })
 
   return (

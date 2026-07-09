@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from 'react'
 import { apiClient } from '@/lib/api-client'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
@@ -25,6 +26,7 @@ export function ContentVersionHistory({ pieceId, onRestore }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [restoringId, setRestoringId] = useState<string | null>(null)
   const [pendingRestoreId, setPendingRestoreId] = useState<string | null>(null)
+  const tToast = useTranslations('toasts')
 
   async function load() {
     setError(null)
@@ -50,11 +52,11 @@ export function ContentVersionHistory({ pieceId, onRestore }: Props) {
         method: 'POST',
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      toast.success('Versao restaurada')
+      toast.success(tToast('content.version_restored'))
       onRestore?.()
       void load()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao restaurar')
+      toast.error(e instanceof Error ? e.message : tToast('content.restore_failed'))
     } finally {
       setRestoringId(null)
       setPendingRestoreId(null)

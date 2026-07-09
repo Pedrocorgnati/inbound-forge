@@ -5,6 +5,7 @@
 // Observacao: reutiliza /api/v1/health/alerts PATCH existente (ack = resolved=true).
 
 import React, { useCallback, useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -18,6 +19,7 @@ export function CostAlertPanel() {
   const [alerts, setAlerts] = useState<AlertLogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [acking, setAcking] = useState<Set<string>>(new Set())
+  const tToast = useTranslations('toasts')
 
   const fetchAlerts = useCallback(async () => {
     try {
@@ -48,9 +50,9 @@ export function CostAlertPanel() {
         body: JSON.stringify({ resolved: true, ackedAt: new Date().toISOString() }),
       })
       if (!res.ok) throw new Error()
-      toast.success('Alerta reconhecido')
+      toast.success(tToast('health.alert_acknowledged'))
     } catch {
-      toast.error('Erro ao reconhecer alerta')
+      toast.error(tToast('health.alert_ack_failed'))
       fetchAlerts()
     } finally {
       setAcking((prev) => {

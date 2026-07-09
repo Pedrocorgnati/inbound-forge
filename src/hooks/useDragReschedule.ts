@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { PublishingPost } from '@/types/publishing'
@@ -37,6 +38,7 @@ export function useDragReschedule({
   onOptimisticUpdate,
   refetch,
 }: UseDragRescheduleParams): UseDragRescheduleReturn {
+  const tToast = useTranslations('toasts')
   const [isDragging, setIsDragging] = useState(false)
 
   const handleDragEnd = useCallback(
@@ -102,7 +104,7 @@ export function useDragReschedule({
             const slot = (await check.json()) as SlotCheckResponse
             if (!slot.ok) {
               onOptimisticUpdate(prevPosts)
-              toast.error(slot.message ?? 'Slot indisponivel')
+              toast.error(slot.message ?? tToast('calendar.slot_unavailable'))
               return
             }
           }
@@ -129,11 +131,11 @@ export function useDragReschedule({
         })
       } catch (e) {
         onOptimisticUpdate(prevPosts)
-        toast.error(e instanceof Error ? e.message : 'Erro ao reagendar post')
+        toast.error(e instanceof Error ? e.message : tToast('calendar.reschedule_error'))
         refetch()
       }
     },
-    [posts, onOptimisticUpdate, refetch],
+    [posts, onOptimisticUpdate, refetch, tToast],
   )
 
   return { handleDragEnd, isDragging }

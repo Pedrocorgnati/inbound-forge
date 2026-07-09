@@ -18,6 +18,7 @@ export default function BlogEditArticlePage() {
   const id = params?.slug as string
   const locale = (params?.locale as string) ?? 'pt-BR'
   const t = useTranslations('blog.editPage')
+  const tToast = useTranslations('toasts')
 
   const [article, setArticle] = React.useState<BlogArticle | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
@@ -30,18 +31,18 @@ export default function BlogEditArticlePage() {
         const data: BlogArticle = await res.json()
         setArticle(data)
       } catch {
-        toast.error('Erro ao carregar artigo')
+        toast.error(tToast('blog.load_article_failed'))
         router.push(`/${locale}/blog`)
       } finally {
         setIsLoading(false)
       }
     }
     load()
-  }, [id, locale, router])
+  }, [id, locale, router, tToast])
 
   function handleSuccess(updated: BlogArticle) {
     setArticle(updated)
-    toast.success('Artigo atualizado com sucesso!')
+    toast.success(tToast('blog.article_updated'))
   }
 
   if (isLoading) {

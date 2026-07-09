@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { ImageIcon } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Pagination } from '@/components/ui/pagination'
@@ -18,6 +19,7 @@ interface AssetGalleryProps {
 }
 
 export function AssetGallery({ filter, onRefresh }: AssetGalleryProps) {
+  const tToast = useTranslations('toasts')
   const [data, setData] = useState<PaginatedAssets | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -85,11 +87,11 @@ export function AssetGallery({ filter, onRefresh }: AssetGalleryProps) {
       setDeleteTarget(null)
       fetchAssets()
     } catch {
-      toast.error('Erro ao excluir asset. Tente novamente.')
+      toast.error(tToast('asset.delete_failed'))
     } finally {
       setIsDeleting(false)
     }
-  }, [deleteTarget, fetchAssets])
+  }, [deleteTarget, fetchAssets, tToast])
 
   // Loading state
   if (isLoading) {

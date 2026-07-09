@@ -11,6 +11,7 @@
  * toast tipado. Zero Estados Indefinidos: loading/erro tratados explicitamente.
  */
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { ShieldAlert } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
 import { uuidv7 } from '@/lib/utils/uuidv7'
@@ -37,6 +38,7 @@ interface RevealPIIModalProps {
 }
 
 export function RevealPIIModal({ leadId, open, onClose, onRevealed }: RevealPIIModalProps) {
+  const tToast = useTranslations('toasts')
   const [motivo, setMotivo] = useState('')
   const [lgpdAck, setLgpdAck] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -75,31 +77,31 @@ export function RevealPIIModal({ leadId, open, onClose, onRevealed }: RevealPIIM
 
       if (!res.ok) {
         if (res.status === 401) {
-          toast.error('Sessão expirada. Faça login novamente.')
+          toast.error(tToast('auth.session_expired'))
         } else if (res.status === 404) {
-          toast.error('Lead não encontrado.')
+          toast.error(tToast('lead.not_found'))
         } else if (res.status === 422) {
-          toast.error(json?.error ?? 'Dados do formulário inválidos.')
+          toast.error(json?.error ?? tToast('lead.reveal_invalid_form'))
         } else if (res.status === 400) {
-          toast.error(json?.error ?? 'Não foi possível revelar o contato.')
+          toast.error(json?.error ?? tToast('lead.reveal_not_possible'))
         } else {
-          toast.error(json?.error ?? 'Erro ao revelar o contato. Tente novamente.')
+          toast.error(json?.error ?? tToast('lead.reveal_failed_retry'))
         }
         return
       }
 
       const data = json?.data as RevealPIIResult | undefined
       if (!data?.contactInfo) {
-        toast.error('Resposta inválida do servidor.')
+        toast.error(tToast('common.invalid_server_response'))
         return
       }
 
-      toast.success('Contato revelado. Registro de auditoria criado.')
+      toast.success(tToast('lead.contact_revealed'))
       onRevealed(data)
       reset()
       onClose()
     } catch {
-      toast.error('Falha de rede ao revelar o contato.')
+      toast.error(tToast('lead.reveal_network_failed'))
     } finally {
       setIsSubmitting(false)
     }

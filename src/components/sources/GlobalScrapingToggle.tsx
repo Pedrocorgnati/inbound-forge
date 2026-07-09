@@ -3,6 +3,7 @@
 // TASK-14 (CL-251): toggle global de scraping. Admin-only na UI.
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 interface FlagResp { success: boolean; data: { key: string; enabled: boolean } }
@@ -11,6 +12,7 @@ const FLAG_KEY = 'scrapingEnabled'
 const ENDPOINT = `/api/v1/settings/flags/${FLAG_KEY}`
 
 export function GlobalScrapingToggle() {
+  const tToast = useTranslations('toasts')
   const qc = useQueryClient()
   const { data, isLoading } = useQuery<FlagResp>({
     queryKey: ['flag', FLAG_KEY],
@@ -32,10 +34,10 @@ export function GlobalScrapingToggle() {
       return res.json() as Promise<FlagResp>
     },
     onSuccess: (r) => {
-      toast.success(r.data.enabled ? 'Scraping ativo' : 'Scraping pausado')
+      toast.success(r.data.enabled ? tToast('source.scraping_active') : tToast('source.scraping_paused'))
       qc.invalidateQueries({ queryKey: ['flag', FLAG_KEY] })
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Erro'),
+    onError: (e) => toast.error(e instanceof Error ? e.message : tToast('common.error_generic')),
   })
 
   const enabled = data?.data.enabled ?? true

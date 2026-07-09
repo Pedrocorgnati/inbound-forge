@@ -127,7 +127,7 @@ export function ThemeCard({ theme, isWide, engineActivated = true, onReject, onR
         )}
 
         {!isRejected && theme.conversionScore < 33 && (
-          <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-warning-bg px-2 py-0.5 text-xs font-medium text-[#92400E]">
+          <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-warning-bg px-2 py-0.5 text-xs font-medium text-warning-text">
             <Sparkles className="h-3 w-3" />
             Fortaleça a prova social
           </span>

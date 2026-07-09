@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/utils'
 import { formatDateRelative } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -19,13 +20,14 @@ const SEVERITY_ICON: Record<AlertLogEntry['severity'], React.ElementType> = {
 }
 
 const SEVERITY_COLOR: Record<AlertLogEntry['severity'], string> = {
-  info: 'text-[#1E40AF]',
+  info: 'text-info-text',
   warning: 'text-warning',
   error: 'text-danger',
   critical: 'text-danger',
 }
 
 export function AlertLogPanel() {
+  const tToast = useTranslations('toasts')
   const [alerts, setAlerts] = useState<AlertLogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [resolvingIds, setResolvingIds] = useState<Set<string>>(new Set())
@@ -75,11 +77,11 @@ export function AlertLogPanel() {
         body: JSON.stringify({ resolved: true }),
       })
       if (!res.ok) throw new Error()
-      toast.success('Alerta resolvido')
+      toast.success(tToast('health.alert_resolved'))
     } catch {
       // Rollback
       fetchAlerts()
-      toast.error('Erro ao resolver alerta')
+      toast.error(tToast('health.alert_resolve_failed'))
     } finally {
       setResolvingIds((prev) => {
         const next = new Set(prev)

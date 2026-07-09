@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { format } from 'date-fns'
 import type { PublishingPost } from '@/types/publishing'
 
@@ -22,6 +23,7 @@ export function PostRescheduleModal({
   const [dateValue, setDateValue] = useState('')
   const [timeValue, setTimeValue] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const tToast = useTranslations('toasts')
   const dialogRef = useRef<HTMLDivElement>(null)
   const firstInputRef = useRef<HTMLInputElement>(null)
 
@@ -104,9 +106,9 @@ export function PostRescheduleModal({
     setError(null)
     try {
       onReschedule(post.id, newDate)
-      toast.success('Post reagendado com sucesso')
+      toast.success(tToast('calendar.rescheduled'))
     } catch {
-      toast.error('Erro ao reagendar post. Tente novamente.')
+      toast.error(tToast('calendar.reschedule_failed'))
     }
   }
 

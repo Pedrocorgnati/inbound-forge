@@ -5,6 +5,7 @@
  * Intake Review TASK-4 ST004 (CL-081).
  */
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Check, Copy } from 'lucide-react'
 
@@ -41,16 +42,17 @@ async function copyToClipboard(text: string): Promise<boolean> {
 }
 
 export function CopyToClipboardButton({ text, label = 'Copiar', className = '', ...rest }: Props) {
+  const tToast = useTranslations('toasts')
   const [copied, setCopied] = useState(false)
 
   async function handle() {
     const ok = await copyToClipboard(text)
     if (ok) {
       setCopied(true)
-      toast.success('Copiado')
+      toast.success(tToast('common.copied'))
       setTimeout(() => setCopied(false), 2000)
     } else {
-      toast.error('Falha ao copiar')
+      toast.error(tToast('common.copy_failed'))
     }
   }
 

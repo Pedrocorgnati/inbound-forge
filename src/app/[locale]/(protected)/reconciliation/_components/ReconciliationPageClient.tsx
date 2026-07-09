@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { AlertTriangle, CheckCircle2, GitCompareArrows, RefreshCw, SearchX } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -74,6 +75,7 @@ function getPanelItems(items: ReconciliationRow[], type: ReconciliationType) {
 }
 
 export function ReconciliationPageClient({ locale }: ReconciliationPageClientProps) {
+  const tToast = useTranslations('toasts')
   const [items, setItems] = useState<ReconciliationRow[]>([])
   const [status, setStatus] = useState('all')
   const [page, setPage] = useState(1)
@@ -125,7 +127,7 @@ export function ReconciliationPageClient({ locale }: ReconciliationPageClientPro
       toast.success(created > 0 ? `${created} item(ns) detectados` : 'Nenhum novo item detectado')
       await fetchItems()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao sincronizar reconciliação')
+      toast.error(err instanceof Error ? err.message : tToast('analytics.recon_sync_failed'))
     } finally {
       setIsSyncing(false)
     }
@@ -140,10 +142,10 @@ export function ReconciliationPageClient({ locale }: ReconciliationPageClientPro
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(json.error ?? 'Falha ao resolver item')
-      toast.success('Item marcado como matched')
+      toast.success(tToast('analytics.item_matched'))
       await fetchItems()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao resolver item')
+      toast.error(err instanceof Error ? err.message : tToast('analytics.resolve_item_failed'))
     }
   }
 

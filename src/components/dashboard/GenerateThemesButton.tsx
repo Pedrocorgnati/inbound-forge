@@ -4,6 +4,7 @@
  * Intake Review TASK-10 ST002 (CL-052) — Botao de geracao sincrona de sugestoes de temas.
  */
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function GenerateThemesButton({ onGenerated, disabled }: Props) {
+  const tToast = useTranslations('toasts')
   const [busy, setBusy] = useState(false)
 
   async function handleClick() {
@@ -24,7 +26,7 @@ export function GenerateThemesButton({ onGenerated, disabled }: Props) {
         credentials: 'include',
       })
       if (res.status === 429) {
-        toast.error('Aguarde 5 minutos antes de gerar novamente.')
+        toast.error(tToast('theme.generate_cooldown'))
         return
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -33,7 +35,7 @@ export function GenerateThemesButton({ onGenerated, disabled }: Props) {
       toast.success(`${created} novos temas sugeridos.`)
       onGenerated?.()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao gerar temas.')
+      toast.error(err instanceof Error ? err.message : tToast('theme.generate_failed_short'))
     } finally {
       setBusy(false)
     }

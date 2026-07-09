@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,6 +33,7 @@ interface SourceFormProps {
 }
 
 export function SourceForm({ source, onClose, onSuccess }: SourceFormProps) {
+  const tToast = useTranslations('toasts')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const isEdit = !!source
 
@@ -65,10 +67,10 @@ export function SourceForm({ source, onClose, onSuccess }: SourceFormProps) {
         throw new Error(json.message ?? 'Erro ao salvar fonte')
       }
 
-      toast.success(isEdit ? 'Fonte atualizada com sucesso' : 'Fonte criada com sucesso')
+      toast.success(isEdit ? tToast('source.updated') : tToast('source.created'))
       onSuccess()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar fonte')
+      toast.error(err instanceof Error ? err.message : tToast('source.save_failed'))
     } finally {
       setIsSubmitting(false)
     }

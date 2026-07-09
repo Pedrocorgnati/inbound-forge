@@ -108,7 +108,7 @@ export function ContentPageClient({ locale }: ContentPageClientProps) {
 
       {error && (
         <div className="rounded-md border border-danger-bg bg-danger-bg/10 p-4" data-testid="content-error">
-          <p className="text-sm text-[#991B1B]">{error}</p>
+          <p className="text-sm text-danger-text">{error}</p>
           <Button variant="outline" size="sm" onClick={fetchContent} className="mt-2">
             {t('regenerate')}
           </Button>

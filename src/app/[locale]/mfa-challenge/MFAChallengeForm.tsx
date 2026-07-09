@@ -10,6 +10,7 @@
  */
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 const ERROR_COPY: Record<string, string> = {
@@ -28,6 +29,7 @@ function describe(code: string | undefined, status: number): string {
 
 export function MFAChallengeForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter()
+  const tToast = useTranslations('toasts')
   const [mode, setMode] = useState<'totp' | 'recovery'>('totp')
   const [value, setValue] = useState('')
   const [busy, setBusy] = useState(false)
@@ -37,7 +39,7 @@ export function MFAChallengeForm({ redirectTo }: { redirectTo: string }) {
     try {
       if (mode === 'totp') {
         if (!/^[0-9]{6}$/.test(value)) {
-          toast.error('Digite os 6 digitos do app autenticador.')
+          toast.error(tToast('mfa.enter_6_digits'))
           return
         }
         const res = await fetch('/api/v1/auth/mfa/challenge', {
@@ -54,7 +56,7 @@ export function MFAChallengeForm({ redirectTo }: { redirectTo: string }) {
         router.refresh()
       } else {
         if (value.replace(/[^A-Za-z0-9]/g, '').length < 8) {
-          toast.error('Digite um backup code valido.')
+          toast.error(tToast('mfa.invalid_backup_code'))
           return
         }
         const res = await fetch('/api/v1/auth/mfa/disable', {
@@ -67,12 +69,12 @@ export function MFAChallengeForm({ redirectTo }: { redirectTo: string }) {
           toast.error(describe(json.error, res.status))
           return
         }
-        toast.success('MFA desativado via backup code. Reative em Configuracoes > Conta.')
+        toast.success(tToast('mfa.disabled_via_backup'))
         router.replace(redirectTo)
         router.refresh()
       }
     } catch {
-      toast.error('Falha de rede. Tente novamente.')
+      toast.error(tToast('common.network_retry'))
     } finally {
       setBusy(false)
     }

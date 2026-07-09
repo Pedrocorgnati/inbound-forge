@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -77,6 +78,7 @@ function clampStep(raw: string | null, max: number): number {
 }
 
 export function PublishAssistWizard({ postId }: PublishAssistWizardProps) {
+  const tToast = useTranslations('toasts')
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -110,7 +112,7 @@ export function PublishAssistWizard({ postId }: PublishAssistWizardProps) {
         setScheduleValue(getDefaultInstagramScheduleValue(payload.scheduledAt))
       } catch (error) {
         if (!cancelled) {
-          toast.error(error instanceof Error ? error.message : 'Erro ao carregar post')
+          toast.error(error instanceof Error ? error.message : tToast('publishing.load_post_failed'))
           setPost(null)
         }
       } finally {
@@ -122,7 +124,7 @@ export function PublishAssistWizard({ postId }: PublishAssistWizardProps) {
     return () => {
       cancelled = true
     }
-  }, [postId])
+  }, [postId, tToast])
 
   // Validacao step-a-step (cumulativa).
   const step1Valid = !!post && post.caption.trim().length > 0
@@ -192,7 +194,7 @@ export function PublishAssistWizard({ postId }: PublishAssistWizardProps) {
         if (!existingRes.ok) throw new Error(getErrorMessage(existingJson, 'Erro ao recuperar UTM existente'))
         const existing = existingJson?.data ?? existingJson
         setUtmUrl(existing.fullUrl ?? null)
-        toast.info('Este post já tinha um link UTM; reutilizando o existente.')
+        toast.info(tToast('content.utm_reused'))
         return
       }
 
@@ -200,9 +202,9 @@ export function PublishAssistWizard({ postId }: PublishAssistWizardProps) {
       if (!res.ok) throw new Error(getErrorMessage(json, 'Erro ao gerar link UTM'))
       const created = json?.data ?? json
       setUtmUrl(created.fullUrl ?? null)
-      toast.success('Link UTM gerado.')
+      toast.success(tToast('content.utm_generated'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Falha ao gerar link UTM')
+      toast.error(error instanceof Error ? error.message : tToast('content.utm_generate_failed'))
     } finally {
       setGenerating(false)
     }
@@ -224,9 +226,9 @@ export function PublishAssistWizard({ postId }: PublishAssistWizardProps) {
       const updated: PostPayload = json?.data ?? json
       setPost((current) => (current ? { ...current, ...updated } : updated))
       setDone(true)
-      toast.success('Publicação agendada.')
+      toast.success(tToast('queue.schedule_assisted'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Falha ao agendar publicação')
+      toast.error(error instanceof Error ? error.message : tToast('queue.schedule_failed'))
     } finally {
       setScheduling(false)
     }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from '@/components/ui/toast'
 
 interface UseThemeActionsReturn {
@@ -15,6 +16,7 @@ interface UseThemeActionsReturn {
 export function useThemeActions(): UseThemeActionsReturn {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isScoringAll, setIsScoringAll] = useState(false)
+  const tToast = useTranslations('toasts')
 
   const reject = useCallback(async (themeId: string, reason: string): Promise<boolean> => {
     try {
@@ -28,20 +30,20 @@ export function useThemeActions(): UseThemeActionsReturn {
         const body = await res.json().catch(() => null)
         const code = body?.code
         if (code === 'THEME_051') {
-          toast.error('Este tema já foi rejeitado.')
+          toast.error(tToast('theme.already_rejected'))
         } else {
-          toast.error('Erro ao rejeitar. Tente novamente.')
+          toast.error(tToast('theme.reject_failed'))
         }
         return false
       }
 
-      toast.success('Tema rejeitado')
+      toast.success(tToast('theme.rejected'))
       return true
     } catch {
-      toast.error('Erro ao rejeitar. Tente novamente.')
+      toast.error(tToast('theme.reject_failed'))
       return false
     }
-  }, [])
+  }, [tToast])
 
   const restore = useCallback(async (themeId: string): Promise<boolean> => {
     try {
@@ -53,20 +55,20 @@ export function useThemeActions(): UseThemeActionsReturn {
         const body = await res.json().catch(() => null)
         const code = body?.code
         if (code === 'THEME_052') {
-          toast.error('Apenas temas rejeitados podem ser restaurados.')
+          toast.error(tToast('theme.only_rejected_restorable'))
         } else {
-          toast.error('Erro ao restaurar. Tente novamente.')
+          toast.error(tToast('theme.restore_failed'))
         }
         return false
       }
 
-      toast.success('Tema restaurado')
+      toast.success(tToast('theme.restored'))
       return true
     } catch {
-      toast.error('Erro ao restaurar. Tente novamente.')
+      toast.error(tToast('theme.restore_failed'))
       return false
     }
-  }, [])
+  }, [tToast])
 
   const generate = useCallback(async (forceRegenerate = false) => {
     setIsGenerating(true)
@@ -78,7 +80,7 @@ export function useThemeActions(): UseThemeActionsReturn {
       })
 
       if (!res.ok) {
-        toast.error('Erro ao gerar temas. Tente novamente.')
+        toast.error(tToast('theme.generate_failed'))
         return null
       }
 
@@ -87,16 +89,16 @@ export function useThemeActions(): UseThemeActionsReturn {
       if (created > 0) {
         toast.success(`${created} temas gerados`)
       } else {
-        toast.info('Nenhum tema novo. Enriqueça a base de conhecimento.')
+        toast.info(tToast('theme.no_new_themes'))
       }
       return { created }
     } catch {
-      toast.error('Erro ao gerar temas. Tente novamente.')
+      toast.error(tToast('theme.generate_failed'))
       return null
     } finally {
       setIsGenerating(false)
     }
-  }, [])
+  }, [tToast])
 
   const scoreAll = useCallback(async () => {
     setIsScoringAll(true)
@@ -106,9 +108,9 @@ export function useThemeActions(): UseThemeActionsReturn {
       if (!res.ok) {
         const body = await res.json().catch(() => null)
         if (res.status === 429 || body?.error?.includes('andamento')) {
-          toast.warning('Recálculo em andamento. Aguarde e tente novamente.')
+          toast.warning(tToast('theme.recalc_in_progress'))
         } else {
-          toast.error('Erro ao recalcular scores.')
+          toast.error(tToast('theme.recalc_failed'))
         }
         return null
       }
@@ -118,12 +120,12 @@ export function useThemeActions(): UseThemeActionsReturn {
       toast.success(`Scores atualizados em ${data.durationMs}ms`)
       return { updated: data.updated, durationMs: data.durationMs }
     } catch {
-      toast.error('Erro ao recalcular scores.')
+      toast.error(tToast('theme.recalc_failed'))
       return null
     } finally {
       setIsScoringAll(false)
     }
-  }, [])
+  }, [tToast])
 
   return { reject, restore, generate, scoreAll, isGenerating, isScoringAll }
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { AlertCircle, FileWarning, Save } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,6 +30,7 @@ const MIN_OUTCOME_CHARS = 50
 
 export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
   const router = useRouter()
+  const tToast = useTranslations('toasts')
 
   const [form, setForm] = useState<FormData>({
     name: initialData?.name ?? '',
@@ -123,7 +125,7 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
           throw new Error(data?.error ?? 'Erro ao criar case')
         }
 
-        toast.success(asDraft ? 'Rascunho salvo com sucesso' : 'Case publicado com sucesso')
+        toast.success(asDraft ? tToast('knowledge.draft_saved_full') : tToast('knowledge.case_published'))
         router.push(`/${locale}/knowledge?tab=cases`)
       } else {
         // Edit mode — explicit save (publish or save draft)
@@ -146,11 +148,11 @@ export function CaseForm({ mode, initialData, locale }: CaseFormProps) {
           throw new Error(data?.error ?? 'Erro ao atualizar case')
         }
 
-        toast.success(asDraft ? 'Rascunho salvo' : 'Case publicado com sucesso')
+        toast.success(asDraft ? tToast('knowledge.draft_saved') : tToast('knowledge.case_published'))
         router.push(`/${locale}/knowledge?tab=cases`)
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro inesperado')
+      toast.error(err instanceof Error ? err.message : tToast('common.unexpected_error'))
     } finally {
       setIsSubmitting(false)
     }

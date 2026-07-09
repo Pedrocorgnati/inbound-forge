@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { Plus, Users, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -36,6 +37,7 @@ const FUNNEL_OPTIONS = [
 const PAGE_SIZE = 20
 
 export function LeadsList({ locale, themeId }: LeadsListProps) {
+  const tToast = useTranslations('toasts')
   const [leads, setLeads] = useState<Lead[]>([])
   const [pagination, setPagination] = useState<PaginationData | null>(null)
   const [page, setPage] = useState(1)
@@ -101,7 +103,7 @@ export function LeadsList({ locale, themeId }: LeadsListProps) {
 
       if (!res.ok) throw new Error('Falha ao excluir')
 
-      toast.success(`Lead "${removedLead.company ?? 'Sem empresa'}" excluído`)
+      toast.success(tToast('lead.deleted_named', { company: removedLead.company ?? tToast('common.no_company') }))
 
       if (pagination) {
         setPagination((prev) =>
@@ -111,7 +113,7 @@ export function LeadsList({ locale, themeId }: LeadsListProps) {
     } catch {
       // Rollback
       setLeads(previousLeads)
-      toast.error('Erro ao excluir lead. Tente novamente.')
+      toast.error(tToast('lead.delete_failed'))
     } finally {
       setIsDeleting(false)
     }

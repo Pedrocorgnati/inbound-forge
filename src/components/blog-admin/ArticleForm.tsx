@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslations } from 'next-intl'
 import { X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -38,6 +39,7 @@ interface ArticleFormProps {
 type FormValues = CreateArticleInput
 
 export function ArticleForm({ mode, article, onSuccess }: ArticleFormProps) {
+  const tToast = useTranslations('toasts')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [metadataOpen, setMetadataOpen] = React.useState(false)
   const [tagInput, setTagInput] = React.useState('')
@@ -136,11 +138,11 @@ export function ArticleForm({ mode, article, onSuccess }: ArticleFormProps) {
     if (!tag) return
     const current = getValues('tags') ?? []
     if (current.includes(tag)) {
-      toast.error('Tag ja adicionada')
+      toast.error(tToast('blog.tag_already_added'))
       return
     }
     if (current.length >= 20) {
-      toast.error('Maximo de 20 tags')
+      toast.error(tToast('blog.max_tags'))
       return
     }
     setValue('tags', [...current, tag], { shouldValidate: true })

@@ -9,6 +9,7 @@
  * vez de drag-and-drop (MVP); drag pode ser adicionado em iteracao futura.
  */
 import { useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 type TranslationStatus = 'DRAFT' | 'APPROVED' | 'REJECTED'
@@ -37,6 +38,7 @@ const COLUMNS: Array<{ key: TranslationStatus; label: string }> = [
 const DEFAULT_LOCALES = ['en-US', 'it-IT', 'es-ES']
 
 export function TranslationWorkflow({ slug, initialTranslations, availableLocales = DEFAULT_LOCALES }: Props) {
+  const tToast = useTranslations('toasts')
   const [items, setItems] = useState<TranslationItem[]>(initialTranslations)
   const [generating, setGenerating] = useState(false)
 
@@ -52,7 +54,7 @@ export function TranslationWorkflow({ slug, initialTranslations, availableLocale
       const existingLocales = new Set(items.map((i) => i.locale))
       const toGenerate = availableLocales.filter((l) => !existingLocales.has(l))
       if (toGenerate.length === 0) {
-        toast.info('Todas as traducoes ja existem. Use "Recriar" por item para sobrescrever.')
+        toast.info(tToast('blog.translations_exist'))
         return
       }
       const res = await fetch(`/api/v1/blog-articles/${slug}/translate`, {
@@ -80,7 +82,7 @@ export function TranslationWorkflow({ slug, initialTranslations, availableLocale
           })),
       ])
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao gerar traducoes.')
+      toast.error(err instanceof Error ? err.message : tToast('blog.translations_generate_failed'))
     } finally {
       setGenerating(false)
     }
@@ -100,7 +102,7 @@ export function TranslationWorkflow({ slug, initialTranslations, availableLocale
       toast.success(`Status atualizado para ${next}.`)
     } catch (err) {
       setItems(prevItems)
-      toast.error(err instanceof Error ? err.message : 'Falha ao atualizar status.')
+      toast.error(err instanceof Error ? err.message : tToast('blog.translations_status_failed'))
     }
   }
 

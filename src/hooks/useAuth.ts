@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import type { User, Session } from '@supabase/supabase-js'
 
@@ -19,6 +20,7 @@ export function useAuth() {
   const [isSessionExpiring, setIsSessionExpiring] = useState(false)
   const [isSessionExpired, setIsSessionExpired] = useState(false)
   const supabase = createClient()
+  const tToast = useTranslations('toasts')
 
   useEffect(() => {
     // Get initial session
@@ -136,8 +138,8 @@ export function useAuth() {
 
   const signOut = useCallback(async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
-    toast.success('Saiu com sucesso')
-  }, [])
+    toast.success(tToast('auth.logged_out'))
+  }, [tToast])
 
   const refreshSession = useCallback(async () => {
     const { error } = await supabase.auth.refreshSession()

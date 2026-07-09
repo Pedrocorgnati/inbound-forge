@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
+import { useTranslations } from 'next-intl'
 
 type TestStatus = 'idle' | 'testing' | 'ok' | 'error'
 
@@ -35,10 +36,11 @@ export function CredentialTestCard({
   const [masked, setMasked] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const tToast = useTranslations('toasts')
 
   async function handleTest() {
     if (!value.trim()) {
-      toast.error('Insira a credencial antes de testar')
+      toast.error(tToast('credential.insert_first'))
       return
     }
 
@@ -67,7 +69,7 @@ export function CredentialTestCard({
     } catch {
       setStatus('error')
       setErrorMsg('Erro de rede ao testar')
-      toast.error('Erro de rede ao testar credencial')
+      toast.error(tToast('credential.network_failed'))
       onResult(false)
     }
   }

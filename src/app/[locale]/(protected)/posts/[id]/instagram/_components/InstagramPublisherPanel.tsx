@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, Check, Instagram, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { SkeletonCard } from '@/components/ui/skeleton'
@@ -70,6 +71,7 @@ function getErrorMessage(payload: unknown, fallback: string): string {
 }
 
 export function InstagramPublisherPanel({ postId }: InstagramPublisherPanelProps) {
+  const tToast = useTranslations('toasts')
   const [post, setPost] = useState<InstagramPostPayload | null>(null)
   const [hashtags, setHashtags] = useState<string[]>([])
   const [scheduleValue, setScheduleValue] = useState('')
@@ -92,7 +94,7 @@ export function InstagramPublisherPanel({ postId }: InstagramPublisherPanelProps
         setScheduleValue(getDefaultInstagramScheduleValue(payload.scheduledAt))
       } catch (error) {
         if (!cancelled) {
-          toast.error(error instanceof Error ? error.message : 'Erro ao carregar post')
+          toast.error(error instanceof Error ? error.message : tToast('publishing.load_post_failed'))
           setPost(null)
         }
       } finally {
@@ -104,7 +106,7 @@ export function InstagramPublisherPanel({ postId }: InstagramPublisherPanelProps
     return () => {
       cancelled = true
     }
-  }, [postId])
+  }, [postId, tToast])
 
   const painTitle = post?.contentPiece?.theme?.pain?.title ?? post?.contentPiece?.painCategory ?? null
   const targetNiche = post?.contentPiece?.targetNiche ?? null
@@ -184,10 +186,10 @@ export function InstagramPublisherPanel({ postId }: InstagramPublisherPanelProps
       setState('publishing')
       await publish()
       setState('done')
-      toast.success('Post publicado no Instagram')
+      toast.success(tToast('publishing.instagram_published'))
     } catch (error) {
       setState('error')
-      toast.error(error instanceof Error ? error.message : 'Falha ao publicar no Instagram')
+      toast.error(error instanceof Error ? error.message : tToast('publishing.instagram_publish_failed'))
     }
   }
 

@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useMutation } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
 const CONFIRM_PHRASE = 'DELETAR'
 
 export function LeadDeleteDialog({ leadId, leadName, locale, children }: Props) {
+  const tToast = useTranslations('toasts')
   const [open, setOpen] = useState(false)
   const [confirmText, setConfirmText] = useState('')
   const router = useRouter()
@@ -33,10 +35,10 @@ export function LeadDeleteDialog({ leadId, leadName, locale, children }: Props) 
     onSuccess: () => {
       setOpen(false)
       setConfirmText('')
-      toast.success('Lead excluído')
+      toast.success(tToast('lead.deleted'))
       router.push(`/${locale}/leads`)
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Erro'),
+    onError: (e) => toast.error(e instanceof Error ? e.message : tToast('common.error_generic')),
   })
 
   const canConfirm = confirmText === CONFIRM_PHRASE && !mutation.isPending

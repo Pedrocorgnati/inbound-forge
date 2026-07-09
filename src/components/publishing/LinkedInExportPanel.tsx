@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { Check, X, AlertTriangle, Linkedin, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -30,6 +31,7 @@ const MAX_CHARS = PUBLISHING_CHANNELS.LINKEDIN.maxCaptionLength
 const MAX_HASHTAGS = PUBLISHING_CHANNELS.LINKEDIN.maxHashtags
 
 export function LinkedInExportPanel({ postId }: LinkedInExportPanelProps) {
+  const tToast = useTranslations('toasts')
   const [data, setData] = useState<LinkedInData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [editedText, setEditedText] = useState('')
@@ -46,13 +48,13 @@ export function LinkedInExportPanel({ postId }: LinkedInExportPanelProps) {
         setData(payload)
         setEditedText(payload.fullText)
       } catch {
-        toast.error('Erro ao carregar formato LinkedIn')
+        toast.error(tToast('publishing.linkedin_load_failed'))
       } finally {
         setIsLoading(false)
       }
     }
     load()
-  }, [postId])
+  }, [postId, tToast])
 
   const currentCharCount = editedText.length
   const hashtags = data?.hashtagsLine ? data.hashtagsLine.split(' ').filter(Boolean) : []
@@ -70,12 +72,12 @@ export function LinkedInExportPanel({ postId }: LinkedInExportPanelProps) {
       })
       if (!res.ok) throw new Error('Erro ao atualizar status')
       setPublished(true)
-      toast.success('Post marcado como publicado no LinkedIn')
+      toast.success(tToast('publishing.linkedin_marked'))
     } catch {
-      toast.error('Erro ao marcar como publicado')
+      toast.error(tToast('publishing.mark_published_failed'))
       throw new Error('Erro ao marcar como publicado')
     }
-  }, [postId])
+  }, [postId, tToast])
 
   if (isLoading) {
     return (

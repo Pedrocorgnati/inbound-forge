@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from '@/components/ui/toast'
+import { useTranslations } from 'next-intl'
 
 const painSchema = z.object({
   title: z.string().min(3, 'Titulo deve ter no minimo 3 caracteres'),
@@ -30,6 +31,7 @@ interface SavedPain {
 export function PainsStep({ onComplete, onBack }: PainsStepProps) {
   const [savedPains, setSavedPains] = useState<SavedPain[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const tToast = useTranslations('toasts')
 
   const {
     register,
@@ -63,10 +65,10 @@ export function PainsStep({ onComplete, onBack }: PainsStepProps) {
       }
 
       setSavedPains((prev) => [...prev, { title: data.title }])
-      toast.success('Dor registrada com sucesso')
+      toast.success(tToast('onboarding.pain_registered'))
       reset()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar dor')
+      toast.error(err instanceof Error ? err.message : tToast('onboarding.pain_save_failed'))
     } finally {
       setSubmitting(false)
     }

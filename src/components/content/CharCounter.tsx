@@ -14,9 +14,9 @@ export function CharCounter({ current, limit, id, className }: CharCounterProps)
   const colorClass = isUnlimited
     ? 'text-muted-foreground'
     : ratio > 1
-      ? 'text-[#991B1B] font-medium'
+      ? 'text-danger-text font-medium'
       : ratio >= 0.8
-        ? 'text-[#92400E] font-medium'
+        ? 'text-warning-text font-medium'
         : 'text-muted-foreground'
 
   const limitText = isUnlimited ? 'sem limite' : `${limit}`

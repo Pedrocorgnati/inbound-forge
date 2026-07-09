@@ -6,6 +6,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { useState } from 'react'
 
@@ -21,6 +22,7 @@ interface SystemSettingsFormProps {
 }
 
 export function SystemSettingsForm({ initial }: SystemSettingsFormProps) {
+  const tToast = useTranslations('toasts')
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
   const {
@@ -41,9 +43,9 @@ export function SystemSettingsForm({ initial }: SystemSettingsFormProps) {
         throw new Error(payload.error ?? `Falha (status ${res.status})`)
       }
       const sentTo = payload?.data?.sentTo
-      toast.success(sentTo ? `Email de teste enviado para ${sentTo}` : 'Email de teste enviado')
+      toast.success(sentTo ? tToast('settings.test_email_sent_to', { email: sentTo }) : tToast('settings.test_email_sent'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao enviar teste')
+      toast.error(err instanceof Error ? err.message : tToast('settings.test_email_failed'))
     } finally {
       setTesting(false)
     }
@@ -61,9 +63,9 @@ export function SystemSettingsForm({ initial }: SystemSettingsFormProps) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error ?? `Falha (status ${res.status})`)
       }
-      toast.success('Configurações atualizadas')
+      toast.success(tToast('settings.config_updated'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar')
+      toast.error(err instanceof Error ? err.message : tToast('common.error_saving'))
     } finally {
       setSaving(false)
     }

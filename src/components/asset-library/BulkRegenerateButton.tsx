@@ -4,6 +4,7 @@
 // TASK-1 ST004 (CL-275): substituido `window.confirm` por ConfirmDialog.
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -16,6 +17,7 @@ interface Props {
 const MAX = 20
 
 export function BulkRegenerateButton({ selectedIds, onSuccess }: Props) {
+  const tToast = useTranslations('toasts')
   const [busy, setBusy] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -43,7 +45,7 @@ export function BulkRegenerateButton({ selectedIds, onSuccess }: Props) {
       toast.success(`Enfileirado: ${data.jobIds.length} jobs`)
       onSuccess?.()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Falha ao enfileirar')
+      toast.error(e instanceof Error ? e.message : tToast('asset.enqueue_failed'))
     } finally {
       setBusy(false)
       setConfirmOpen(false)

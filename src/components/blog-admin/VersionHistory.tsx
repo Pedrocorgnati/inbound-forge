@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { RotateCcw, GitCompareArrows } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,6 +23,7 @@ export function VersionHistory({
   currentTitle,
   currentBody,
 }: VersionHistoryProps) {
+  const tToast = useTranslations('toasts')
   const [versions, setVersions] = React.useState<BlogArticleVersion[]>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [compareVersionId, setCompareVersionId] = React.useState<string | null>(null)
@@ -35,11 +37,11 @@ export function VersionHistory({
       const data: BlogArticleVersion[] = await res.json()
       setVersions(data.sort((a, b) => b.versionNumber - a.versionNumber))
     } catch {
-      toast.error('Falha ao carregar histórico de versões')
+      toast.error(tToast('blog.version_history_failed'))
     } finally {
       setIsLoading(false)
     }
-  }, [articleId])
+  }, [articleId, tToast])
 
   React.useEffect(() => {
     fetchVersions()

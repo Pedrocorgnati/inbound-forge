@@ -80,7 +80,7 @@ export function RollbackConfirmModal({
           <DiffViewer before={currentBody} after={version.body} />
         </div>
 
-        <p className="rounded-md bg-warning-bg p-3 text-sm text-[#92400E]">
+        <p className="rounded-md bg-warning-bg p-3 text-sm text-warning-text">
           Esta ação criará uma nova versão com o conteúdo de v
           {version.versionNumber}. O histórico NÃO será perdido.
         </p>

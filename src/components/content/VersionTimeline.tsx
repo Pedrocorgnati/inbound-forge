@@ -6,6 +6,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { VersionDiff } from './VersionDiff'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
@@ -34,6 +35,7 @@ function bodyOf(v: Variant) {
 
 export function VersionTimeline({ pieceId }: VersionTimelineProps) {
   const qc = useQueryClient()
+  const tToast = useTranslations('toasts')
   const [selected, setSelected] = useState<[string | null, string | null]>([null, null])
   const [restoring, setRestoring] = useState(false)
   const [pendingRestoreId, setPendingRestoreId] = useState<string | null>(null)
@@ -70,10 +72,10 @@ export function VersionTimeline({ pieceId }: VersionTimelineProps) {
         body: JSON.stringify({ variantId }),
       })
       if (!res.ok) throw new Error(`Falha (${res.status})`)
-      toast.success('Versão restaurada')
+      toast.success(tToast('content.version_restored'))
       qc.invalidateQueries({ queryKey: ['content-history', pieceId] })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro')
+      toast.error(err instanceof Error ? err.message : tToast('common.error_generic'))
     } finally {
       setRestoring(false)
       setPendingRestoreId(null)

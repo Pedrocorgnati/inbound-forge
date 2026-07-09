@@ -7,6 +7,7 @@ import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 interface Props {
   itemId: string
@@ -18,6 +19,7 @@ interface Props {
 export function QueueCancelDialog({ itemId, itemLabel, endpoint, children }: Props) {
   const [open, setOpen] = useState(false)
   const qc = useQueryClient()
+  const tToast = useTranslations('toasts')
   const base = endpoint ?? `/api/v1/queue/${itemId}`
 
   const reschedule = async () => {
@@ -34,12 +36,12 @@ export function QueueCancelDialog({ itemId, itemLabel, endpoint, children }: Pro
     onSuccess: () => {
       setOpen(false)
       qc.invalidateQueries({ queryKey: ['queue'] })
-      toast.success('Publicação cancelada', {
+      toast.success(tToast('queue.publication_canceled'), {
         action: { label: 'Desfazer', onClick: () => void reschedule() },
         duration: 5_000,
       })
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Erro'),
+    onError: (e) => toast.error(e instanceof Error ? e.message : tToast('common.error_generic')),
   })
 
   return (

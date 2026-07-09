@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { apiClient } from '@/lib/api-client'
 
 const Schema = z.object({
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function ThrottleConfigPanel({ initial }: Props) {
+  const tToast = useTranslations('toasts')
   const [saving, setSaving] = useState(false)
   const {
     register,
@@ -44,9 +46,9 @@ export function ThrottleConfigPanel({ initial }: Props) {
         const err = (await res.json().catch(() => ({}))) as { error?: string }
         throw new Error(err.error ?? `Falha (status ${res.status})`)
       }
-      toast.success('Throttling atualizado')
+      toast.success(tToast('settings.throttle_updated'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar')
+      toast.error(err instanceof Error ? err.message : tToast('common.error_saving'))
     } finally {
       setSaving(false)
     }

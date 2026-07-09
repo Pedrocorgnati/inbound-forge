@@ -111,7 +111,7 @@ export function AngleHistoryDrawer({
           )}
 
           {error && (
-            <p className="text-sm text-[#991B1B]" data-testid="history-error">{error}</p>
+            <p className="text-sm text-danger-text" data-testid="history-error">{error}</p>
           )}
 
           {!isLoading && !error && versions.length === 0 && (

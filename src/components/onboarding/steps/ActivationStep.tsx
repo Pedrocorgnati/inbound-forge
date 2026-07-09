@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle2, XCircle, Loader2, PartyPopper } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -25,6 +26,7 @@ interface ActivationStepProps {
 const STORAGE_KEY = STORAGE_KEYS.ONBOARDING
 
 export function ActivationStep({ locale, onBack }: ActivationStepProps) {
+  const tToast = useTranslations('toasts')
   const router = useRouter()
   const [counts, setCounts] = useState<Counts | null>(null)
   const [loading, setLoading] = useState(true)
@@ -40,14 +42,14 @@ export function ActivationStep({ locale, onBack }: ActivationStepProps) {
           setCounts(data.counts)
         }
       } catch {
-        toast.error('Erro ao verificar progresso')
+        toast.error(tToast('onboarding.progress_check_failed'))
       } finally {
         setLoading(false)
       }
     }
 
     fetchCounts()
-  }, [])
+  }, [tToast])
 
   const casesOk = (counts?.cases ?? 0) >= 5
   const painsOk = (counts?.pains ?? 0) >= 5
@@ -69,7 +71,7 @@ export function ActivationStep({ locale, onBack }: ActivationStepProps) {
       }
 
       setActivated(true)
-      toast.success('Onboarding concluido com sucesso!')
+      toast.success(tToast('onboarding.completed'))
 
       // Clear localStorage
       try {
@@ -83,7 +85,7 @@ export function ActivationStep({ locale, onBack }: ActivationStepProps) {
         router.push(`/${locale}/dashboard`)
       }, 2500)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao ativar')
+      toast.error(err instanceof Error ? err.message : tToast('onboarding.activate_failed'))
     } finally {
       setActivating(false)
     }

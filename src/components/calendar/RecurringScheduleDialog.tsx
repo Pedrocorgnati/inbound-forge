@@ -3,6 +3,7 @@
 // RecurringScheduleDialog — cria agendamento recorrente (TASK-14 ST001 / CL-119)
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 
@@ -20,6 +21,7 @@ interface Props {
 }
 
 export function RecurringScheduleDialog({ baseDraftId, onClose, onCreated }: Props) {
+  const tToast = useTranslations('toasts')
   const [presetId, setPresetId] = useState('weekly')
   const [customRrule, setCustomRrule] = useState('FREQ=WEEKLY;BYDAY=MO,WE,FR')
   const [startAt, setStartAt] = useState(() => new Date().toISOString().slice(0, 16))
@@ -51,9 +53,9 @@ export function RecurringScheduleDialog({ baseDraftId, onClose, onCreated }: Pro
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = (await res.json()) as { occurrences: string[]; total: number }
       setPreview(data.occurrences)
-      if (data.total === 0) toast.warning('Nenhuma ocorrencia gerada — revise a regra')
+      if (data.total === 0) toast.warning(tToast('calendar.no_occurrences'))
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao prever')
+      toast.error(e instanceof Error ? e.message : tToast('calendar.preview_failed'))
     } finally {
       setBusy(false)
     }
@@ -77,7 +79,7 @@ export function RecurringScheduleDialog({ baseDraftId, onClose, onCreated }: Pro
       onCreated?.(data.parentId, data.created)
       onClose()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao criar')
+      toast.error(e instanceof Error ? e.message : tToast('calendar.create_failed'))
     } finally {
       setBusy(false)
     }

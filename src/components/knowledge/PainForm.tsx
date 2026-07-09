@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -30,6 +31,7 @@ interface FormData {
 const MIN_DESC_CHARS = 10
 
 export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, locale: _locale }: PainFormProps) {
+  const tToast = useTranslations('toasts')
   const [form, setForm] = useState<FormData>({
     title: initialData?.title ?? '',
     description: initialData?.description ?? '',
@@ -116,7 +118,7 @@ export function PainForm({ mode, initialData, isOpen, onClose, onSuccess, locale
       onSuccess()
       onClose()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro inesperado')
+      toast.error(err instanceof Error ? err.message : tToast('common.unexpected_error'))
     } finally {
       setIsSubmitting(false)
     }

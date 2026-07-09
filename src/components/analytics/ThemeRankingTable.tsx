@@ -4,6 +4,7 @@
 // INT-027, INT-041 | PERF-002: paginação obrigatória
 
 import React, { memo, useState, useEffect, useCallback, useTransition } from 'react'
+import { useTranslations } from 'next-intl'
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -33,6 +34,7 @@ const LIMIT = 20
 
 function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
   const fmt = useFormatters()
+  const tToast = useTranslations('toasts')
   const [sortBy, setSortBy] = useState<SortBy>('realConversionRate')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [page, setPage] = useState(1)
@@ -41,9 +43,9 @@ function ThemeRankingTableComponent({ period }: ThemeRankingTableProps) {
 
   useEffect(() => {
     if (error) {
-      toast.error('Erro ao carregar ranking de temas')
+      toast.error(tToast('theme.ranking_load_failed'))
     }
-  }, [error])
+  }, [error, tToast])
 
   const [isSortPending, startSortTransition] = useTransition()
 

@@ -4,6 +4,7 @@
 // INT-003, INT-040, INT-041
 
 import React, { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { trackEvent } from '@/lib/ga4'
 import { GA4_EVENTS } from '@/constants/ga4-events'
@@ -27,6 +28,7 @@ export function AnalyticsDashboard() {
   const [reconciliationStats, setReconciliationStats] = useState({ postsWithoutConversion: 0, leadsWithoutPost: 0 })
   const [ga4Source, setGA4Source] = useState<'ga4' | 'internal' | null>(null)
   const [ga4ReconReport, setGa4ReconReport] = useState<GA4ReconciliationReport | null>(null)
+  const tToast = useTranslations('toasts')
 
   useEffect(() => {
     trackEvent({ name: GA4_EVENTS.ANALYTICS_PAGE_VIEW })
@@ -52,9 +54,9 @@ export function AnalyticsDashboard() {
 
   useEffect(() => {
     if (funnelError) {
-      toast.error('Erro ao carregar métricas do funil')
+      toast.error(tToast('analytics.funnel_load_failed'))
     }
-  }, [funnelError])
+  }, [funnelError, tToast])
 
   useEffect(() => {
     async function loadGA4Source() {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { ArrowLeft, ArrowRight, Plus, Loader2, SkipForward } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -28,6 +29,7 @@ interface ObjectionsStepProps {
 }
 
 export function ObjectionsStep({ onComplete, onSkip, onBack }: ObjectionsStepProps) {
+  const tToast = useTranslations('toasts')
   const [savedObjections, setSavedObjections] = useState<SavedObjection[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [content, setContent] = useState('')
@@ -35,7 +37,7 @@ export function ObjectionsStep({ onComplete, onSkip, onBack }: ObjectionsStepPro
 
   async function handleAdd() {
     if (content.length < 5) {
-      toast.error('A objecao deve ter no minimo 5 caracteres')
+      toast.error(tToast('onboarding.objection_min'))
       return
     }
 
@@ -53,10 +55,10 @@ export function ObjectionsStep({ onComplete, onSkip, onBack }: ObjectionsStepPro
       }
 
       setSavedObjections((prev) => [...prev, { content, type }])
-      toast.success('Objecao registrada')
+      toast.success(tToast('onboarding.objection_registered'))
       setContent('')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar objecao')
+      toast.error(err instanceof Error ? err.message : tToast('onboarding.objection_save_failed'))
     } finally {
       setSubmitting(false)
     }

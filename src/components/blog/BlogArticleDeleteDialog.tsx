@@ -5,6 +5,7 @@
 
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 type Props = {
@@ -30,6 +31,7 @@ export function BlogArticleDeleteDialog({
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const tToast = useTranslations('toasts')
 
   const canConfirm = ack && input === CONFIRM_PHRASE && !busy
 
@@ -43,7 +45,7 @@ export function BlogArticleDeleteDialog({
         const json = await res.json().catch(() => ({}))
         throw new Error(json?.error ?? `Falha (${res.status})`)
       }
-      toast.success('Artigo excluido')
+      toast.success(tToast('blog.article_excluded'))
       onDeleted?.()
       onOpenChange(false)
     } catch (err) {

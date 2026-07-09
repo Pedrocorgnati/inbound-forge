@@ -5,6 +5,7 @@
  */
 import * as React from 'react'
 import useSWR from 'swr'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Modal } from '@/components/ui/modal'
 import { Badge } from '@/components/ui/badge'
@@ -38,6 +39,7 @@ export function PublishErrorDrawer({
   open: boolean
   onClose: () => void
 }) {
+  const tToast = useTranslations('toasts')
   const { data, isLoading } = useSWR<{ data: PublishError[] }>(
     open ? `/api/v1/posts/${postId}/errors` : null,
     fetcher
@@ -55,9 +57,9 @@ export function PublishErrorDrawer({
   async function copyError(err: PublishError) {
     try {
       await navigator.clipboard.writeText(JSON.stringify(err, null, 2))
-      toast.success('Erro copiado')
+      toast.success(tToast('publishing.error_copied'))
     } catch {
-      toast.error('Falha ao copiar')
+      toast.error(tToast('common.copy_failed'))
     }
   }
 

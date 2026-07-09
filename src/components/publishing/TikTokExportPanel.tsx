@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Hash, Info } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,6 +19,7 @@ interface PostData {
 }
 
 export function TikTokExportPanel({ postId }: TikTokExportPanelProps) {
+  const tToast = useTranslations('toasts')
   const [data, setData] = useState<PostData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -34,13 +36,13 @@ export function TikTokExportPanel({ postId }: TikTokExportPanelProps) {
           imageUrl: post.imageUrl ?? null,
         })
       } catch {
-        toast.error('Erro ao carregar dados do post')
+        toast.error(tToast('publishing.post_load_failed'))
       } finally {
         setIsLoading(false)
       }
     }
     load()
-  }, [postId])
+  }, [postId, tToast])
 
   if (isLoading) return <SkeletonCard />
 

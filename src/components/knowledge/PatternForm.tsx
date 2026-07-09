@@ -7,6 +7,7 @@ import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { ResponsiveSheet } from '@/components/ui/responsive-sheet'
 import { toast } from '@/components/ui/toast'
+import { useTranslations } from 'next-intl'
 import { AlertCircle } from 'lucide-react'
 import { useKnowledgeAutosave } from '@/hooks/useKnowledgeAutosave'
 import { useFormatters } from '@/lib/i18n/formatters'
@@ -68,6 +69,7 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
 
   // RESOLVED: G002 — useFormatters usa locale dinâmico
   const fmt = useFormatters()
+  const tToast = useTranslations('toasts')
 
   const fetchPains = useCallback(async () => {
     setIsLoadingPains(true)
@@ -77,11 +79,11 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
       const json = await res.json()
       setPains(json.data ?? [])
     } catch {
-      toast.error('Erro ao carregar dores')
+      toast.error(tToast('knowledge.load_pains_failed'))
     } finally {
       setIsLoadingPains(false)
     }
-  }, [])
+  }, [tToast])
 
   const fetchCases = useCallback(async () => {
     setIsLoadingCases(true)
@@ -91,11 +93,11 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
       const json = await res.json()
       setCases(json.data ?? [])
     } catch {
-      toast.error('Erro ao carregar cases')
+      toast.error(tToast('knowledge.load_cases_failed'))
     } finally {
       setIsLoadingCases(false)
     }
-  }, [])
+  }, [tToast])
 
   // Load pains and cases on modal open
   useEffect(() => {
@@ -178,7 +180,7 @@ export function PatternForm({ mode, initialData, isOpen, onClose, onSuccess, loc
       onSuccess()
       onClose()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro inesperado')
+      toast.error(err instanceof Error ? err.message : tToast('common.unexpected_error'))
     } finally {
       setIsSubmitting(false)
     }

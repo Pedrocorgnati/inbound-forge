@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 const LeadEditSchema = z.object({
@@ -33,6 +34,7 @@ interface Props {
 
 export function LeadEditForm({ leadId, initial }: Props) {
   const qc = useQueryClient()
+  const tToast = useTranslations('toasts')
   const { register, handleSubmit, formState: { errors } } = useForm<LeadEditValues>({
     resolver: zodResolver(LeadEditSchema),
     defaultValues: initial,
@@ -53,9 +55,9 @@ export function LeadEditForm({ leadId, initial }: Props) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['lead', leadId] })
-      toast.success('Lead atualizado')
+      toast.success(tToast('lead.updated'))
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Erro'),
+    onError: (e) => toast.error(e instanceof Error ? e.message : tToast('common.error_generic')),
   })
 
   return (

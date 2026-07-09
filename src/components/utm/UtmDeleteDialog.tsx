@@ -6,6 +6,7 @@ import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 interface Props {
   postId: string
@@ -16,6 +17,7 @@ interface Props {
 export function UtmDeleteDialog({ postId, label, children }: Props) {
   const [open, setOpen] = useState(false)
   const qc = useQueryClient()
+  const tToast = useTranslations('toasts')
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -26,9 +28,9 @@ export function UtmDeleteDialog({ postId, label, children }: Props) {
     onSuccess: () => {
       setOpen(false)
       qc.invalidateQueries({ queryKey: ['utms'] })
-      toast.success('UTM excluído')
+      toast.success(tToast('utm.deleted'))
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Erro'),
+    onError: (e) => toast.error(e instanceof Error ? e.message : tToast('common.error_generic')),
   })
 
   return (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
@@ -26,6 +27,7 @@ export function CasePainLinkModal({
   locale: _locale,
   onSuccess,
 }: CasePainLinkModalProps) {
+  const tToast = useTranslations('toasts')
   const [cases, setCases] = useState<CaseResponse[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(currentCaseIds))
   const [isLoading, setIsLoading] = useState(false)
@@ -127,7 +129,7 @@ export function CasePainLinkModal({
     } else if (successCount > 0) {
       toast.success(`${successCount} vínculo(s) atualizado(s) com sucesso`)
     } else {
-      toast.info('Nenhuma alteração realizada')
+      toast.info(tToast('common.no_changes'))
     }
 
     setIsSaving(false)

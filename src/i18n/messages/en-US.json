@@ -954,5 +954,282 @@
       "cancel": "Cancel",
       "saved": "Rule created"
     }
+  },
+  "toasts": {
+    "common": {
+      "copy_failed": "Failed to copy",
+      "copied": "Copied",
+      "save_failed": "Failed to save",
+      "remove_failed": "Failed to remove",
+      "updated": "Updated",
+      "network_retry": "Network error. Please try again.",
+      "copy_not_possible": "Could not copy.",
+      "no_changes": "No changes made",
+      "select_file": "Select a file",
+      "invalid_server_response": "Invalid server response.",
+      "error_generic": "Error",
+      "unexpected_error": "Unexpected error",
+      "error_saving": "Error saving",
+      "no_company": "No company"
+    },
+    "auth": {
+      "logged_out": "Signed out successfully",
+      "session_expired": "Session expired. Please sign in again.",
+      "password_reset": "Password reset successfully!",
+      "current_password_invalid": "Current password is invalid",
+      "too_many_attempts": "Too many attempts. Wait 15 minutes.",
+      "password_updated": "Password updated",
+      "email_confirmation_sent": "Confirmation email sent to the new address.",
+      "reset_password_failed": "Error resetting password"
+    },
+    "mfa": {
+      "enter_6_digits": "Enter the 6 digits from your authenticator app.",
+      "enter_6_digits_disable": "Enter the 6 digits to confirm deactivation.",
+      "invalid_backup_code": "Enter a valid backup code.",
+      "enabled": "MFA enabled. Save your backup codes.",
+      "disabled": "MFA disabled.",
+      "disabled_via_backup": "MFA disabled via backup code. Re-enable in Settings > Account.",
+      "backup_codes_copied": "Backup codes copied.",
+      "network_start": "Network error while starting MFA.",
+      "network_verify": "Network error while verifying the code.",
+      "network_disable": "Network error while disabling MFA."
+    },
+    "theme": {
+      "already_rejected": "This theme was already rejected.",
+      "reject_failed": "Error rejecting. Please try again.",
+      "rejected": "Theme rejected",
+      "only_rejected_restorable": "Only rejected themes can be restored.",
+      "restore_failed": "Error restoring. Please try again.",
+      "restored": "Theme restored",
+      "generate_failed": "Error generating themes. Please try again.",
+      "no_new_themes": "No new themes. Enrich the knowledge base.",
+      "recalc_in_progress": "Recalculation in progress. Wait and try again.",
+      "recalc_failed": "Error recalculating scores.",
+      "generate_cooldown": "Wait 5 minutes before generating again.",
+      "load_failed": "Error loading theme data",
+      "ranking_load_failed": "Error loading theme ranking",
+      "generate_failed_short": "Failed to generate themes."
+    },
+    "lead": {
+      "moved": "Lead moved",
+      "not_found": "Lead not found",
+      "registered": "Lead registered successfully",
+      "deleted": "Lead deleted",
+      "updated": "Lead updated",
+      "delete_failed": "Error deleting lead. Please try again.",
+      "contact_copied": "Contact copied to clipboard.",
+      "contact_hidden_ttl": "Contact automatically hidden (TTL expired).",
+      "contact_revealed": "Contact revealed. Audit log created.",
+      "reveal_network_failed": "Network error while revealing the contact.",
+      "move_failed": "Error moving lead",
+      "register_unexpected": "Unexpected error registering lead",
+      "deleted_named": "Lead \"{company}\" deleted",
+      "reveal_invalid_form": "Invalid form data.",
+      "reveal_not_possible": "Could not reveal the contact.",
+      "reveal_failed_retry": "Error revealing the contact. Please try again."
+    },
+    "onboarding": {
+      "load_data_failed": "Error loading data",
+      "name_min": "Name must be at least 3 characters",
+      "desc_min": "Description must be at least 10 characters",
+      "select_pain": "Select a pain point",
+      "select_case": "Select a case",
+      "solution_registered": "Solution pattern registered",
+      "case_saved": "Case saved successfully",
+      "pain_registered": "Pain point registered successfully",
+      "progress_check_failed": "Error checking progress",
+      "completed": "Onboarding completed successfully!",
+      "objection_min": "The objection must be at least 5 characters",
+      "objection_registered": "Objection registered",
+      "solution_save_failed": "Error saving pattern",
+      "case_save_failed": "Error saving case",
+      "pain_save_failed": "Error saving pain point",
+      "activate_failed": "Error activating",
+      "objection_save_failed": "Error saving objection"
+    },
+    "credential": {
+      "insert_first": "Enter the credential before testing",
+      "network_failed": "Network error while testing credential"
+    },
+    "publishing": {
+      "post_load_failed": "Error loading post data",
+      "error_copied": "Error copied",
+      "linkedin_load_failed": "Error loading LinkedIn format",
+      "linkedin_marked": "Post marked as published on LinkedIn",
+      "mark_published_failed": "Error marking as published",
+      "post_created": "Post created successfully!",
+      "image_uploaded": "Image uploaded successfully",
+      "instagram_published": "Post published on Instagram",
+      "load_post_failed": "Error loading post",
+      "instagram_publish_failed": "Failed to publish on Instagram",
+      "retry_requeued": "Post re-queued (content reused)",
+      "retry_resent": "Post resent for publishing!"
+    },
+    "calendar": {
+      "update_item_failed": "Failed to update item",
+      "published_cannot_remove": "A published item cannot be removed",
+      "removed_from_queue": "Removed from queue",
+      "no_occurrences": "No occurrences generated — review the rule",
+      "rescheduled": "Post rescheduled successfully",
+      "reschedule_failed": "Error rescheduling post. Please try again.",
+      "reschedule_error": "Error rescheduling post",
+      "slot_unavailable": "Slot unavailable",
+      "paused": "Paused",
+      "resumed": "Resumed",
+      "preview_failed": "Error previewing",
+      "create_failed": "Error creating"
+    },
+    "queue": {
+      "publication_canceled": "Publication canceled",
+      "post_duplicated": "Post duplicated",
+      "schedule_assisted": "Publication scheduled.",
+      "cancel_failed": "Error canceling",
+      "duplicate_failed": "Error duplicating",
+      "schedule_failed": "Failed to schedule publication"
+    },
+    "content": {
+      "load_failed": "Error loading theme data",
+      "context_copied": "Context copied to clipboard",
+      "copy_context_failed": "Failed to copy context",
+      "version_restored": "Version restored",
+      "draft_deleted": "Draft deleted successfully",
+      "utm_reused": "This post already had a UTM link; reusing the existing one.",
+      "utm_generated": "UTM link generated.",
+      "utm_generate_failed": "Failed to generate UTM link",
+      "restore_failed": "Error restoring"
+    },
+    "knowledge": {
+      "unlocked": "Knowledge base unlocked!",
+      "order_updated": "Order updated",
+      "case_archived": "Case archived",
+      "load_pains_failed": "Error loading pain points",
+      "load_cases_failed": "Error loading cases",
+      "order_save_failed": "Failed to save order",
+      "case_archive_failed": "Error archiving",
+      "draft_saved": "Draft saved",
+      "draft_saved_full": "Draft saved successfully",
+      "case_published": "Case published successfully"
+    },
+    "blog": {
+      "load_article_failed": "Error loading article",
+      "article_approved": "Article approved successfully!",
+      "article_published": "Article published successfully!",
+      "article_updated": "Article updated successfully!",
+      "article_deleted": "Article deleted successfully",
+      "article_unpublished": "Article unpublished",
+      "article_excluded": "Article deleted",
+      "load_articles_failed": "Failed to load articles",
+      "version_history_failed": "Failed to load version history",
+      "metadata_updated": "Metadata updated",
+      "tag_already_added": "Tag already added",
+      "max_tags": "Maximum of 20 tags",
+      "choose_future_date": "Choose a future date",
+      "date_must_future": "The date must be in the future",
+      "translations_exist": "All translations already exist. Use \"Recreate\" per item to overwrite.",
+      "approve_failed": "Error approving article",
+      "publish_failed": "Error publishing article",
+      "delete_failed": "Error deleting article",
+      "translations_generate_failed": "Failed to generate translations.",
+      "translations_status_failed": "Failed to update status.",
+      "scheduled": "Article scheduled",
+      "schedule_canceled": "Schedule canceled",
+      "schedule_failed": "Error scheduling"
+    },
+    "analytics": {
+      "recon_load_failed": "Error loading reconciliation panel",
+      "recon_sync_failed": "Error syncing reconciliation",
+      "exporting": "Exporting...",
+      "csv_saved": "CSV saved",
+      "csv_failed": "Error exporting CSV",
+      "funnel_load_failed": "Error loading funnel metrics",
+      "channels_load_failed": "Error loading channel comparison",
+      "ltr_load_failed": "Error loading Learn-to-Rank",
+      "conversion_removed": "Conversion removed",
+      "validation_updated": "Validation updated",
+      "validate_failed": "Failed to validate",
+      "item_resolved": "Item marked as resolved",
+      "item_excluded": "Item deleted",
+      "item_matched": "Item marked as matched",
+      "resolve_item_failed": "Error resolving item",
+      "exclude_item_failed": "Error deleting item"
+    },
+    "conversions": {
+      "load_failed": "Error loading conversions",
+      "delete_failed": "Error deleting conversion"
+    },
+    "health": {
+      "alert_resolved": "Alert resolved",
+      "alert_resolve_failed": "Error resolving alert",
+      "alert_acknowledged": "Alert acknowledged",
+      "alert_ack_failed": "Error acknowledging alert",
+      "job_reprocessed": "Job reprocessed"
+    },
+    "sources": {
+      "update_status_failed": "Error updating source status",
+      "reset_antibot_failed": "Error resetting anti-bot protection"
+    },
+    "asset": {
+      "alt_saved": "Alt text saved",
+      "alt_save_failed": "Error saving alt text",
+      "tags_save_failed": "Error saving tags",
+      "delete_failed": "Error deleting asset. Please try again.",
+      "enqueue_failed": "Failed to enqueue",
+      "file_too_large": "File exceeds {mb} MB"
+    },
+    "settings": {
+      "throttle_updated": "Throttling updated",
+      "config_updated": "Settings updated",
+      "threshold_updated": "Threshold updated",
+      "tiktok_connected": "TikTok connected successfully!",
+      "tiktok_connect_failed": "Failed to connect TikTok. Please try again.",
+      "tiktok_start_failed": "Could not start the TikTok connection.",
+      "font_registered": "Font registered",
+      "export_done": "Export completed.",
+      "export_request_failed": "Error requesting export.",
+      "template_removed": "Template removed",
+      "test_email_sent": "Test email sent",
+      "test_email_sent_to": "Test email sent to {email}",
+      "test_email_failed": "Error sending test",
+      "threshold_save_failed": "Error saving threshold",
+      "fonts_list_failed": "Error listing",
+      "font_upload_failed": "Upload failed",
+      "export_failed": "Error exporting"
+    },
+    "utm": {
+      "link_copied": "Link copied!",
+      "copy_link_failed": "Error copying link",
+      "link_removed": "UTM link removed",
+      "deleted": "UTM deleted",
+      "updated": "UTM updated",
+      "load_failed": "Error loading UTM links",
+      "remove_failed": "Error removing UTM link"
+    },
+    "approvals": {
+      "registered": "Approval registered",
+      "approve_failed": "Could not approve."
+    },
+    "layout": {
+      "version_copied": "Version copied"
+    },
+    "template": {
+      "updated": "Template updated",
+      "created": "Template created"
+    },
+    "niche": {
+      "theme_created": "Theme created",
+      "opportunity_discarded": "Opportunity discarded"
+    },
+    "source": {
+      "paused": "Source paused",
+      "activated": "Source activated",
+      "deactivated": "Source deactivated",
+      "update_failed": "Failed to update source",
+      "scraping_active": "Scraping active",
+      "scraping_paused": "Scraping paused",
+      "remove_failed": "Error removing source",
+      "created": "Source created successfully",
+      "updated": "Source updated successfully",
+      "save_failed": "Error saving source"
+    }
   }
 }

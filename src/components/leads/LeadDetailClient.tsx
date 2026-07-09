@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useParams, useRouter } from 'next/navigation'
 import { AlertTriangle, ChevronRight, Eye, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -74,6 +75,7 @@ const FUNNEL_MAP: Record<string, { label: string; variant: 'info' | 'warning' | 
 // --- Component ---
 
 export function LeadDetailClient() {
+  const tToast = useTranslations('toasts')
   const params = useParams<{ locale: string; id: string }>()
   const router = useRouter()
   const locale = params.locale
@@ -114,7 +116,7 @@ export function LeadDetailClient() {
       const res = await fetch(`/api/v1/leads/${id}`)
       if (!res.ok) {
         if (res.status === 404) {
-          toast.error('Lead não encontrado')
+          toast.error(tToast('lead.not_found'))
           router.push(`/${locale}/leads`)
           return
         }
@@ -128,7 +130,7 @@ export function LeadDetailClient() {
     } finally {
       setIsLoading(false)
     }
-  }, [id, locale, router])
+  }, [id, locale, router, tToast])
 
   useEffect(() => {
     fetchLead()
@@ -143,7 +145,7 @@ export function LeadDetailClient() {
 
       void navigator.clipboard
         ?.writeText(result.contactInfo)
-        .then(() => toast.success('Contato copiado para a área de transferência.'))
+        .then(() => toast.success(tToast('lead.contact_copied')))
         .catch(() => {
           /* clipboard indisponivel: contato segue visivel na tela */
         })
@@ -155,14 +157,14 @@ export function LeadDetailClient() {
           if (prev === null) return null
           if (prev <= 1) {
             hideRevealedContact()
-            toast.info('Contato ocultado automaticamente (TTL expirado).')
+            toast.info(tToast('lead.contact_hidden_ttl'))
             return null
           }
           return prev - 1
         })
       }, 1000)
     },
-    [clearRevealTimer, hideRevealedContact],
+    [clearRevealTimer, hideRevealedContact, tToast],
   )
 
   function handleFormSuccess() {

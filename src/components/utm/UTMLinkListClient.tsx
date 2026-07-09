@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { Copy, Link2, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -43,6 +43,7 @@ function truncateUrl(url: string): string {
 
 export function UTMLinkListClient() {
   const locale = useLocale()
+  const tToast = useTranslations('toasts')
   const [links, setLinks] = useState<UTMLinkItem[]>([])
   const [meta, setMeta] = useState<PaginationMeta | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -59,11 +60,11 @@ export function UTMLinkListClient() {
       setLinks(json.data ?? [])
       setMeta(json.meta ?? null)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao carregar UTM links')
+      toast.error(err instanceof Error ? err.message : tToast('utm.load_failed'))
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [tToast])
 
   useEffect(() => {
     fetchLinks(page)
@@ -72,9 +73,9 @@ export function UTMLinkListClient() {
   async function handleCopy(url: string) {
     try {
       await navigator.clipboard.writeText(url)
-      toast.success('Link copiado!')
+      toast.success(tToast('utm.link_copied'))
     } catch {
-      toast.error('Erro ao copiar link')
+      toast.error(tToast('utm.copy_link_failed'))
     }
   }
 
@@ -86,10 +87,10 @@ export function UTMLinkListClient() {
         const data = await res.json().catch(() => null)
         throw new Error(data?.error ?? 'Erro ao remover UTM link')
       }
-      toast.success('UTM link removido')
+      toast.success(tToast('utm.link_removed'))
       await fetchLinks(page)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao remover UTM link')
+      toast.error(err instanceof Error ? err.message : tToast('utm.remove_failed'))
     } finally {
       setDeletingId(null)
     }

@@ -5,6 +5,7 @@
  */
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 interface ExportRequest {
   id: string
@@ -35,6 +36,7 @@ export function PrivacyClient() {
   const [requests, setRequests] = useState<ExportRequest[]>([])
   const [loading, setLoading] = useState(false)
   const [polling, setPolling] = useState(false)
+  const tToast = useTranslations('toasts')
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -74,7 +76,7 @@ export function PrivacyClient() {
         return
       }
       if (!res.ok) {
-        toast.error('Erro ao solicitar export.')
+        toast.error(tToast('settings.export_request_failed'))
         return
       }
       // CP-COMP-03: o export agora e processado na propria requisicao; o link de

@@ -42,7 +42,7 @@ export async function MvpCriteriaCard() {
         className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted"
       >
         <div
-          className={cn('h-full transition-all', done ? 'bg-success' : 'bg-primary')}
+          className={cn('h-full transition-[width,background-color]', done ? 'bg-success' : 'bg-primary')}
           style={{ width: `${pct}%` }}
         />
       </div>

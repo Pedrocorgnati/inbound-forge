@@ -4,6 +4,7 @@
 // Usa HTML5 drag API para evitar nova dependencia de dnd-kit.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function KnowledgeReorderableList({ type, initialItems }: Props) {
+  const tToast = useTranslations('toasts')
   const [items, setItems] = useState(initialItems)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -40,9 +42,9 @@ export function KnowledgeReorderableList({ type, initialItems }: Props) {
           }),
         })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        toast.success('Ordem atualizada', { duration: 1500 })
+        toast.success(tToast('knowledge.order_updated'), { duration: 1500 })
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Falha ao salvar ordem')
+        toast.error(e instanceof Error ? e.message : tToast('knowledge.order_save_failed'))
       }
     }, 500)
   }

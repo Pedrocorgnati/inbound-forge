@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
@@ -34,6 +35,7 @@ interface ResetPasswordFormProps {
 
 export function ResetPasswordForm({ locale }: ResetPasswordFormProps) {
   const router = useRouter()
+  const tToast = useTranslations('toasts')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [hasSession, setHasSession] = useState(false)
@@ -72,11 +74,11 @@ export function ResetPasswordForm({ locale }: ResetPasswordFormProps) {
     const { error } = await supabase.auth.updateUser({ password: data.password })
 
     if (error) {
-      toast.error(error.message ?? 'Erro ao redefinir senha')
+      toast.error(error.message ?? tToast('auth.reset_password_failed'))
       return
     }
 
-    toast.success('Senha redefinida com sucesso!')
+    toast.success(tToast('auth.password_reset'))
     router.push(`/${locale}/login`)
   }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { ImageTemplateForm } from '@/components/admin/ImageTemplateForm'
 
@@ -17,6 +18,7 @@ type Template = {
 }
 
 export default function ImageTemplatesAdminClient() {
+  const tToast = useTranslations('toasts')
   const [items, setItems] = useState<Template[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<Template | 'new' | null>(null)
@@ -29,7 +31,7 @@ export default function ImageTemplatesAdminClient() {
       if (!res.ok) throw new Error(json?.error ?? 'Falha ao carregar')
       setItems((json.data ?? json.items ?? []) as Template[])
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro')
+      toast.error(err instanceof Error ? err.message : tToast('common.error_generic'))
     } finally {
       setLoading(false)
     }
@@ -47,7 +49,7 @@ export default function ImageTemplatesAdminClient() {
       toast.error(json?.error ?? `Falha (${res.status})`)
       return
     }
-    toast.success('Template removido')
+    toast.success(tToast('settings.template_removed'))
     void load()
   }
 

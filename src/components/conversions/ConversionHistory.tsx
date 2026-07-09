@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Trash2, History } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -36,6 +37,7 @@ export function ConversionHistory({ leadId, themeId: _themeId, refreshKey }: Con
   const [isLoading, setIsLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState<ConversionItem | null>(null)
   const fmt = useFormatters()
+  const tToast = useTranslations('toasts')
 
   const fetchConversions = useCallback(async () => {
     setIsLoading(true)
@@ -46,11 +48,11 @@ export function ConversionHistory({ leadId, themeId: _themeId, refreshKey }: Con
       setItems(json.data ?? [])
       setTotal(json.meta?.total ?? json.data?.length ?? 0)
     } catch {
-      toast.error('Erro ao carregar conversoes')
+      toast.error(tToast('conversions.load_failed'))
     } finally {
       setIsLoading(false)
     }
-  }, [leadId])
+  }, [leadId, tToast])
 
   useEffect(() => {
     fetchConversions()
@@ -65,11 +67,11 @@ export function ConversionHistory({ leadId, themeId: _themeId, refreshKey }: Con
       })
       if (!res.ok) throw new Error('Falha ao deletar conversao')
 
-      toast.success('Conversao removida')
+      toast.success(tToast('analytics.conversion_removed'))
       setDeleteTarget(null)
       fetchConversions()
     } catch {
-      toast.error('Erro ao deletar conversao')
+      toast.error(tToast('conversions.delete_failed'))
       throw new Error('delete failed') // re-throw so Modal stays open
     }
   }

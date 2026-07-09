@@ -2,6 +2,7 @@
 
 // Intake-Review TASK-5 ST002 (CL-225): campo configuravel para threshold de custo USD.
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 interface Props {
@@ -13,6 +14,7 @@ export function CostThresholdField({
   initialThresholdUsd,
   initialCurrentSpendUsd,
 }: Props) {
+  const tToast = useTranslations('toasts')
   const [value, setValue] = useState<number>(initialThresholdUsd)
   const [saving, setSaving] = useState(false)
   const [currentSpend, setCurrentSpend] = useState<number>(initialCurrentSpendUsd)
@@ -35,7 +37,7 @@ export function CostThresholdField({
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error ?? `Falha (status ${res.status})`)
       }
-      toast.success('Threshold atualizado')
+      toast.success(tToast('settings.threshold_updated'))
       setDirty(false)
 
       // Refresca consumo atual
@@ -44,7 +46,7 @@ export function CostThresholdField({
         setCurrentSpend(refreshed.data.currentSpendUsd)
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar threshold')
+      toast.error(err instanceof Error ? err.message : tToast('settings.threshold_save_failed'))
     } finally {
       setSaving(false)
     }

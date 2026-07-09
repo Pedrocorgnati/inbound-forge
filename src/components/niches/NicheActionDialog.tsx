@@ -3,6 +3,7 @@
 // TASK-11 (CL-249): dialog que confirma approve/discard de NicheOpportunity.
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import * as Dialog from '@radix-ui/react-dialog'
 import { toast } from 'sonner'
 
@@ -20,6 +21,7 @@ interface NicheActionDialogProps {
 }
 
 export function NicheActionDialog({ kind, opportunity, onClose, onDone }: NicheActionDialogProps) {
+  const tToast = useTranslations('toasts')
   const [value, setValue] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -39,10 +41,10 @@ export function NicheActionDialog({ kind, opportunity, onClose, onDone }: NicheA
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error ?? `Falha (status ${res.status})`)
       }
-      toast.success(kind === 'approve' ? 'Tema criado' : 'Oportunidade descartada')
+      toast.success(kind === 'approve' ? tToast('niche.theme_created') : tToast('niche.opportunity_discarded'))
       onDone()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro')
+      toast.error(err instanceof Error ? err.message : tToast('common.error_generic'))
     } finally {
       setSubmitting(false)
     }

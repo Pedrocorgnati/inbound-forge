@@ -6,6 +6,7 @@
 
 import { useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 type Template = {
@@ -42,6 +43,7 @@ const DIMENSIONS: Record<string, Array<{ width: number; height: number; label: s
 }
 
 export function ImageTemplateForm({ template, onClose, onSaved }: Props) {
+  const tToast = useTranslations('toasts')
   const isEdit = !!template?.id
   const [form, setForm] = useState<Template>(
     template ?? {
@@ -73,7 +75,7 @@ export function ImageTemplateForm({ template, onClose, onSaved }: Props) {
         const json = await res.json().catch(() => ({}))
         throw new Error(json?.error ?? `Falha (${res.status})`)
       }
-      toast.success(isEdit ? 'Template atualizado' : 'Template criado')
+      toast.success(isEdit ? tToast('template.updated') : tToast('template.created'))
       onSaved()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro')

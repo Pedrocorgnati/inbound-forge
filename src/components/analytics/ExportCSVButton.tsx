@@ -6,6 +6,7 @@
 import React, { memo, useState } from 'react'
 import { Download, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import type { AnalyticsPeriod } from '@/types/analytics'
 import { trackEvent } from '@/lib/ga4'
@@ -18,11 +19,12 @@ interface ExportCSVButtonProps {
 
 function ExportCSVButtonComponent({ period, variant = 'outline' }: ExportCSVButtonProps) {
   const [isExporting, setIsExporting] = useState(false)
+  const tToast = useTranslations('toasts')
 
   async function handleExport() {
     if (isExporting) return
     setIsExporting(true)
-    toast.info('Exportando...')
+    toast.info(tToast('analytics.exporting'))
 
     try {
       const res = await fetch(`/api/v1/analytics/export?period=${period}`)
@@ -42,10 +44,10 @@ function ExportCSVButtonComponent({ period, variant = 'outline' }: ExportCSVButt
       document.body.removeChild(link)
       URL.revokeObjectURL(url)
 
-      toast.success('CSV salvo')
+      toast.success(tToast('analytics.csv_saved'))
       trackEvent({ name: GA4_EVENTS.ANALYTICS_EXPORTED, params: { period } })
     } catch {
-      toast.error('Erro ao exportar CSV')
+      toast.error(tToast('analytics.csv_failed'))
     } finally {
       setIsExporting(false)
     }

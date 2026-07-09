@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { AlertTriangle, Eye, Globe, Shield, ShieldAlert, Pencil, Trash2, Power, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import type { SourceDto } from '@/lib/services/source.service'
 
 export function SourceList() {
   const locale = useLocale()
+  const tToast = useTranslations('toasts')
   const [sources, setSources] = useState<SourceDto[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -47,10 +48,10 @@ export function SourceList() {
         body: JSON.stringify({ isActive: !source.isActive }),
       })
       if (!res.ok) throw new Error()
-      toast.success(source.isActive ? 'Fonte desativada' : 'Fonte ativada')
+      toast.success(source.isActive ? tToast('source.deactivated') : tToast('source.activated'))
       load()
     } catch {
-      toast.error('Erro ao atualizar status da fonte')
+      toast.error(tToast('sources.update_status_failed'))
     }
   }
 
@@ -61,7 +62,7 @@ export function SourceList() {
       toast.success(`Protecao anti-bot resetada em "${source.name}"`)
       load()
     } catch {
-      toast.error('Erro ao resetar protecao anti-bot')
+      toast.error(tToast('sources.reset_antibot_failed'))
     }
   }
 
@@ -78,7 +79,7 @@ export function SourceList() {
       setDeleteTarget(null)
       load()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao remover fonte')
+      toast.error(err instanceof Error ? err.message : tToast('source.remove_failed'))
     } finally {
       setIsDeleting(false)
     }

@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { CheckCircle, Trash2, AlertTriangle, ArrowUpRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils/date'
@@ -41,6 +42,7 @@ const TYPE_DESCRIPTIONS: Record<ReconciliationItemData['type'], string> = {
 
 export function ReconciliationItem({ item, onResolved, onDeleted }: ReconciliationItemProps) {
   const { locale } = useParams<{ locale: string }>()
+  const tToast = useTranslations('toasts')
   const [isResolving, setIsResolving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -56,10 +58,10 @@ export function ReconciliationItem({ item, onResolved, onDeleted }: Reconciliati
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error ?? 'Erro ao resolver item')
       }
-      toast.success('Item marcado como resolvido')
+      toast.success(tToast('analytics.item_resolved'))
       onResolved(item.id)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao resolver item')
+      toast.error(err instanceof Error ? err.message : tToast('analytics.resolve_item_failed'))
     } finally {
       setIsResolving(false)
     }
@@ -73,10 +75,10 @@ export function ReconciliationItem({ item, onResolved, onDeleted }: Reconciliati
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error ?? 'Erro ao excluir item')
       }
-      toast.success('Item excluído')
+      toast.success(tToast('analytics.item_excluded'))
       onDeleted(item.id)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao excluir item')
+      toast.error(err instanceof Error ? err.message : tToast('analytics.exclude_item_failed'))
     } finally {
       setIsDeleting(false)
     }

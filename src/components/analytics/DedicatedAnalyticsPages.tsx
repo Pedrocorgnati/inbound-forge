@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Activity, BarChart3, Brain, MousePointerClick, RotateCcw, TrendingUp, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -73,6 +74,7 @@ export function AnalyticsThemesPageContent() {
 }
 
 export function AnalyticsChannelsPageContent() {
+  const tToast = useTranslations('toasts')
   const [period, setPeriod] = useState<AnalyticsPeriod>('30d')
   const [channels, setChannels] = useState<ChannelPerformance[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -110,9 +112,9 @@ export function AnalyticsChannelsPageContent() {
 
   useEffect(() => {
     if (error) {
-      toast.error('Erro ao carregar comparativo de canais')
+      toast.error(tToast('analytics.channels_load_failed'))
     }
-  }, [error])
+  }, [error, tToast])
 
   const maxEngagement = useMemo(
     () => channels.reduce((acc, channel) => Math.max(acc, channel.engagementCount ?? 0), 0) || 1,
@@ -229,6 +231,7 @@ export function AnalyticsChannelsPageContent() {
 }
 
 export function AnalyticsLearningPageContent() {
+  const tToast = useTranslations('toasts')
   const [status, setStatus] = useState<LtrStatus | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
@@ -264,9 +267,9 @@ export function AnalyticsLearningPageContent() {
 
   useEffect(() => {
     if (error) {
-      toast.error('Erro ao carregar Learn-to-Rank')
+      toast.error(tToast('analytics.ltr_load_failed'))
     }
-  }, [error])
+  }, [error, tToast])
 
   if (isLoading) {
     return (

@@ -37,7 +37,7 @@ function ProviderBar({ data }: { data: QuotaData }) {
       </div>
       <div className="h-2 w-full rounded-full bg-muted">
         <div
-          className={`h-2 rounded-full transition-all ${progressColor(pct)}`}
+          className={`h-2 rounded-full transition-[width,background-color] ${progressColor(pct)}`}
           style={{ width: `${pct}%` }}
         />
       </div>

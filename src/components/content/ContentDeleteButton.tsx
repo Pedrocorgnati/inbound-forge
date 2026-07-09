@@ -8,6 +8,7 @@
  */
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,7 @@ export function ContentDeleteButton({
   className,
   size = 'sm',
 }: ContentDeleteButtonProps) {
+  const tToast = useTranslations('toasts')
   const [open, setOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const isDraft = piece.status === 'DRAFT'
@@ -43,11 +45,11 @@ export function ContentDeleteButton({
         toast.error(msg)
         return
       }
-      toast.success('Rascunho deletado com sucesso')
+      toast.success(tToast('content.draft_deleted'))
       onDeleted?.(piece.id)
       setOpen(false)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro inesperado')
+      toast.error(err instanceof Error ? err.message : tToast('common.unexpected_error'))
     } finally {
       setDeleting(false)
     }

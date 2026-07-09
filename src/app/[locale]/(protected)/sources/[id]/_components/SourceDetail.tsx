@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import {
   AlertTriangle,
   ArrowLeft,
@@ -90,6 +91,7 @@ function typeLabel(type: SourceDetailPayload['source']['type']) {
 }
 
 export function SourceDetail({ sourceId, locale }: SourceDetailProps) {
+  const tToast = useTranslations('toasts')
   const [data, setData] = useState<SourceDetailPayload | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -135,11 +137,11 @@ export function SourceDetail({ sourceId, locale }: SourceDetailProps) {
         const json = await response.json().catch(() => ({}))
         throw new Error(json.error ?? 'Falha ao atualizar fonte')
       }
-      toast.success(data.source.isActive ? 'Fonte pausada' : 'Fonte ativada')
+      toast.success(data.source.isActive ? tToast('source.paused') : tToast('source.activated'))
       setConfirmOpen(false)
       await load()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Falha ao atualizar fonte')
+      toast.error(err instanceof Error ? err.message : tToast('source.update_failed'))
     } finally {
       setIsUpdating(false)
     }

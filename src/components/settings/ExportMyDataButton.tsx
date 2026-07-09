@@ -5,9 +5,11 @@
  * Trata rate-limit 429 exibindo retry-after em minutos.
  */
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 export function ExportMyDataButton() {
+  const tToast = useTranslations('toasts')
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
@@ -38,9 +40,9 @@ export function ExportMyDataButton() {
       a.click()
       a.remove()
       URL.revokeObjectURL(url)
-      toast.success('Export concluido.')
+      toast.success(tToast('settings.export_done'))
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao exportar')
+      toast.error(e instanceof Error ? e.message : tToast('settings.export_failed'))
     } finally {
       setLoading(false)
     }

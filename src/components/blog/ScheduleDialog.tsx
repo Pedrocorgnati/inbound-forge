@@ -4,6 +4,7 @@
 // de um BlogArticle. Usa input datetime-local nativo (evita dependencia nova).
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import * as Dialog from '@radix-ui/react-dialog'
 import { cn } from '@/lib/utils'
@@ -23,6 +24,7 @@ function toLocalInputValue(iso?: string | null): string {
 }
 
 export function ScheduleDialog({ articleId, scheduledFor, onUpdated, trigger }: ScheduleDialogProps) {
+  const tToast = useTranslations('toasts')
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState(toLocalInputValue(scheduledFor))
   const [submitting, setSubmitting] = useState(false)
@@ -39,11 +41,11 @@ export function ScheduleDialog({ articleId, scheduledFor, onUpdated, trigger }: 
         const err = await res.json().catch(() => ({}))
         throw new Error(err.error ?? `Falha (status ${res.status})`)
       }
-      toast.success(payload.scheduledFor ? 'Artigo agendado' : 'Agendamento cancelado')
+      toast.success(payload.scheduledFor ? tToast('blog.scheduled') : tToast('blog.schedule_canceled'))
       setOpen(false)
       onUpdated?.()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao agendar')
+      toast.error(err instanceof Error ? err.message : tToast('blog.schedule_failed'))
     } finally {
       setSubmitting(false)
     }
@@ -51,12 +53,12 @@ export function ScheduleDialog({ articleId, scheduledFor, onUpdated, trigger }: 
 
   const handleSchedule = () => {
     if (!value) {
-      toast.error('Escolha uma data futura')
+      toast.error(tToast('blog.choose_future_date'))
       return
     }
     const iso = new Date(value).toISOString()
     if (new Date(iso).getTime() <= Date.now()) {
-      toast.error('A data deve ser no futuro')
+      toast.error(tToast('blog.date_must_future'))
       return
     }
     void call({ scheduledFor: iso })

@@ -7,6 +7,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 
 const Schema = z
@@ -46,6 +47,7 @@ const STRENGTH_COLOR = [
 ]
 
 export function ChangePasswordForm() {
+  const tToast = useTranslations('toasts')
   const {
     register,
     handleSubmit,
@@ -67,18 +69,18 @@ export function ChangePasswordForm() {
       }),
     })
     if (res.status === 401) {
-      toast.error('Senha atual invalida')
+      toast.error(tToast('auth.current_password_invalid'))
       return
     }
     if (res.status === 429) {
-      toast.error('Muitas tentativas. Aguarde 15 minutos.')
+      toast.error(tToast('auth.too_many_attempts'))
       return
     }
     if (!res.ok) {
       toast.error(`Falha (${res.status})`)
       return
     }
-    toast.success('Senha atualizada')
+    toast.success(tToast('auth.password_updated'))
     reset()
   }
 

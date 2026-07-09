@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { toast } from '@/components/ui/toast'
 import { Button } from '@/components/ui/button'
@@ -16,14 +17,15 @@ export function ThresholdUnlockAnimation({
   onDismiss,
   locale,
 }: ThresholdUnlockAnimationProps) {
+  const tToast = useTranslations('toasts')
   const router = useRouter()
 
   // Show toast when visible
   useEffect(() => {
     if (isVisible) {
-      toast.success('Base de conhecimento desbloqueada!')
+      toast.success(tToast('knowledge.unlocked'))
     }
-  }, [isVisible])
+  }, [isVisible, tToast])
 
   // Dismiss via Escape
   const handleKeyDown = useCallback(

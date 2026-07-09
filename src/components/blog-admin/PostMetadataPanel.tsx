@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Modal } from '@/components/ui/modal'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,7 @@ interface Props {
 export function PostMetadataPanel({ articleId, initial, open, onClose, onSaved }: Props) {
   const [tagsText, setTagsText] = useState<string>((initial.tags ?? []).join(', '))
   const [slugError, setSlugError] = useState<string | null>(null)
+  const tToast = useTranslations('toasts')
 
   const {
     register,
@@ -66,11 +68,11 @@ export function PostMetadataPanel({ articleId, initial, open, onClose, onSaved }
         return
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      toast.success('Metadata atualizada')
+      toast.success(tToast('blog.metadata_updated'))
       onSaved?.()
       onClose()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar')
+      toast.error(err instanceof Error ? err.message : tToast('common.error_saving'))
     }
   }
 

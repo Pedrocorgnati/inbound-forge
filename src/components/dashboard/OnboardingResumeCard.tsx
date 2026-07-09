@@ -57,7 +57,7 @@ export function OnboardingResumeCard({ locale }: { locale: string }) {
       </header>
       <div className="mb-3 h-2 w-full rounded-full bg-muted">
         <div
-          className="h-2 rounded-full bg-primary transition-all"
+          className="h-2 rounded-full bg-primary transition-[width]"
           style={{ width: `${Math.round(data.progressPct)}%` }}
           aria-hidden="true"
         />

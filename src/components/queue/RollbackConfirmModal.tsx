@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { apiClient } from '@/lib/api-client'
 
 const MIN_REASON = 10
@@ -82,8 +83,15 @@ export function RollbackConfirmModal({ postId, postPreview, open, onClose, onSuc
         <details className="mb-3 rounded border bg-gray-50 p-2 text-sm">
           <summary className="cursor-pointer font-medium">Preview do post</summary>
           {postPreview.imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={postPreview.imageUrl} alt="" className="mt-2 max-h-40 rounded" />
+            <div className="relative mt-2 h-40 w-full">
+              <Image
+                src={postPreview.imageUrl}
+                alt=""
+                fill
+                sizes="(max-width: 512px) 100vw, 512px"
+                className="rounded object-contain object-left"
+              />
+            </div>
           )}
           <p className="mt-2 whitespace-pre-wrap">{postPreview.caption}</p>
         </details>

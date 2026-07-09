@@ -10,6 +10,7 @@
  */
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle } from 'lucide-react'
@@ -17,6 +18,7 @@ import { AlertTriangle } from 'lucide-react'
 type ConnectStatus = 'idle' | 'connected' | 'error'
 
 export function TikTokConnectCard() {
+  const tToast = useTranslations('toasts')
   const searchParams = useSearchParams()
   const [status, setStatus] = useState<ConnectStatus>('idle')
   const [loading, setLoading] = useState(false)
@@ -25,12 +27,12 @@ export function TikTokConnectCard() {
     const tiktok = searchParams.get('tiktok')
     if (tiktok === 'connected') {
       setStatus('connected')
-      toast.success('TikTok conectado com sucesso!')
+      toast.success(tToast('settings.tiktok_connected'))
     } else if (tiktok === 'error' || tiktok === 'exchange_error' || tiktok === 'invalid_state') {
       setStatus('error')
-      toast.error('Falha ao conectar TikTok. Tente novamente.')
+      toast.error(tToast('settings.tiktok_connect_failed'))
     }
-  }, [searchParams])
+  }, [searchParams, tToast])
 
   async function handleConnect() {
     setLoading(true)
@@ -40,7 +42,7 @@ export function TikTokConnectCard() {
       const { authUrl } = await res.json()
       window.location.href = authUrl
     } catch {
-      toast.error('Nao foi possivel iniciar a conexao com TikTok.')
+      toast.error(tToast('settings.tiktok_start_failed'))
       setLoading(false)
     }
   }

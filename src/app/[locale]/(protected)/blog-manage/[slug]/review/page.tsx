@@ -15,10 +15,12 @@ import type { BlogArticle } from '@/types/blog'
 import { BLOG_STATUS } from '@/constants/status'
 import { useFormatters } from '@/lib/i18n/formatters'
 import { uuidv7 } from '@/lib/utils/uuidv7'
+import { useTranslations } from 'next-intl'
 
 export default function BlogReviewPage() {
   const params = useParams()
   const router = useRouter()
+  const tToast = useTranslations('toasts')
   const id = params?.slug as string
   const fmt = useFormatters()
   const locale = (params?.locale as string) ?? 'pt-BR'
@@ -36,14 +38,14 @@ export default function BlogReviewPage() {
         const data: BlogArticle = await res.json()
         setArticle(data)
       } catch {
-        toast.error('Erro ao carregar artigo')
+        toast.error(tToast('blog.load_article_failed'))
         router.push(`/${locale}/blog`)
       } finally {
         setIsLoading(false)
       }
     }
     load()
-  }, [id, locale, router])
+  }, [id, locale, router, tToast])
 
   async function handleApprove() {
     if (!article) return
@@ -64,9 +66,9 @@ export default function BlogReviewPage() {
       }
       const updated: BlogArticle = await res.json()
       setArticle(updated)
-      toast.success('Artigo aprovado com sucesso!')
+      toast.success(tToast('blog.article_approved'))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao aprovar artigo')
+      toast.error(err instanceof Error ? err.message : tToast('blog.approve_failed'))
     } finally {
       setIsApproving(false)
     }
@@ -84,10 +86,10 @@ export default function BlogReviewPage() {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.message ?? 'Erro ao publicar')
       }
-      toast.success('Artigo publicado com sucesso!')
+      toast.success(tToast('blog.article_published'))
       router.push(`/${locale}/blog`)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao publicar artigo')
+      toast.error(err instanceof Error ? err.message : tToast('blog.publish_failed'))
     } finally {
       setIsPublishing(false)
     }

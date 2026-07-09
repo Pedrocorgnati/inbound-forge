@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, ChevronRight } from 'lucide-react'
@@ -12,6 +13,7 @@ import { VersionHistory } from '@/components/blog-admin/VersionHistory'
 import type { BlogArticle } from '@/types/blog'
 
 export default function BlogVersionsPage() {
+  const tToast = useTranslations('toasts')
   const params = useParams()
   const router = useRouter()
   const id = params?.slug as string
@@ -28,14 +30,14 @@ export default function BlogVersionsPage() {
         const data: BlogArticle = await res.json()
         setArticle(data)
       } catch {
-        toast.error('Erro ao carregar artigo')
+        toast.error(tToast('blog.load_article_failed'))
         router.push(`/${locale}/blog`)
       } finally {
         setIsLoading(false)
       }
     }
     load()
-  }, [id, locale, router])
+  }, [id, locale, router, tToast])
 
   if (isLoading) {
     return (

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslations } from 'next-intl'
 import { ArrowLeft, ArrowRight, Plus, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -29,6 +30,7 @@ interface SavedCase {
 }
 
 export function FirstCaseStep({ onComplete, onBack }: FirstCaseStepProps) {
+  const tToast = useTranslations('toasts')
   const [savedCases, setSavedCases] = useState<SavedCase[]>([])
   const [submitting, setSubmitting] = useState(false)
 
@@ -64,10 +66,10 @@ export function FirstCaseStep({ onComplete, onBack }: FirstCaseStepProps) {
       }
 
       setSavedCases((prev) => [...prev, { name: data.name, sector: data.sector }])
-      toast.success('Case salvo com sucesso')
+      toast.success(tToast('onboarding.case_saved'))
       reset()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao salvar case')
+      toast.error(err instanceof Error ? err.message : tToast('onboarding.case_save_failed'))
     } finally {
       setSubmitting(false)
     }

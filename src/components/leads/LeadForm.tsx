@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { AlertCircle } from 'lucide-react'
 import { z } from 'zod'
 import { Input } from '@/components/ui/input'
@@ -53,6 +54,7 @@ interface LeadFormProps {
 
 export function LeadForm({ locale, onSuccess, defaultValues, themeId, postId }: LeadFormProps) {
   const router = useRouter()
+  const tToast = useTranslations('toasts')
 
   const [form, setForm] = useState({
     name: defaultValues?.name ?? '',
@@ -126,7 +128,7 @@ export function LeadForm({ locale, onSuccess, defaultValues, themeId, postId }: 
         throw new Error(data?.error ?? 'Erro ao registrar lead')
       }
 
-      toast.success('Lead registrado com sucesso')
+      toast.success(tToast('lead.registered'))
 
       if (onSuccess) {
         onSuccess()
@@ -134,7 +136,7 @@ export function LeadForm({ locale, onSuccess, defaultValues, themeId, postId }: 
         router.push(`/${locale}/leads`)
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro inesperado ao registrar lead')
+      toast.error(err instanceof Error ? err.message : tToast('lead.register_unexpected'))
     } finally {
       setIsSubmitting(false)
     }

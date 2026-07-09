@@ -954,5 +954,282 @@
       "cancel": "Annulla",
       "saved": "Regola creata"
     }
+  },
+  "toasts": {
+    "common": {
+      "copy_failed": "Copia non riuscita",
+      "copied": "Copiato",
+      "save_failed": "Salvataggio non riuscito",
+      "remove_failed": "Rimozione non riuscita",
+      "updated": "Aggiornato",
+      "network_retry": "Errore di rete. Riprova.",
+      "copy_not_possible": "Impossibile copiare.",
+      "no_changes": "Nessuna modifica effettuata",
+      "select_file": "Seleziona un file",
+      "invalid_server_response": "Risposta del server non valida.",
+      "error_generic": "Errore",
+      "unexpected_error": "Errore imprevisto",
+      "error_saving": "Errore durante il salvataggio",
+      "no_company": "Nessuna azienda"
+    },
+    "auth": {
+      "logged_out": "Disconnesso correttamente",
+      "session_expired": "Sessione scaduta. Accedi di nuovo.",
+      "password_reset": "Password reimpostata con successo!",
+      "current_password_invalid": "Password attuale non valida",
+      "too_many_attempts": "Troppi tentativi. Attendi 15 minuti.",
+      "password_updated": "Password aggiornata",
+      "email_confirmation_sent": "Email di conferma inviata al nuovo indirizzo.",
+      "reset_password_failed": "Errore durante la reimpostazione della password"
+    },
+    "mfa": {
+      "enter_6_digits": "Inserisci le 6 cifre dell'app di autenticazione.",
+      "enter_6_digits_disable": "Inserisci le 6 cifre per confermare la disattivazione.",
+      "invalid_backup_code": "Inserisci un codice di backup valido.",
+      "enabled": "MFA attivato. Conserva i tuoi codici di backup.",
+      "disabled": "MFA disattivato.",
+      "disabled_via_backup": "MFA disattivato tramite codice di backup. Riattivalo in Impostazioni > Account.",
+      "backup_codes_copied": "Codici di backup copiati.",
+      "network_start": "Errore di rete durante l'avvio dell'MFA.",
+      "network_verify": "Errore di rete durante la verifica del codice.",
+      "network_disable": "Errore di rete durante la disattivazione dell'MFA."
+    },
+    "theme": {
+      "already_rejected": "Questo tema è già stato rifiutato.",
+      "reject_failed": "Errore durante il rifiuto. Riprova.",
+      "rejected": "Tema rifiutato",
+      "only_rejected_restorable": "Solo i temi rifiutati possono essere ripristinati.",
+      "restore_failed": "Errore durante il ripristino. Riprova.",
+      "restored": "Tema ripristinato",
+      "generate_failed": "Errore durante la generazione dei temi. Riprova.",
+      "no_new_themes": "Nessun nuovo tema. Arricchisci la base di conoscenza.",
+      "recalc_in_progress": "Ricalcolo in corso. Attendi e riprova.",
+      "recalc_failed": "Errore durante il ricalcolo dei punteggi.",
+      "generate_cooldown": "Attendi 5 minuti prima di generare di nuovo.",
+      "load_failed": "Errore durante il caricamento dei dati del tema",
+      "ranking_load_failed": "Errore durante il caricamento della classifica dei temi",
+      "generate_failed_short": "Generazione dei temi non riuscita."
+    },
+    "lead": {
+      "moved": "Lead spostato",
+      "not_found": "Lead non trovato",
+      "registered": "Lead registrato con successo",
+      "deleted": "Lead eliminato",
+      "updated": "Lead aggiornato",
+      "delete_failed": "Errore durante l'eliminazione del lead. Riprova.",
+      "contact_copied": "Contatto copiato negli appunti.",
+      "contact_hidden_ttl": "Contatto nascosto automaticamente (TTL scaduto).",
+      "contact_revealed": "Contatto rivelato. Registro di audit creato.",
+      "reveal_network_failed": "Errore di rete durante la rivelazione del contatto.",
+      "move_failed": "Errore durante lo spostamento del lead",
+      "register_unexpected": "Errore imprevisto durante la registrazione del lead",
+      "deleted_named": "Lead \"{company}\" eliminato",
+      "reveal_invalid_form": "Dati del modulo non validi.",
+      "reveal_not_possible": "Impossibile rivelare il contatto.",
+      "reveal_failed_retry": "Errore durante la rivelazione del contatto. Riprova."
+    },
+    "onboarding": {
+      "load_data_failed": "Errore durante il caricamento dei dati",
+      "name_min": "Il nome deve avere almeno 3 caratteri",
+      "desc_min": "La descrizione deve avere almeno 10 caratteri",
+      "select_pain": "Seleziona un punto critico",
+      "select_case": "Seleziona un caso",
+      "solution_registered": "Schema di soluzione registrato",
+      "case_saved": "Caso salvato con successo",
+      "pain_registered": "Punto critico registrato con successo",
+      "progress_check_failed": "Errore durante la verifica dell'avanzamento",
+      "completed": "Onboarding completato con successo!",
+      "objection_min": "L'obiezione deve avere almeno 5 caratteri",
+      "objection_registered": "Obiezione registrata",
+      "solution_save_failed": "Errore durante il salvataggio dello schema",
+      "case_save_failed": "Errore durante il salvataggio del caso",
+      "pain_save_failed": "Errore durante il salvataggio del punto critico",
+      "activate_failed": "Errore durante l'attivazione",
+      "objection_save_failed": "Errore durante il salvataggio dell'obiezione"
+    },
+    "credential": {
+      "insert_first": "Inserisci la credenziale prima di testare",
+      "network_failed": "Errore di rete durante il test della credenziale"
+    },
+    "publishing": {
+      "post_load_failed": "Errore durante il caricamento dei dati del post",
+      "error_copied": "Errore copiato",
+      "linkedin_load_failed": "Errore durante il caricamento del formato LinkedIn",
+      "linkedin_marked": "Post contrassegnato come pubblicato su LinkedIn",
+      "mark_published_failed": "Errore durante la marcatura come pubblicato",
+      "post_created": "Post creato con successo!",
+      "image_uploaded": "Immagine caricata con successo",
+      "instagram_published": "Post pubblicato su Instagram",
+      "load_post_failed": "Errore durante il caricamento del post",
+      "instagram_publish_failed": "Pubblicazione su Instagram non riuscita",
+      "retry_requeued": "Post rimesso in coda (contenuto riutilizzato)",
+      "retry_resent": "Post inviato di nuovo per la pubblicazione!"
+    },
+    "calendar": {
+      "update_item_failed": "Aggiornamento dell'elemento non riuscito",
+      "published_cannot_remove": "Un elemento già pubblicato non può essere rimosso",
+      "removed_from_queue": "Rimosso dalla coda",
+      "no_occurrences": "Nessuna occorrenza generata — rivedi la regola",
+      "rescheduled": "Post riprogrammato con successo",
+      "reschedule_failed": "Errore durante la riprogrammazione del post. Riprova.",
+      "reschedule_error": "Errore durante la riprogrammazione del post",
+      "slot_unavailable": "Slot non disponibile",
+      "paused": "In pausa",
+      "resumed": "Ripreso",
+      "preview_failed": "Errore durante l'anteprima",
+      "create_failed": "Errore durante la creazione"
+    },
+    "queue": {
+      "publication_canceled": "Pubblicazione annullata",
+      "post_duplicated": "Post duplicato",
+      "schedule_assisted": "Pubblicazione programmata.",
+      "cancel_failed": "Errore durante l'annullamento",
+      "duplicate_failed": "Errore durante la duplicazione",
+      "schedule_failed": "Programmazione della pubblicazione non riuscita"
+    },
+    "content": {
+      "load_failed": "Errore durante il caricamento dei dati del tema",
+      "context_copied": "Contesto copiato negli appunti",
+      "copy_context_failed": "Copia del contesto non riuscita",
+      "version_restored": "Versione ripristinata",
+      "draft_deleted": "Bozza eliminata con successo",
+      "utm_reused": "Questo post aveva già un link UTM; riutilizzo quello esistente.",
+      "utm_generated": "Link UTM generato.",
+      "utm_generate_failed": "Generazione del link UTM non riuscita",
+      "restore_failed": "Errore durante il ripristino"
+    },
+    "knowledge": {
+      "unlocked": "Base di conoscenza sbloccata!",
+      "order_updated": "Ordine aggiornato",
+      "case_archived": "Caso archiviato",
+      "load_pains_failed": "Errore durante il caricamento dei punti critici",
+      "load_cases_failed": "Errore durante il caricamento dei casi",
+      "order_save_failed": "Salvataggio dell'ordine non riuscito",
+      "case_archive_failed": "Errore durante l'archiviazione",
+      "draft_saved": "Bozza salvata",
+      "draft_saved_full": "Bozza salvata con successo",
+      "case_published": "Caso pubblicato con successo"
+    },
+    "blog": {
+      "load_article_failed": "Errore durante il caricamento dell'articolo",
+      "article_approved": "Articolo approvato con successo!",
+      "article_published": "Articolo pubblicato con successo!",
+      "article_updated": "Articolo aggiornato con successo!",
+      "article_deleted": "Articolo eliminato con successo",
+      "article_unpublished": "Articolo ritirato dalla pubblicazione",
+      "article_excluded": "Articolo eliminato",
+      "load_articles_failed": "Caricamento degli articoli non riuscito",
+      "version_history_failed": "Caricamento della cronologia delle versioni non riuscito",
+      "metadata_updated": "Metadati aggiornati",
+      "tag_already_added": "Tag già aggiunto",
+      "max_tags": "Massimo 20 tag",
+      "choose_future_date": "Scegli una data futura",
+      "date_must_future": "La data deve essere nel futuro",
+      "translations_exist": "Tutte le traduzioni esistono già. Usa \"Ricrea\" per ogni elemento per sovrascrivere.",
+      "approve_failed": "Errore durante l'approvazione dell'articolo",
+      "publish_failed": "Errore durante la pubblicazione dell'articolo",
+      "delete_failed": "Errore durante l'eliminazione dell'articolo",
+      "translations_generate_failed": "Generazione delle traduzioni non riuscita.",
+      "translations_status_failed": "Aggiornamento dello stato non riuscito.",
+      "scheduled": "Articolo programmato",
+      "schedule_canceled": "Programmazione annullata",
+      "schedule_failed": "Errore durante la programmazione"
+    },
+    "analytics": {
+      "recon_load_failed": "Errore durante il caricamento del pannello di riconciliazione",
+      "recon_sync_failed": "Errore durante la sincronizzazione della riconciliazione",
+      "exporting": "Esportazione in corso...",
+      "csv_saved": "CSV salvato",
+      "csv_failed": "Errore durante l'esportazione del CSV",
+      "funnel_load_failed": "Errore durante il caricamento delle metriche del funnel",
+      "channels_load_failed": "Errore durante il caricamento del confronto dei canali",
+      "ltr_load_failed": "Errore durante il caricamento di Learn-to-Rank",
+      "conversion_removed": "Conversione rimossa",
+      "validation_updated": "Convalida aggiornata",
+      "validate_failed": "Convalida non riuscita",
+      "item_resolved": "Elemento contrassegnato come risolto",
+      "item_excluded": "Elemento eliminato",
+      "item_matched": "Elemento contrassegnato come abbinato",
+      "resolve_item_failed": "Errore durante la risoluzione dell'elemento",
+      "exclude_item_failed": "Errore durante l'eliminazione dell'elemento"
+    },
+    "conversions": {
+      "load_failed": "Errore durante il caricamento delle conversioni",
+      "delete_failed": "Errore durante l'eliminazione della conversione"
+    },
+    "health": {
+      "alert_resolved": "Avviso risolto",
+      "alert_resolve_failed": "Errore durante la risoluzione dell'avviso",
+      "alert_acknowledged": "Avviso confermato",
+      "alert_ack_failed": "Errore durante la conferma dell'avviso",
+      "job_reprocessed": "Job rielaborato"
+    },
+    "sources": {
+      "update_status_failed": "Errore durante l'aggiornamento dello stato della fonte",
+      "reset_antibot_failed": "Errore durante il ripristino della protezione anti-bot"
+    },
+    "asset": {
+      "alt_saved": "Testo alternativo salvato",
+      "alt_save_failed": "Errore durante il salvataggio del testo alternativo",
+      "tags_save_failed": "Errore durante il salvataggio dei tag",
+      "delete_failed": "Errore durante l'eliminazione dell'asset. Riprova.",
+      "enqueue_failed": "Accodamento non riuscito",
+      "file_too_large": "Il file supera {mb} MB"
+    },
+    "settings": {
+      "throttle_updated": "Throttling aggiornato",
+      "config_updated": "Impostazioni aggiornate",
+      "threshold_updated": "Soglia aggiornata",
+      "tiktok_connected": "TikTok connesso con successo!",
+      "tiktok_connect_failed": "Connessione a TikTok non riuscita. Riprova.",
+      "tiktok_start_failed": "Impossibile avviare la connessione con TikTok.",
+      "font_registered": "Font registrato",
+      "export_done": "Esportazione completata.",
+      "export_request_failed": "Errore durante la richiesta di esportazione.",
+      "template_removed": "Modello rimosso",
+      "test_email_sent": "Email di prova inviata",
+      "test_email_sent_to": "Email di prova inviata a {email}",
+      "test_email_failed": "Errore durante l'invio del test",
+      "threshold_save_failed": "Errore durante il salvataggio della soglia",
+      "fonts_list_failed": "Errore durante l'elenco",
+      "font_upload_failed": "Caricamento non riuscito",
+      "export_failed": "Errore durante l'esportazione"
+    },
+    "utm": {
+      "link_copied": "Link copiato!",
+      "copy_link_failed": "Errore durante la copia del link",
+      "link_removed": "Link UTM rimosso",
+      "deleted": "UTM eliminato",
+      "updated": "UTM aggiornato",
+      "load_failed": "Errore durante il caricamento dei link UTM",
+      "remove_failed": "Errore durante la rimozione del link UTM"
+    },
+    "approvals": {
+      "registered": "Approvazione registrata",
+      "approve_failed": "Impossibile approvare."
+    },
+    "layout": {
+      "version_copied": "Versione copiata"
+    },
+    "template": {
+      "updated": "Modello aggiornato",
+      "created": "Modello creato"
+    },
+    "niche": {
+      "theme_created": "Tema creato",
+      "opportunity_discarded": "Opportunità scartata"
+    },
+    "source": {
+      "paused": "Fonte in pausa",
+      "activated": "Fonte attivata",
+      "deactivated": "Fonte disattivata",
+      "update_failed": "Aggiornamento della fonte non riuscito",
+      "scraping_active": "Scraping attivo",
+      "scraping_paused": "Scraping in pausa",
+      "remove_failed": "Errore durante la rimozione della fonte",
+      "created": "Fonte creata con successo",
+      "updated": "Fonte aggiornata con successo",
+      "save_failed": "Errore durante il salvataggio della fonte"
+    }
   }
 }

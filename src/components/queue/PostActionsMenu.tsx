@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 import { apiClient } from '@/lib/api-client'
 import { RollbackConfirmModal } from './RollbackConfirmModal'
 import { PublishErrorDrawer } from '@/components/publishing/PublishErrorDrawer'
@@ -20,6 +21,7 @@ type Props = {
 
 export function PostActionsMenu({ postId, status, caption, imageUrl, onChanged }: Props) {
   const router = useRouter()
+  const tToast = useTranslations('toasts')
   const [open, setOpen] = useState(false)
   const [rollbackOpen, setRollbackOpen] = useState(false)
   const [errorsOpen, setErrorsOpen] = useState(false)
@@ -41,12 +43,12 @@ export function PostActionsMenu({ postId, status, caption, imageUrl, onChanged }
         const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
         throw new Error(err.error ?? `HTTP ${res.status}`)
       }
-      toast.success('Publicacao cancelada')
+      toast.success(tToast('queue.publication_canceled'))
       setCancelOpen(false)
       onChanged?.()
       router.refresh()
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao cancelar')
+      toast.error(e instanceof Error ? e.message : tToast('queue.cancel_failed'))
     } finally {
       setCancelling(false)
     }
@@ -59,11 +61,11 @@ export function PostActionsMenu({ postId, status, caption, imageUrl, onChanged }
       const res = await apiClient(`/api/v1/posts/${postId}/duplicate`, { method: 'POST' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = (await res.json()) as { post: { id: string } }
-      toast.success('Post duplicado')
+      toast.success(tToast('queue.post_duplicated'))
       onChanged?.()
       router.push(`/queue/${data.post.id}`)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Erro ao duplicar')
+      toast.error(e instanceof Error ? e.message : tToast('queue.duplicate_failed'))
     } finally {
       setDuplicating(false)
     }
